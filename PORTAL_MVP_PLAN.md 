@@ -1,0 +1,255 @@
+# Plan MVP Portal Servana (SaaS)
+
+Este documento define qué falta para considerar el **portal del restaurante** como un MVP sólido y vendible.
+
+---
+
+## 1. Estado actual (lo que YA tenemos ✅)
+
+- [x] **Auth básica con Supabase**
+  - `app/page.tsx` protegido: redirige a `/login` si no hay usuario.
+  - Resolución de `tenantId` con `getCurrentTenantId`.
+
+- [x] **Layout de dashboard**
+  - `DashboardShell` con sidebar moderno (Reservas, Pendientes, Clientes, Analytics, Ajustes).
+  - Topbar fijo con título “Reservas”.
+
+- [x] **Vista principal de reservas**
+  - `SummaryCards` con:
+    - Hoy
+    - Mañana
+    - Resto semana
+    - Resto mes
+  - `ReservationsView` con:
+    - Filtro por texto (nombre, teléfono, localizador, notas).
+    - Filtro por estado.
+    - Filtro por rango de fechas:
+      - Botones rápidos: **Hoy** y **+1 día**.
+      - Datepickers con calendario en español.
+    - Virtualización de lista (performante con muchas reservas).
+    - Formato de fecha/hora en español (24h).
+
+- [x] **Drawer lateral de detalle**
+  - Apertura al hacer clic en una fila.
+  - Datos mostrados:
+    - Fecha y hora.
+    - Comensales.
+    - Teléfono.
+    - Localizador.
+    - Origen (WhatsApp, etc.).
+    - Estado actual con chip bonito y consistente.
+  - Datos editables:
+    - Comensales.
+    - Teléfono.
+    - Notas internas.
+  - Botón **Guardar cambios** con estilo translúcido.
+
+- [x] **Cambio rápido de estado**
+  - Botones en el drawer:
+    - Confirmada
+    - Sentada
+    - Finalizada
+    - Cancelada
+    - No-show
+  - Todos con mismo tamaño y estilo “premium”.
+  - Recarga automática de la lista tras cambiar estado o guardar.
+
+- [x] **Modo “Pendientes” a nivel de UI**
+  - Navegación con item **“Pendientes”** en el sidebar.
+  - `ReservationsView` soporta `initialStatus="pending"` y modo `isPendingMode`:
+    - `/` → oculta `pending`.
+    - `/pending` → muestra `pending` filtradas.
+
+---
+
+## 2. Alcance del MVP del portal
+
+Lo que consideramos **MVP completo** para el portal:
+
+1. **Gestionar reservas** cómodamente:
+   - Ver, filtrar, buscar, editar, cambiar estado.
+   - Separar claramente reservas **Pendientes** de las demás.
+
+2. **Config básica del restaurante (tenant)**:
+   - Datos de negocio.
+   - Horarios básicos de reservas.
+   - Política de confirmación:
+     - Auto-confirmación.
+     - Confirmación manual (reservas entran como `pending`).
+
+3. **Experiencia de usuario cerrada**:
+   - Login / logout claros.
+   - Alguna gestión mínima de usuario (ver su email, botón de “Salir”).
+   - Mensajes de error y loading razonables.
+
+---
+
+## 3. Checklist de tareas pendientes
+
+### 3.1. Autenticación y cuenta de usuario
+
+- [ ] **Añadir botón de “Cerrar sesión” en el portal**
+  - Mostrarlo en el topbar (derecha) con el email del usuario o avatar.
+  - Acción: llamar a `supabase.auth.signOut()` y redirigir a `/login`.
+
+- [ ] **Página de login pulida**
+  - Comprobar:
+    - Formulario de email + password / magic link (lo que uses).
+    - Manejo de errores de credenciales.
+  - Pequeño texto de “¿Has olvidado la contraseña?” con link a flujo de Supabase (aunque sea muy básico).
+
+- [ ] **Página / estado de “No autorizado / sesión expirada”**
+  - Si hay error en `getUser()`, mostrar algo amigable:
+    - “Tu sesión ha caducado, vuelve a entrar”.
+
+---
+
+### 3.2. Vista de “Pendientes” operativa al 100%
+
+- [ ] **Crear `app/pending/page.tsx`** (si no está ya)
+  - Muy parecido a `app/page.tsx` pero:
+    - Usa `DashboardShell`.
+    - Obtiene `tenantId`.
+    - Renderiza:
+      ```tsx
+      <ReservationsView
+        tenantId={tenantId}
+        defaultTz={defaultTz}
+        initialStatus="pending"
+      />
+      ```
+
+- [ ] **Texto contextual en la vista de Pendientes**
+  - Encima de `ReservationsView`, un subtítulo tipo:
+    > “Reservas pendientes de revisión. Cuando las confirmes, dejarán de aparecer aquí.”
+
+- [ ] **Verificar filtro de estados en modo pending**
+  - `statusOptions` en `isPendingMode` debe permitir cambiar de `pending` a `confirmed`, etc., para trabajar desde esa vista.
+
+---
+
+### 3.3. Configuración básica del restaurante (Settings)
+
+- [ ] **Tabla / columnas necesarias en BD (si no están):**
+  - En `tenants`:
+    - `name` (ya debería existir).
+    - `max_party_size` (int, opcional).
+    - `use_manual_confirmation` (boolean, `DEFAULT false`).
+    - Campo simple para horarios, por ahora algo tipo:
+      - `service_hours_json jsonb`  
+        (ej: `{ "lunch": { "start": "13:00", "end": "15:30" }, "dinner": { "start": "20:00", "end": "23:00" } }`)
+
+- [ ] **Crear server actions para Settings**
+  - Archivo nuevo sugerido: `app/settings-actions.ts` o dentro de `app/actions.ts` con sección de tenants:
+    - `getTenantSettings(tenantId)`
+    - `updateTenantSettings(tenantId, payload)`
+
+- [ ] **Page de Ajustes en el portal**
+  - `app/settings/page.tsx` (o `app/(settings)/page.tsx`):
+    - Protegida por auth + tenant.
+    - Formulario con:
+      - Nombre del restaurante (solo lectura o editable).
+      - `max_party_size`.
+      - Toggle para `use_manual_confirmation`:
+        - Texto explicando:
+          > Si está activado, las reservas del bot entrarán como “Pendiente” y deberás confirmarlas manualmente.
+      - Un campo simple para horarios:
+        - Por ahora, por ejemplo:
+          - “Horario comida (texto libre)”
+          - “Horario cena (texto libre)”
+        - Más adelante se puede hacer estructurado.
+
+- [ ] **Guardar cambios**
+  - Botón “Guardar ajustes” con mismo estilo translúcido que en el drawer.
+  - Toast o mensaje sutil de “Ajustes guardados”.
+
+---
+
+### 3.4. Integración de `use_manual_confirmation` con la lógica de negocio
+
+> Nota: esto toca **más al bot** que al portal, pero lo dejamos ya especificado.
+
+- [ ] **En el bot (backend), leer `use_manual_confirmation` del tenant**
+  - Si `false` → reservas entran como `confirmed`.
+  - Si `true` → reservas entran como `pending`.
+
+- [ ] **Textos de respuesta del bot**
+  - Modo auto-confirmación:
+    - “Tu reserva está confirmada para el día X a las Y…”
+  - Modo manual:
+    - “Hemos recibido tu petición. El restaurante revisará disponibilidad y te confirmaremos en breve.”
+
+---
+
+### 3.5. UX / Detallitos finales
+
+- [ ] **Mensajes de error más claros**
+  - En `ReservationsView` y en el Drawer, capturar errores de server actions y mostrar:
+    - Un pequeño texto “No se ha podido guardar, inténtalo de nuevo”.
+    - Log en consola para debug (ya lo tienes en parte).
+
+- [ ] **Estado “vacío” más friendly**
+  - Donde pone “No hay reservas”, añadir un iconito o texto un poco más cálido:
+    > “Todavía no hay reservas en este rango. Prueba a cambiar la fecha.”
+
+- [ ] **Responsive**
+  - Revisar cómo se ve:
+    - En tablet (ancho medio).
+    - En móvil:
+      - La tabla puede convertirse en tarjetas apiladas (si quieres dejar eso para más adelante, márcalo como v2).
+
+- [ ] **Indicador de loading más visual**
+  - Reemplazar el simple “Cargando…” por un pequeño skeleton o spinner centrado en la tabla.
+
+---
+
+### 3.6. Hardening técnico (v1, básico pero serio)
+
+- [ ] **Revisar RLS en Supabase**
+  - Asegurar que:
+    - `reservations` solo se ve por `tenant_id` vía `tenant_users` y `auth.uid()`.
+    - `tenants` y `tenant_users` tienen políticas que impiden ver datos de otros tenants.
+
+- [ ] **Limitar select en acciones**
+  - `getReservations`: usar `.select()` con campos necesarios (si quieres optimizar).
+  - Evitar exponer campos sensibles en el portal (si los hubiera).
+
+- [ ] **Variables de entorno limpias**
+  - Revisar `.env.local`:
+    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+    - Cualquier otra necesaria para el portal.
+
+---
+
+## 4. Versión v2 (ideas futuras – fuera de MVP)
+
+Solo para que no se pierdan:
+
+- [ ] **Vista de Analytics**
+  - Gráficos simples:
+    - Reservas por día.
+    - No-show vs confirmadas.
+    - Personas total por servicio.
+
+- [ ] **Gestión de clientes**
+  - Página “Clientes” con lista de clientes recurrentes.
+  - Notas por cliente, nº de visitas, etc.
+
+- [ ] **Gestión de equipo**
+  - Invitar usuarios del restaurante por email.
+  - Roles simples: “Admin” vs “Staff”.
+
+---
+
+## 5. Resumen
+
+Con lo que ya tenemos implementado, el portal está bastante avanzado en la parte **reservas**.  
+Para cerrar un **MVP vendible**, los focos son:
+
+1. **Pulir auth y UX de sesión** (logout, errores).
+2. **Terminar bien la vista de Pendientes** como “inbox” del encargado.
+3. **Añadir página de Ajustes del restaurante** con `use_manual_confirmation` y config mínima.
+4. **Revisión RLS y pequeños detalles de UX**.
+
+Cuando estos puntos estén marcados como `[x]`, el portal estará listo para enseñar a restaurantes sin vergüenza 😏.

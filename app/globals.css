@@ -1,0 +1,42 @@
+/* app/globals.css */
+@import "tailwindcss";
+
+:root {
+  --radius: 1.25rem;
+}
+
+/* Fondo glass tipo Apple */
+.bg-glass {
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+}
+
+.dark .bg-glass {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tarjetas redondeadas con sombra suave */
+.card {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 50px -10px rgba(0, 0, 0, 0.15);
+}
+
+/* Fondo con gradientes radiales */
+.gradient-hero {
+  background:
+    radial-gradient(1200px 600px at 20% -20%, rgba(99, 102, 241, .25), transparent 70%),
+    radial-gradient(800px 400px at 100% 0%, rgba(56, 189, 248, .2), transparent 70%);
+}
+
+/* Fuente display para títulos — estilo SaaS moderno */
+.font-display {
+  font-family:
+    "Inter",
+    "SF Pro Display",
+    "SF Pro Text",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
