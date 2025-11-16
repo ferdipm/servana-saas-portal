@@ -6,6 +6,7 @@ import {
   Reservation,
   updateReservationStatus,
   updateReservationDetails,
+  createReservation,
 } from "./actions";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
@@ -16,6 +17,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { Plus } from "lucide-react";
 
 type Props = {
   tenantId: string;
@@ -52,6 +54,7 @@ export function ReservationsView({
   const [loading, setLoading] = useState(false);
 
   const [selected, setSelected] = useState<Reservation | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // offset para los botones rápidos (Hoy, +1 día)
   const [dayOffset, setDayOffset] = useState(0);
@@ -82,20 +85,16 @@ export function ReservationsView({
   }, [tenantId, q, status, from, to]);
 
   const visibleRows = useMemo(() => {
-    // En la vista de pendientes, el backend ya viene filtrado por status = 'pending'
     if (isPendingMode) return rows;
 
-    // En la vista general:
-    // - Para filtro "Todos": ocultamos "pending" y "cancelled" (no tiene sentido operativo en la vista diaria)
-    // - Para filtros concretos (confirmed, seated, cancelled, no_show, finished):
-    //   dejamos que el backend filtre por status, aquí solo nos aseguramos de ocultar "pending" por si acaso.
     if (status === "all") {
+      // Vista general: ocultamos pending + cancelled por defecto
       return rows.filter(
         (r) => r.status !== "pending" && r.status !== "cancelled"
       );
     }
 
-    // Filtros concretos: respetamos lo que venga del servidor, pero nunca mostramos "pending" aquí.
+    // Filtros concretos: respetamos el status, pero nunca mostramos pending aquí
     return rows.filter((r) => r.status !== "pending");
   }, [rows, isPendingMode, status]);
 
@@ -112,6 +111,7 @@ export function ReservationsView({
     if (!el) return;
 
     function onScroll() {
+      if (!el) return;
       const nearBottom =
         el.scrollTop + el.clientHeight >= el.scrollHeight - 300;
 
@@ -138,7 +138,6 @@ export function ReservationsView({
     setTo(toDate.toISOString());
   }
 
-  // Opciones de estado: sin "pending" en la vista normal
   const statusOptions = isPendingMode
     ? [
         { value: "pending", label: "Pendiente" },
@@ -187,8 +186,8 @@ export function ReservationsView({
               )}
             </div>
 
-            {/* Rango + botones rápidos */}
-            <div className="flex items-center gap-3 flex-wrap">
+            {/* Rango + botones rápidos + nueva reserva */}
+            <div className="flex items-center gap-3 flex-wrap md:flex-nowrap md:justify-end">
               <span className="text-sm text-zinc-600 dark:text-zinc-300">
                 Ver reservas de:
               </span>
@@ -270,13 +269,33 @@ export function ReservationsView({
                   />
                 </PopoverContent>
               </Popover>
+
+              {/* Botón NUEVA RESERVA MANUAL */}
+              {!isPendingMode && (
+                <button
+                  type="button"
+                  onClick={() => setCreating(true)}
+                  className="
+                    h-9 px-4 rounded-xl text-sm font-medium
+                    border border-emerald-400/60
+                    bg-emerald-500/15 hover:bg-emerald-500/25
+                    text-emerald-50
+                    shadow-md backdrop-blur-sm
+                    transition-colors
+                    inline-flex items-center gap-2
+                    whitespace-nowrap
+                  "
+                >
+                  <span>Reserva manual</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Header */}
+        {/* Header columnas */}
         <div className="px-3 md:px-4 pt-3 mb-5">
-          <div className="bg-[#1c1e24] ring-1 ring-zinc-900/10 dark:ring:white/10 rounded-md shadow-sm overflow-hidden">
+          <div className="bg-[#1c1e24] ring-1 ring-zinc-900/10 dark:ring-white/10 rounded-md shadow-sm overflow-hidden">
             <div
               className="
                 grid grid-cols-[1fr_1.2fr_.9fr_1fr_1fr_auto]
@@ -361,6 +380,19 @@ export function ReservationsView({
             load(true);
           }}
           isPendingMode={isPendingMode}
+        />
+      )}
+
+      {creating && (
+        <NewReservationDrawer
+          tenantId={tenantId}
+          defaultTz={defaultTz}
+          onClose={() => setCreating(false)}
+          onCreated={() => {
+            setCreating(false);
+            // refrescamos lista (se verá en el rango actual)
+            load(true);
+          }}
         />
       )}
     </>
@@ -500,7 +532,7 @@ function ReservationRow({
   );
 }
 
-/* --------------------------- DRAWER --------------------------- */
+/* --------------------------- DRAWER EXISTENTE --------------------------- */
 
 function ReservationDrawer({
   reservation,
@@ -615,7 +647,7 @@ function ReservationDrawer({
           {/* Comensales / Teléfono */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-xs text-zinc-500.mb-1">Comensales</div>
+              <div className="text-xs text-zinc-500 mb-1">Comensales</div>
               <input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
@@ -636,7 +668,7 @@ function ReservationDrawer({
           {/* Localizador / Origen */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-xs text-zinc-500.mb-1">Localizador</div>
+              <div className="text-xs text-zinc-500 mb-1">Localizador</div>
               <div className="font-mono text-[13px] text-zinc-300">
                 #{reservation.locator ?? reservation.id.slice(0, 8)}
               </div>
@@ -805,6 +837,226 @@ function ReservationDrawer({
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+/* ----------------------- DRAWER NUEVA RESERVA ----------------------- */
+
+/* ----------------------- DRAWER NUEVA RESERVA ----------------------- */
+
+function NewReservationDrawer({
+  tenantId,
+  defaultTz,
+  onClose,
+  onCreated,
+}: {
+  tenantId: string;
+  defaultTz: string;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [partySize, setPartySize] = useState("");
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [time, setTime] = useState("20:00");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleCreate() {
+    if (!name.trim() || !partySize || !date || !time) {
+      // En el futuro podemos mostrar un toast
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const [hourStr, minuteStr] = time.split(":");
+      const dt = new Date(date);
+      dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+      await createReservation({
+        tenantId,
+        name: name.trim(),
+        phone: phone || null,
+        party_size: Number(partySize),
+        datetime_utc: dt.toISOString(),
+        notes: notes || null,
+        source: "phone",
+        tz: defaultTz,
+        status: "confirmed", // reservas manuales → confirmadas por defecto
+      });
+
+      onCreated();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      {/* Panel lateral */}
+      <aside
+        className="
+          fixed right-0 top-0 bottom-0 z-50
+          w-full max-w-lg
+          bg-[#0b0b0d] text-zinc-100
+          border-l border-zinc-800
+          shadow-2xl
+          flex flex-col
+        "
+      >
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase text-zinc-500">
+              Nueva reserva manual
+            </div>
+            <div className="text-base font-semibold">Crear reserva</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-zinc-400 hover:text-zinc-100 text-sm"
+          >
+            Cerrar
+          </button>
+        </div>
+
+        {/* Contenido */}
+        <div className="flex-1 overflow-auto px-5 py-4 space-y-4 text-sm">
+          <p className="text-xs text-zinc-500">
+            Usa este formulario para reservas creadas por teléfono o en sala.
+          </p>
+
+          {/* Nombre */}
+          <div>
+            <div className="text-xs text-zinc-500 mb-1">Nombre *</div>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              placeholder="Nombre del cliente"
+            />
+          </div>
+
+          {/* Teléfono / Comensales */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Teléfono</div>
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                placeholder="+34…"
+              />
+            </div>
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Comensales *</div>
+              <input
+                value={partySize}
+                onChange={(e) => setPartySize(e.target.value)}
+                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                inputMode="numeric"
+                placeholder="2"
+              />
+            </div>
+          </div>
+
+          {/* Fecha + hora */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Fecha con popover, igual estilo que en la lista */}
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Fecha *</div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="
+                      h-9 px-3 rounded-lg border border-zinc-700/60
+                      bg-zinc-900/60 text-sm flex items-center gap-2 w-full
+                      justify-between
+                    "
+                  >
+                    <span>
+                      {date
+                        ? date.toLocaleDateString("es-ES", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "Selecciona fecha"}
+                    </span>
+                    <span className="text-[11px] text-zinc-500">Cambiar</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Calendar
+                    mode="single"
+                    locale={es}
+                    selected={date}
+                    onSelect={(d) => setDate(d ?? undefined)}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Hora */}
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Hora *</div>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              />
+              <div className="text-[11px] text-zinc-500 mt-1">
+                Se usará la zona horaria del restaurante ({defaultTz}).
+              </div>
+            </div>
+          </div>
+
+          {/* Notas internas */}
+          <div>
+            <div className="text-xs text-zinc-500 mb-1">Notas internas</div>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm resize-none"
+              placeholder="Alergias, peticiones especiales…"
+            />
+          </div>
+
+          {/* Info de estado inicial */}
+          <div className="text-xs text-zinc-500 pt-2">
+            Estado inicial:{" "}
+            <span className="font-medium text-emerald-300">Confirmada</span>{" "}
+            (reservas creadas manualmente).
+          </div>
+
+          {/* Botón crear reserva centrado bajo el texto de estado inicial */}
+          <div className="pt-5 pb-2 flex justify-center">
+            <button
+              disabled={saving}
+              onClick={handleCreate}
+              className="
+                px-4 py-2 rounded-lg text-sm font-medium
+                border border-emerald-400/60
+                bg-emerald-500/15 text-emerald-50
+                hover:bg-emerald-500/25
+                disabled:opacity-60
+              "
+            >
+              {saving ? "Creando…" : "Crear reserva"}
+            </button>
           </div>
         </div>
       </aside>

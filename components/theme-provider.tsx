@@ -1,8 +1,9 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { type ThemeProviderProps } from "next-themes/dist/types";
-import { useEffect } from "react";
+import { useEffect, type ComponentProps } from "react";
+
+type ThemeProviderProps = ComponentProps<typeof NextThemesProvider>;
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   // Force immediate sync on mount

@@ -4,6 +4,9 @@ import { getCurrentTenantId } from "@/lib/getCurrentTenant";
 import DashboardShell from "./dashboard-shell";
 import { SummaryCards } from "./summary-cards";
 import { ReservationsView } from "./reservations-view";
+import { Plus } from "lucide-react"; // arriba del todo
+
+
 
 export default async function Page() {
   const supabase = await supabaseServer();
@@ -23,7 +26,12 @@ export default async function Page() {
   return (
     <DashboardShell>
       <div className="p-6 space-y-6">
-        <SummaryCards tenantId={tenantId} />
+        <div className="relative">
+          <div className="pt-6">
+            <SummaryCards tenantId={tenantId} />
+          </div>
+        </div>
+
         <section className="mt-6">
           <ReservationsView tenantId={tenantId} defaultTz={defaultTz} />
         </section>
@@ -31,3 +39,5 @@ export default async function Page() {
     </DashboardShell>
   );
 }
+
+

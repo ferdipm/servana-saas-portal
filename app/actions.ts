@@ -220,3 +220,55 @@ export async function updateReservationDetails(params: {
 
   return { ok: true };
 }
+
+export type CreateReservationInput = {
+  tenantId: string;
+  name: string;
+  phone?: string | null;
+  party_size: number;
+  datetime_utc: string;
+  notes?: string | null;
+  source?: string | null;
+  tz?: string | null;
+  status?: string;
+};
+
+export async function createReservation(input: CreateReservationInput) {
+  const supabase = await supabaseServer();
+
+  const {
+    tenantId,
+    name,
+    phone = null,
+    party_size,
+    datetime_utc,
+    notes = null,
+    source = "phone",
+    tz = "Europe/Zurich",
+    status = "confirmed",
+  } = input;
+
+  const { data, error } = await supabase
+    .from("reservations")
+    .insert({
+      tenant_id: tenantId,
+      name,
+      phone,
+      party_size,
+      datetime_utc,
+      notes,
+      source,
+      tz,
+      status,
+      reminder_sent: false,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Error creating reservation:", error);
+    throw new Error("Failed to create reservation");
+  }
+
+  return data as Reservation;
+}

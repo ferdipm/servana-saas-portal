@@ -106,7 +106,7 @@ Lo que consideramos **MVP completo** para el portal:
 
 ### 3.2. Vista de “Pendientes” operativa al 100%
 
-- [ ] **Crear `app/pending/page.tsx`** (si no está ya)
+- [x] **Crear `app/pending/page.tsx`** (si no está ya)
   - Muy parecido a `app/page.tsx` pero:
     - Usa `DashboardShell`.
     - Obtiene `tenantId`.
@@ -221,6 +221,79 @@ Lo que consideramos **MVP completo** para el portal:
     - Cualquier otra necesaria para el portal.
 
 ---
+
+### 3.7. Reservas manuales:
+
+## 3. Crear reservas manuales (teléfono / walk-in)
+
+### 3.1 UX / UI
+
+- [x] 3.1.1 Añadir botón **“+ Nueva reserva”** en la vista principal de reservas (`/`), arriba a la derecha del listado.
+- [ ] 3.1.2 El botón abre el **mismo drawer de reserva** pero en **modo creación** (sin datos cargados).
+- [ ] 3.1.3 Campos visibles en el formulario de creación:
+  - [ ] Nombre (obligatorio)
+  - [ ] Teléfono (opcional pero recomendado)
+  - [ ] Nº de comensales (obligatorio)
+  - [ ] Fecha y hora (obligatorio – date + time picker)
+  - [ ] Notas internas (opcional)
+- [ ] 3.1.4 Mostrar el **estado inicial** (solo lectura) como “Confirmada” para las reservas manuales.
+- [ ] 3.1.5 Textos claros para este flujo: “Reserva creada manualmente (teléfono)” o similar en el drawer.
+
+### 3.2 Backend — acción `createReservation`
+
+- [ ] 3.2.1 Crear en `app/actions.ts` una server action `createReservation`.
+- [ ] 3.2.2 Parámetros mínimos de entrada:
+  - tenantId (derivado del usuario logado)
+  - name
+  - phone (opcional)
+  - party_size
+  - datetime_local + tz (o directamente datetime_utc calculado en el front)
+  - notes (opcional)
+- [ ] 3.2.3 Insert en la tabla `reservations`:
+  - [ ] `tenant_id` = tenant actual
+  - [ ] `source` = `"phone"`
+  - [ ] `status` = `"confirmed"` (de momento, fijo para manuales)
+  - [ ] `datetime_utc` calculado correctamente a partir de la hora local + tz
+- [ ] 3.2.4 Validaciones básicas:
+  - [ ] No permitir `party_size <= 0`
+  - [ ] No permitir `datetime_utc` claramente en el pasado (salvo que decidamos lo contrario)
+- [ ] 3.2.5 Devolver `{ ok: true, id }` al front si todo va bien, o error claro si falla.
+
+### 3.3 Integración en el front
+
+- [ ] 3.3.1 Añadir estado `creatingReservation` / `mode: "create" | "view"` en la vista para distinguir:
+  - Drawer abierto por click en fila → modo **vista/edición**
+  - Drawer abierto por botón “+ Nueva reserva” → modo **creación**
+- [ ] 3.3.2 En modo creación:
+  - [ ] Inicializar los campos del formulario vacíos / con defaults.
+  - [ ] Botón principal “Crear reserva” en lugar de “Guardar cambios”.
+  - [ ] Al hacer submit:
+    - [ ] Llamar a `createReservation`
+    - [ ] Cerrar drawer
+    - [ ] Recargar la lista (`getReservations`) manteniendo filtros actuales.
+- [ ] 3.3.3 Manejo de errores:
+  - [ ] Mostrar mensaje de error si el create falla (toast o mensaje en el drawer).
+  - [ ] Desactivar botón mientras se está enviando (`loading` state).
+
+### 3.4 Comportamiento con flujo de “pendientes”
+
+- [ ] 3.4.1 Definir comportamiento inicial simple:
+  - Reservas creadas manualmente desde el portal → **`status = confirmed`** siempre.
+- [ ] 3.4.2 (A futuro) Anotar en el plan:
+  - Posible ajuste por tenant: opción “Las reservas creadas manualmente entran como `pending`”.
+- [ ] 3.4.3 Confirmar que las reservas manuales creadas:
+  - [ ] Aparecen en la vista principal de reservas con el filtro por defecto (Hoy).
+  - [ ] **No** aparecen en `/pending` (porque no son `pending`).
+
+### 3.5 QA / Pruebas
+
+- [ ] 3.5.1 Crear una reserva manual para hoy vía portal y verificar:
+  - [ ] Se guarda en Supabase correctamente (status, source, tenant_id, datetime_utc).
+  - [ ] Se ve en la lista de reservas del día.
+- [ ] 3.5.2 Probar cambiarla de estado desde el drawer (confirmada → sentada → finalizada, etc.).
+- [ ] 3.5.3 Probar varios husos horarios (si aplican) para asegurarse de que el cálculo de `datetime_utc` es correcto.
+- [ ] 3.5.4 Probar el caso de error:
+  - [ ] Datos inválidos (sin nombre, sin fecha…) → que el formulario lo bloquee antes de llamar al backend.
 
 ## 4. Versión v2 (ideas futuras – fuera de MVP)
 

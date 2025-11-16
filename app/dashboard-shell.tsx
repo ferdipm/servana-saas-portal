@@ -1,9 +1,9 @@
 "use client";
 
 import { Home, Users, BarChart3, Settings, Clock3 } from "lucide-react";
+import React from "react";
 
-
-type Item = { href: string; label: string; icon: JSX.Element };
+type Item = { href: string; label: string; icon: React.ReactElement };
 
 const nav: Item[] = [
   { href: "/", label: "Reservas", icon: <Home className="w-4 h-4" /> },
@@ -66,18 +66,18 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <div className="flex flex-col">
         {/* Topbar */}
         <header className="sticky top-0 z-40 border-b border-zinc-800/60 backdrop-blur-xl bg-[#0b0b0d]/80">
-          <div className="max-w-6xl mx-auto px-4 h-20 flex flex-col justify-center gap-1">
+          <div className="max-w-7xl mx-auto px-4 h-24 flex flex-col justify-center gap-1">
             <div className="font-display text-3xl md:text-4xl font-semibold tracking-tight">
               Reservas
             </div>
             <div className="text-sm text-zinc-400">
-              Vista general de las reservas activas del día
+              Vista general de reservas
             </div>
           </div>
         </header>
 
         {/* Contenido */}
-        <main className="max-w-6xl mx-auto w-full p-4 md:p-6">
+        <main className="max-w-7xl mx-auto w-full p-4 md:p-6">
           {children}
         </main>
       </div>

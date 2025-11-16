@@ -1,0 +1,20 @@
+stages:
+  - deploy
+
+deploy_to_railway:
+  stage: deploy
+  image: node:20
+  only:
+    - main  # Solo deploy en la rama main
+  before_script:
+    # Instalar Railway CLI
+    - npm install -g @railway/cli
+  script:
+    # Deploy usando Railway CLI
+    - railway up --service servana-saas-portal
+  environment:
+    name: production
+    url: https://servana-saas-portal-production.up.railway.app
+  variables:
+    # Estas variables las configuras en GitLab CI/CD Settings
+    RAILWAY_TOKEN: $RAILWAY_TOKEN
