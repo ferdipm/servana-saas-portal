@@ -188,7 +188,7 @@ export function ReservationsView({
 
             {/* Rango + botones rápidos + nueva reserva */}
             <div className="flex items-center gap-3 flex-wrap md:flex-nowrap md:justify-end">
-              <span className="text-sm text-zinc-600 dark:text-zinc-300">
+              <span className="text-sm text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                 Ver reservas de:
               </span>
 
@@ -196,7 +196,7 @@ export function ReservationsView({
               <button
                 onClick={() => setDayRange(0)}
                 className={`
-                  text-sm px-3 py-1.5 rounded-lg font-medium
+                  text-sm px-3 py-1.5 rounded-lg font-medium whitespace-nowrap
                   ${
                     dayOffset === 0
                       ? "bg-indigo-600 text-white"
@@ -211,7 +211,7 @@ export function ReservationsView({
               <button
                 onClick={() => setDayRange(dayOffset + 1)}
                 className={`
-                  text-sm px-3 py-1.5 rounded-lg font-medium
+                  text-sm px-3 py-1.5 rounded-lg font-medium whitespace-nowrap
                   ${
                     dayOffset > 0
                       ? "bg-indigo-600 text-white"
@@ -228,7 +228,7 @@ export function ReservationsView({
                   <button
                     className="
                       h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2
+                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2 whitespace-nowrap
                     "
                   >
                     Desde{" "}
@@ -252,7 +252,7 @@ export function ReservationsView({
                   <button
                     className="
                       h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2
+                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2 whitespace-nowrap
                     "
                   >
                     Hasta{" "}
