@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
+import { getUserAccessibleRestaurants, userHasRestaurantAccess } from "@/lib/getCurrentTenant";
 
 import { redirect } from "next/navigation";
 
@@ -19,7 +20,13 @@ export type Reservation = {
   datetime_utc: string;
   notes: string | null;
   tenant_id: string | null;
+  restaurant_id: string; // NUEVO: Ahora es NOT NULL en la BD
   reminder_sent: boolean | null;
+  restaurant_info?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 };
 
 type GetReservationsOpts = {
@@ -36,10 +43,27 @@ export async function getReservations(opts: GetReservationsOpts) {
   const { tenantId, q, status, from, to, limit = 50, cursorCreatedAt } = opts;
   const supabase = await supabaseServer();
 
+  // NUEVO: Obtener restaurantes accesibles para el usuario
+  const accessibleRestaurants = await getUserAccessibleRestaurants();
+  const accessibleRestaurantIds = accessibleRestaurants.map((r) => r.restaurant_id);
+
+  // Si el usuario no tiene acceso a ningún restaurante, devolver vacío
+  if (accessibleRestaurantIds.length === 0) {
+    return { data: [], nextCursor: null };
+  }
+
   let query = supabase
     .from("reservations")
-    .select("*")
+    .select(`
+      *,
+      restaurant_info:restaurant_id (
+        id,
+        name,
+        slug
+      )
+    `)
     .eq("tenant_id", tenantId) // 👈 clave: filtramos por tenant_id
+    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO: filtrar por restaurantes accesibles
     .order("datetime_utc", { ascending: false })
     .limit(limit);
 
@@ -90,6 +114,15 @@ export async function getReservationsSummary({
   const supabase = await supabaseServer();
   const now = new Date();
 
+  // NUEVO: Obtener restaurantes accesibles para el usuario
+  const accessibleRestaurants = await getUserAccessibleRestaurants();
+  const accessibleRestaurantIds = accessibleRestaurants.map((r) => r.restaurant_id);
+
+  // Si el usuario no tiene acceso a ningún restaurante, devolver ceros
+  if (accessibleRestaurantIds.length === 0) {
+    return { today: 0, tomorrow: 0, weekRest: 0, monthRest: 0 };
+  }
+
   // Fechas en UTC
   const startOfToday = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
@@ -121,7 +154,8 @@ export async function getReservationsSummary({
   const { count: today, error: todayError } = await supabase
     .from("reservations")
     .select("id", { count: "exact", head: true })
-    .eq("tenant_id", tenantId) // 👈 antes business_id
+    .eq("tenant_id", tenantId)
+    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO: filtrar por restaurantes accesibles
     .gte("datetime_utc", startOfToday.toISOString())
     .lt("datetime_utc", startOfTomorrow.toISOString());
 
@@ -129,6 +163,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
+    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
     .gte("datetime_utc", startOfTomorrow.toISOString())
     .lt("datetime_utc", startOfDayAfterTomorrow.toISOString());
 
@@ -136,6 +171,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
+    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonday.toISOString());
 
@@ -143,6 +179,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
+    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonth.toISOString());
 
@@ -231,6 +268,7 @@ export async function updateReservationDetails(params: {
 
 export type CreateReservationInput = {
   tenantId: string;
+  restaurantId?: string; // Opcional: si no se pasa, se obtiene automáticamente (solo válido para tenants de 1 restaurante)
   name: string;
   phone?: string | null;
   party_size: number;
@@ -246,6 +284,7 @@ export async function createReservation(input: CreateReservationInput) {
 
   const {
     tenantId,
+    restaurantId,
     name,
     phone = null,
     party_size,
@@ -256,10 +295,38 @@ export async function createReservation(input: CreateReservationInput) {
     status = "confirmed",
   } = input;
 
+  // Resolver restaurant_id
+  let finalRestaurantId = restaurantId;
+
+  if (!finalRestaurantId) {
+    // Si no se pasó restaurant_id, intentar obtener automáticamente
+    // SOLO válido para tenants con 1 solo restaurante
+    const accessibleRestaurants = await getUserAccessibleRestaurants();
+
+    if (accessibleRestaurants.length === 0) {
+      throw new Error("No tienes acceso a ningún restaurante");
+    }
+
+    if (accessibleRestaurants.length > 1) {
+      throw new Error(
+        "Tienes acceso a múltiples restaurantes. Debes especificar restaurant_id explícitamente."
+      );
+    }
+
+    finalRestaurantId = accessibleRestaurants[0].restaurant_id;
+  } else {
+    // Si se pasó restaurant_id, verificar que el usuario tiene acceso
+    const hasAccess = await userHasRestaurantAccess(finalRestaurantId);
+    if (!hasAccess) {
+      throw new Error("No tienes permiso para crear reservas en este restaurante");
+    }
+  }
+
   const { data, error } = await supabase
     .from("reservations")
     .insert({
       tenant_id: tenantId,
+      restaurant_id: finalRestaurantId,
       name,
       phone,
       party_size,
@@ -279,6 +346,63 @@ export async function createReservation(input: CreateReservationInput) {
   }
 
   return data as Reservation;
+}
+
+/**
+ * Obtiene información del tenant (si es multi-restaurant y cuántos tiene)
+ */
+export async function getTenantInfo(tenantId: string) {
+  const supabase = await supabaseServer();
+
+  const { data, error } = await supabase
+    .from("tenants")
+    .select("is_multi_restaurant, restaurant_count")
+    .eq("id", tenantId)
+    .single();
+
+  if (error) {
+    console.error("Error getting tenant info:", error);
+    return { is_multi_restaurant: false, restaurant_count: 1 };
+  }
+
+  return {
+    is_multi_restaurant: data.is_multi_restaurant ?? false,
+    restaurant_count: data.restaurant_count ?? 1,
+  };
+}
+
+/**
+ * Obtiene la lista de restaurantes de un tenant (filtrado por permisos del usuario)
+ */
+export async function getRestaurants(tenantId: string) {
+  const supabase = await supabaseServer();
+
+  // NUEVO: Obtener solo los restaurantes a los que el usuario tiene acceso
+  const accessibleRestaurants = await getUserAccessibleRestaurants();
+  const accessibleRestaurantIds = accessibleRestaurants.map((r) => r.restaurant_id);
+
+  if (accessibleRestaurantIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("restaurant_info")
+    .select("id, name, slug, phone")
+    .eq("tenant_id", tenantId)
+    .in("id", accessibleRestaurantIds) // 👈 NUEVO: filtrar por restaurantes accesibles
+    .order("name");
+
+  if (error) {
+    console.error("Error getting restaurants:", error);
+    throw new Error("Failed to get restaurants");
+  }
+
+  return data as Array<{
+    id: string;
+    name: string;
+    slug: string;
+    phone: string | null;
+  }>;
 }
 
 export async function logout() {
