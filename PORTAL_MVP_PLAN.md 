@@ -241,39 +241,39 @@ Lo que consideramos **MVP completo** para el portal:
 
 ### 3.2 Backend — acción `createReservation`
 
-- [ ] 3.2.1 Crear en `app/actions.ts` una server action `createReservation`.
-- [ ] 3.2.2 Parámetros mínimos de entrada:
+- [x] 3.2.1 Crear en `app/actions.ts` una server action `createReservation`.
+- [x] 3.2.2 Parámetros mínimos de entrada:
   - tenantId (derivado del usuario logado)
   - name
   - phone (opcional)
   - party_size
   - datetime_local + tz (o directamente datetime_utc calculado en el front)
   - notes (opcional)
-- [ ] 3.2.3 Insert en la tabla `reservations`:
-  - [ ] `tenant_id` = tenant actual
-  - [ ] `source` = `"phone"`
-  - [ ] `status` = `"confirmed"` (de momento, fijo para manuales)
-  - [ ] `datetime_utc` calculado correctamente a partir de la hora local + tz
-- [ ] 3.2.4 Validaciones básicas:
-  - [ ] No permitir `party_size <= 0`
-  - [ ] No permitir `datetime_utc` claramente en el pasado (salvo que decidamos lo contrario)
-- [ ] 3.2.5 Devolver `{ ok: true, id }` al front si todo va bien, o error claro si falla.
+- [x] 3.2.3 Insert en la tabla `reservations`:
+  - [x] `tenant_id` = tenant actual
+  - [x] `source` = `"phone"`
+  - [x] `status` = `"confirmed"` (de momento, fijo para manuales)
+  - [x] `datetime_utc` calculado correctamente a partir de la hora local + tz
+- [x] 3.2.4 Validaciones básicas:
+  - [x] No permitir `party_size <= 0`
+  - [x] No permitir `datetime_utc` claramente en el pasado (salvo que decidamos lo contrario)
+- [x] 3.2.5 Devolver `{ ok: true, id }` al front si todo va bien, o error claro si falla.
 
 ### 3.3 Integración en el front
 
-- [ ] 3.3.1 Añadir estado `creatingReservation` / `mode: "create" | "view"` en la vista para distinguir:
+- [x] 3.3.1 Añadir estado `creatingReservation` / `mode: "create" | "view"` en la vista para distinguir:
   - Drawer abierto por click en fila → modo **vista/edición**
   - Drawer abierto por botón “+ Nueva reserva” → modo **creación**
-- [ ] 3.3.2 En modo creación:
-  - [ ] Inicializar los campos del formulario vacíos / con defaults.
-  - [ ] Botón principal “Crear reserva” en lugar de “Guardar cambios”.
-  - [ ] Al hacer submit:
-    - [ ] Llamar a `createReservation`
-    - [ ] Cerrar drawer
-    - [ ] Recargar la lista (`getReservations`) manteniendo filtros actuales.
-- [ ] 3.3.3 Manejo de errores:
-  - [ ] Mostrar mensaje de error si el create falla (toast o mensaje en el drawer).
-  - [ ] Desactivar botón mientras se está enviando (`loading` state).
+- [x] 3.3.2 En modo creación:
+  - [x] Inicializar los campos del formulario vacíos / con defaults.
+  - [x] Botón principal “Crear reserva” en lugar de “Guardar cambios”.
+  - [x] Al hacer submit:
+    - [x] Llamar a `createReservation`
+    - [x] Cerrar drawer
+    - [x] Recargar la lista (`getReservations`) manteniendo filtros actuales.
+- [x] 3.3.3 Manejo de errores:
+  - [x] Mostrar mensaje de error si el create falla (toast o mensaje en el drawer).
+  - [x] Desactivar botón mientras se está enviando (`loading` state).
 
 ### 3.4 Comportamiento con flujo de “pendientes”
 

@@ -4,7 +4,6 @@ import { getCurrentTenantId } from "@/lib/getCurrentTenant";
 import DashboardShell from "./dashboard-shell";
 import { SummaryCards } from "./summary-cards";
 import { ReservationsView } from "./reservations-view";
-import { Plus } from "lucide-react"; // arriba del todo
 
 
 
@@ -24,7 +23,7 @@ export default async function Page() {
   const defaultTz = "Europe/Zurich";
 
   return (
-    <DashboardShell>
+    <DashboardShell userEmail={user.email}>
       <div className="p-6 space-y-6">
         <div className="relative">
           <div className="pt-6">

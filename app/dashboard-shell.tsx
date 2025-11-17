@@ -1,7 +1,7 @@
-"use client";
 
 import { Home, Users, BarChart3, Settings, Clock3 } from "lucide-react";
 import React from "react";
+import { logout } from "./actions";
 
 type Item = { href: string; label: string; icon: React.ReactElement };
 
@@ -13,7 +13,13 @@ const nav: Item[] = [
   { href: "#", label: "Ajustes", icon: <Settings className="w-4 h-4" /> },
 ];
 
-export default function DashboardShell({ children }: { children: React.ReactNode }) {
+export default function DashboardShell({
+  children,
+  userEmail,
+}: {
+  children: React.ReactNode;
+  userEmail?: string | null;
+}) {
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-[260px_1fr] bg-[#0b0b0d] text-zinc-100">
       {/* Sidebar */}
@@ -66,12 +72,38 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       <div className="flex flex-col">
         {/* Topbar */}
         <header className="sticky top-0 z-40 border-b border-zinc-800/60 backdrop-blur-xl bg-[#0b0b0d]/80">
-          <div className="max-w-7xl mx-auto px-4 h-24 flex flex-col justify-center gap-1">
-            <div className="font-display text-3xl md:text-4xl font-semibold tracking-tight">
-              Reservas
+          <div className="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between gap-4">
+            {/* Left: title + subtitle */}
+            <div>
+              <div className="font-display text-3xl md:text-4xl font-semibold tracking-tight">
+                Reservas
+              </div>
+              <div className="text-sm text-zinc-400">
+                Vista general de reservas
+              </div>
             </div>
-            <div className="text-sm text-zinc-400">
-              Vista general de reservas
+
+            {/* Right: user info + logout */}
+            <div className="flex items-center gap-3 text-sm">
+              {userEmail && (
+                <div className="px-3 py-1.5 rounded-full bg-zinc-800/70 border border-zinc-700/60 text-zinc-200 max-w-[220px] truncate">
+                  {userEmail}
+                </div>
+              )}
+              <form action={logout}>
+                <button
+                  type="submit"
+                  className="
+                    px-3 py-1.5 rounded-full text-xs font-medium
+                    border border-zinc-600
+                    bg-zinc-900/70 hover:bg-zinc-800
+                    text-zinc-200
+                    transition-colors
+                  "
+                >
+                  Cerrar sesión
+                </button>
+              </form>
             </div>
           </div>
         </header>

@@ -2,6 +2,8 @@
 
 import { supabaseServer } from "@/lib/supabaseServer";
 
+import { redirect } from "next/navigation";
+
 export type Reservation = {
   id: string;
   phone: string | null;
@@ -190,23 +192,29 @@ export async function updateReservationStatus(params: {
 
 /**
  * Actualiza campos editables básicos de una reserva:
+ * - name
  * - phone
  * - party_size
  * - notes
+ * - datetime_utc
  */
 export async function updateReservationDetails(params: {
   reservationId: string;
+  name?: string;
   phone?: string | null;
   party_size?: number | null;
   notes?: string | null;
+  datetime_utc?: string;
 }) {
   const supabase = await supabaseServer();
-  const { reservationId, phone, party_size, notes } = params;
+  const { reservationId, name, phone, party_size, notes, datetime_utc } = params;
 
   const payload: Record<string, any> = {};
+  if (name !== undefined) payload.name = name;
   if (phone !== undefined) payload.phone = phone;
   if (party_size !== undefined) payload.party_size = party_size;
   if (notes !== undefined) payload.notes = notes;
+  if (datetime_utc !== undefined) payload.datetime_utc = datetime_utc;
 
   const { error } = await supabase
     .from("reservations")
@@ -271,4 +279,10 @@ export async function createReservation(input: CreateReservationInput) {
   }
 
   return data as Reservation;
+}
+
+export async function logout() {
+  const supabase = await supabaseServer();
+  await supabase.auth.signOut();
+  redirect("/login");
 }

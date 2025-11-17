@@ -548,37 +548,72 @@ function ReservationDrawer({
   const tz = reservation.tz || "Europe/Zurich";
   const dtUtc = new Date(reservation.datetime_utc);
 
-  const fecha = dtUtc
-    .toLocaleDateString("es-ES", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
+  const [editDate, setEditDate] = useState<Date | undefined>(dtUtc);
+  const [editTime, setEditTime] = useState<string>(
+    dtUtc.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
       timeZone: tz,
     })
-    .replace(".", "");
+  );
 
-  const hora = dtUtc.toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: tz,
-  });
-
+  const [name, setName] = useState<string>(reservation.name ?? "");
   const [phone, setPhone] = useState<string>(reservation.phone ?? "");
   const [partySize, setPartySize] = useState<string>(
     reservation.party_size?.toString() ?? ""
   );
   const [notes, setNotes] = useState<string>(reservation.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
+    // limpiamos error previo
+    setError(null);
+
+    // Validar nombre obligatorio
+    if (!name.trim()) {
+      setError("El nombre es obligatorio.");
+      return;
+    }
+
+    // Validar que hay fecha y hora
+    if (!editDate || !editTime) {
+      setError("Por favor, rellena fecha y hora.");
+      return;
+    }
+
+    // Validar comensales (mínimo 1 si se informa)
+    if (!partySize) {
+      setError("El número de comensales debe ser al menos 1.");
+      return;
+    }
+    const numericPartySize = Number(partySize);
+    if (Number.isNaN(numericPartySize) || numericPartySize < 1) {
+      setError("El número de comensales debe ser al menos 1.");
+      return;
+    }
+
+    // Construir fecha/hora y validar que no sea pasado
+    const [hourStr, minuteStr] = editTime.split(":");
+    const dt = new Date(editDate);
+    dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+    const now = new Date();
+    if (dt.getTime() < now.getTime()) {
+      setError("La fecha y hora deben ser en el futuro.");
+      return;
+    }
+
     setSaving(true);
     try {
       await updateReservationDetails({
         reservationId: reservation.id,
+        name: name.trim(),
         phone: phone || null,
-        party_size: partySize ? Number(partySize) : null,
+        party_size: numericPartySize,
         notes: notes || null,
+        datetime_utc: dt.toISOString(),
       });
       onUpdated();
     } finally {
@@ -636,11 +671,77 @@ function ReservationDrawer({
 
         {/* Contenido scrollable */}
         <div className="flex-1 overflow-auto px-5 py-4 space-y-4">
-          {/* Fecha y hora */}
+          {error && (
+            <div className="mb-3 text-xs text-rose-300 bg-rose-950/50 border border-rose-500/40 rounded-md px-3 py-2">
+              {error}
+            </div>
+          )}
+          {/* Nombre editable */}
           <div>
-            <div className="text-xs text-zinc-500 mb-1">Fecha y hora</div>
-            <div className="text-sm font-medium">
-              {fecha} · {hora}
+            <div className="text-xs text-zinc-500 mb-1">Nombre</div>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              placeholder="Nombre del cliente"
+            />
+          </div>
+          {/* Fecha y hora (editables) */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {/* Fecha */}
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Fecha</div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="
+                      h-9 px-3 rounded-lg border border-zinc-700/60
+                      bg-zinc-900/60 text-sm flex items-center gap-2 w-full
+                      justify-between
+                    "
+                  >
+                    <span>
+                      {editDate
+                        ? editDate.toLocaleDateString("es-ES", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "Selecciona fecha"}
+                    </span>
+                    <span className="text-[11px] text-zinc-500">Cambiar</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Calendar
+                    mode="single"
+                    locale={es}
+                    selected={editDate}
+                    onSelect={(d) => setEditDate(d ?? undefined)}
+                    disabled={(dateValue) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const d = new Date(dateValue);
+                      d.setHours(0, 0, 0, 0);
+                      return d < today;
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Hora */}
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Hora</div>
+              <input
+                type="time"
+                value={editTime}
+                onChange={(e) => setEditTime(e.target.value)}
+                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              />
+              <div className="text-[11px] text-zinc-500 mt-1">
+                Se usará la zona horaria del restaurante ({tz}).
+              </div>
             </div>
           </div>
 
@@ -866,24 +967,40 @@ function NewReservationDrawer({
   const [time, setTime] = useState("20:00");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleCreate() {
+    // limpiamos error previo
+    setError(null);
+
     if (!name.trim() || !partySize || !date || !time) {
-      // En el futuro podemos mostrar un toast
+      setError("Por favor, rellena nombre, comensales, fecha y hora.");
+      return;
+    }
+
+    const numericPartySize = Number(partySize);
+    if (Number.isNaN(numericPartySize) || numericPartySize < 1) {
+      setError("El número de comensales debe ser al menos 1.");
+      return;
+    }
+
+    const [hourStr, minuteStr] = time.split(":");
+    const dt = new Date(date);
+    dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+    const now = new Date();
+    if (dt.getTime() < now.getTime()) {
+      setError("La fecha y hora deben ser en el futuro.");
       return;
     }
 
     setSaving(true);
     try {
-      const [hourStr, minuteStr] = time.split(":");
-      const dt = new Date(date);
-      dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
-
       await createReservation({
         tenantId,
         name: name.trim(),
         phone: phone || null,
-        party_size: Number(partySize),
+        party_size: numericPartySize,
         datetime_utc: dt.toISOString(),
         notes: notes || null,
         source: "phone",
@@ -936,6 +1053,11 @@ function NewReservationDrawer({
           <p className="text-xs text-zinc-500">
             Usa este formulario para reservas creadas por teléfono o en sala.
           </p>
+          {error && (
+            <div className="text-xs text-rose-300 bg-rose-950/50 border border-rose-500/40 rounded-md px-3 py-2">
+              {error}
+            </div>
+          )}
 
           {/* Nombre */}
           <div>
@@ -1003,6 +1125,13 @@ function NewReservationDrawer({
                     locale={es}
                     selected={date}
                     onSelect={(d) => setDate(d ?? undefined)}
+                    disabled={(dateValue) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const d = new Date(dateValue);
+                      d.setHours(0, 0, 0, 0);
+                      return d < today;
+                    }}
                   />
                 </PopoverContent>
               </Popover>
