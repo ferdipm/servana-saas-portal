@@ -459,10 +459,6 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
 
   // Manejar fin de drag de categorías
   const handleCategoryDragEnd = (event: DragEndEvent) => {
-    // Prevenir comportamiento por defecto y propagación del evento
-    if (event.preventDefault) event.preventDefault();
-    if (event.stopPropagation) event.stopPropagation();
-
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -473,17 +469,10 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
         return arrayMove(items, oldIndex, newIndex);
       });
     }
-
-    // Asegurar que no se procese nada más
-    return false;
   };
 
   // Manejar fin de drag de platos
   const handleDishDragEnd = (categoryId: string) => (event: DragEndEvent) => {
-    // Prevenir comportamiento por defecto y propagación del evento
-    if (event.preventDefault) event.preventDefault();
-    if (event.stopPropagation) event.stopPropagation();
-
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -502,9 +491,6 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
         })
       );
     }
-
-    // Asegurar que no se procese nada más
-    return false;
   };
 
   // Toggle expandir/colapsar categoría
@@ -865,14 +851,6 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleCategoryDragEnd}
-            onDragStart={(e) => {
-              if (e.preventDefault) e.preventDefault();
-              if (e.stopPropagation) e.stopPropagation();
-            }}
-            onDragCancel={(e) => {
-              if (e.preventDefault) e.preventDefault();
-              if (e.stopPropagation) e.stopPropagation();
-            }}
           >
             <SortableContext
               items={filteredCategories.map(c => c.id)}
@@ -941,14 +919,6 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                               sensors={sensors}
                               collisionDetection={closestCenter}
                               onDragEnd={handleDishDragEnd(category.id)}
-                              onDragStart={(e) => {
-                                if (e.preventDefault) e.preventDefault();
-                                if (e.stopPropagation) e.stopPropagation();
-                              }}
-                              onDragCancel={(e) => {
-                                if (e.preventDefault) e.preventDefault();
-                                if (e.stopPropagation) e.stopPropagation();
-                              }}
                             >
                               <SortableContext
                                 items={category.dishes.map(d => d.id)}
