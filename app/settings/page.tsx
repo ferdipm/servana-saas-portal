@@ -52,6 +52,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       special_days,
       faq,
       menu_items,
+      set_menus,
       logo_url
     `
     )
@@ -77,6 +78,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   // En tu esquema real, los datos extendidos viven en restaurant_info
   const initialFaqs = infoRow?.faq ?? [];
   const initialMenu = infoRow?.menu_items ?? {};
+  const initialSetMenus = infoRow?.set_menus ?? [];
   const initialOpeningHours = infoRow?.opening_hours ?? {};
   const initialSpecialDays = infoRow?.special_days ?? [];
 
@@ -110,6 +112,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           initialInfo={initialInfo}
           initialFaqs={initialFaqs}
           initialMenu={initialMenu}
+          initialSetMenus={initialSetMenus}
           initialOpeningHours={initialOpeningHours}
           initialSpecialDays={initialSpecialDays}
         />

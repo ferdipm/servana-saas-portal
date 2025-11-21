@@ -6,6 +6,7 @@ import { updateGeneralSettings } from "./actions";
 import { LogoUploader } from "./LogoUploader";
 import { OpeningHoursEditor } from "./OpeningHoursEditor";
 import { MenuEditor } from "./MenuEditor";
+import { SetMenusEditor } from "./SetMenusEditor";
 
 type InitialInfo = {
   name: string;
@@ -25,11 +26,12 @@ type SettingsContentProps = {
   initialInfo: InitialInfo;
   initialFaqs: any;
   initialMenu: any;
+  initialSetMenus: any;
   initialOpeningHours: any;
   initialSpecialDays?: any[];
 };
 
-type TabKey = "general" | "menu" | "faqs" | "hours" | "logo";
+type TabKey = "general" | "carta" | "menus" | "faqs" | "hours" | "logo";
 
 export function SettingsContent({
   tenantId,
@@ -38,6 +40,7 @@ export function SettingsContent({
   initialInfo,
   initialFaqs,
   initialMenu,
+  initialSetMenus,
   initialOpeningHours,
   initialSpecialDays = [],
 }: SettingsContentProps) {
@@ -83,7 +86,8 @@ export function SettingsContent({
         {[
           { key: "general", label: "General" },
           { key: "hours", label: "Horarios" },
-          { key: "menu", label: "Menú" },
+          { key: "carta", label: "Carta" },
+          { key: "menus", label: "Menús" },
           { key: "faqs", label: "FAQs" },
           { key: "logo", label: "Logo" },
         ].map((t) => (
@@ -191,10 +195,21 @@ export function SettingsContent({
         </section>
       )}
 
-      {tab === "menu" && (
+      {tab === "carta" && (
         <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <MenuEditor
             restaurantId={restaurantId}
+            initialMenu={initialMenu}
+            isReadOnly={isReadOnly}
+          />
+        </section>
+      )}
+
+      {tab === "menus" && (
+        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <SetMenusEditor
+            restaurantId={restaurantId}
+            initialSetMenus={initialSetMenus}
             initialMenu={initialMenu}
             isReadOnly={isReadOnly}
           />

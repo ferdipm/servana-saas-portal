@@ -196,3 +196,44 @@ export async function updateMenu(formData: FormData) {
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
+
+/**
+ * Actualiza los menús cerrados de un restaurante (set_menus)
+ */
+export async function updateSetMenus(formData: FormData) {
+  const restaurantId = formData.get("restaurantId");
+  const setMenus = formData.get("setMenus");
+
+  if (!restaurantId || typeof restaurantId !== "string") {
+    throw new Error("Falta el identificador del restaurante.");
+  }
+
+  if (!setMenus || typeof setMenus !== "string") {
+    throw new Error("Faltan los datos de los menús.");
+  }
+
+  // Parsear y validar el JSON de menús
+  let parsedSetMenus;
+  try {
+    parsedSetMenus = JSON.parse(setMenus);
+  } catch (err) {
+    throw new Error("Formato de menús inválido.");
+  }
+
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("restaurant_info")
+    .update({
+      set_menus: parsedSetMenus,
+    })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("Error en updateSetMenus:", error);
+    throw new Error("No se han podido actualizar los menús.");
+  }
+
+  // Volvemos a validar la página de ajustes
+  revalidatePath("/settings");
+}
