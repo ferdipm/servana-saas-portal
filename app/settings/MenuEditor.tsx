@@ -27,6 +27,8 @@ type MenuDish = {
   price?: number;
   description?: string;
   allergens?: string[];
+  hasHalfPortion?: boolean;      // ¿Tiene opción de media ración?
+  halfPortionPrice?: number;     // Precio de la media ración
 };
 
 type MenuCategory = {
@@ -216,15 +218,13 @@ function SortableCategory({
 // Componente para plato sortable
 function SortableDish({
   dish,
-  categoryId,
-  onUpdate,
+  onEdit,
   onDelete,
   onDuplicate,
   isReadOnly,
 }: {
   dish: MenuDish;
-  categoryId: string;
-  onUpdate: (field: keyof MenuDish, value: any) => void;
+  onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
   isReadOnly: boolean;
@@ -266,62 +266,57 @@ function SortableDish({
         )}
 
         <div className="flex-1 space-y-1.5">
-          {/* Nombre y Precio en la misma línea */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={dish.name}
-              onChange={(e) => onUpdate("name", e.target.value)}
-              disabled={isReadOnly}
-              placeholder="Nombre del plato"
-              className="flex-1 text-sm font-medium rounded bg-zinc-800/70 border border-zinc-700/50 px-2.5 py-1.5 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-zinc-800 disabled:opacity-50"
-            />
-            <div className="relative w-20">
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={dish.price ?? ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  onUpdate("price", value === "" ? undefined : parseFloat(value));
-                }}
-                disabled={isReadOnly}
-                placeholder="0.00"
-                className="w-full text-sm font-medium rounded bg-zinc-800/70 border border-zinc-700/50 pl-5 pr-1.5 py-1.5 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-zinc-800 disabled:opacity-50"
-              />
-              <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+          {/* Nombre, Precio y Media ración en la misma línea */}
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-sm font-medium text-zinc-100">{dish.name}</span>
+            <div className="flex items-center gap-2 text-sm">
+              {dish.price !== undefined && (
+                <span className="text-emerald-400 font-medium">{dish.price.toFixed(2)}€</span>
+              )}
+              {dish.hasHalfPortion && dish.halfPortionPrice !== undefined && (
+                <span className="text-xs text-zinc-400">(1/2: {dish.halfPortionPrice.toFixed(2)}€)</span>
+              )}
             </div>
           </div>
 
           {/* Descripción */}
-          <textarea
-            value={dish.description}
-            onChange={(e) => onUpdate("description", e.target.value)}
-            disabled={isReadOnly}
-            placeholder="Descripción o ingredientes"
-            rows={1}
-            className="w-full text-xs rounded bg-zinc-800/70 border border-zinc-700/50 px-2.5 py-1.5 text-zinc-300 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-zinc-800 disabled:opacity-50 resize-none"
-          />
+          {dish.description && (
+            <p className="text-xs text-zinc-400">{dish.description}</p>
+          )}
 
-          {/* Alérgenos y botones en la misma línea para ahorrar espacio */}
+          {/* Alérgenos, media ración badge y botones */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            {/* Alérgenos */}
-            {dish.allergens && dish.allergens.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {dish.allergens.map((allergen) => (
+            <div className="flex flex-wrap gap-1 items-center">
+              {/* Badge media ración */}
+              {dish.hasHalfPortion && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-indigo-900/25 text-indigo-300 border border-indigo-800/40">
+                  ½ Media ración
+                </span>
+              )}
+              {/* Alérgenos */}
+              {dish.allergens && dish.allergens.length > 0 && (
+                dish.allergens.map((allergen) => (
                   <span
                     key={allergen}
                     className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-amber-900/25 text-amber-300 border border-amber-800/40"
                   >
                     ⚠️ {allergen}
                   </span>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
 
             {/* Botones de acción */}
             <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                onClick={onEdit}
+                disabled={isReadOnly}
+                className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                title="Editar plato"
+              >
+                ✏️
+              </button>
               <button
                 type="button"
                 onClick={onDuplicate}
@@ -398,10 +393,16 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
     name: "",
     description: "",
     allergens: [],
+    price: undefined,
+    hasHalfPortion: false,
+    halfPortionPrice: undefined,
   });
 
   // Estado para editar categoría
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
+
+  // Estado para editar plato existente
+  const [editingDish, setEditingDish] = useState<{ categoryId: string; dish: MenuDish } | null>(null);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -566,6 +567,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
       name: "",
       description: "",
       allergens: [],
+      price: undefined,
+      hasHalfPortion: false,
+      halfPortionPrice: undefined,
     });
     setShowAddDishDialog(true);
   };
@@ -579,6 +583,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
       name: newDish.name!,
       description: newDish.description,
       allergens: newDish.allergens,
+      price: newDish.price,
+      hasHalfPortion: newDish.hasHalfPortion,
+      halfPortionPrice: newDish.hasHalfPortion ? newDish.halfPortionPrice : undefined,
     };
 
     setCategories((prev) =>
@@ -591,6 +598,44 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
 
     setShowAddDishDialog(false);
     setCurrentEditingCategory(null);
+  };
+
+  // Abrir diálogo para editar plato existente
+  const openEditDishDialog = (categoryId: string, dish: MenuDish) => {
+    setEditingDish({ categoryId, dish: { ...dish } });
+  };
+
+  // Guardar edición de plato
+  const saveDishEdit = () => {
+    if (!editingDish) return;
+
+    setCategories((prev) =>
+      prev.map((cat) =>
+        cat.id === editingDish.categoryId
+          ? {
+              ...cat,
+              dishes: cat.dishes.map((d) =>
+                d.id === editingDish.dish.id ? editingDish.dish : d
+              ),
+            }
+          : cat
+      )
+    );
+
+    setEditingDish(null);
+  };
+
+  // Toggle alérgeno en diálogo de edición
+  const toggleAllergenInEditDialog = (allergen: string) => {
+    if (!editingDish) return;
+    const currentAllergens = editingDish.dish.allergens || [];
+    const newAllergens = currentAllergens.includes(allergen)
+      ? currentAllergens.filter((a) => a !== allergen)
+      : [...currentAllergens, allergen];
+    setEditingDish({
+      ...editingDish,
+      dish: { ...editingDish.dish, allergens: newAllergens },
+    });
   };
 
   // Duplicar plato
@@ -929,8 +974,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                                     <SortableDish
                                       key={dish.id}
                                       dish={dish}
-                                      categoryId={category.id}
-                                      onUpdate={(field, value) => updateDish(category.id, dish.id, field, value)}
+                                      onEdit={() => openEditDishDialog(category.id, dish)}
                                       onDelete={() => {
                                         if (confirm(`¿Eliminar "${dish.name}"?`)) {
                                           deleteDish(category.id, dish.id);
@@ -1192,6 +1236,56 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                 />
               </div>
 
+              {/* Precio */}
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Precio (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={newDish.price ?? ""}
+                  onChange={(e) => setNewDish({ ...newDish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                  placeholder="0.00"
+                  className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Media ración */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newDish.hasHalfPortion ?? false}
+                    onChange={(e) => setNewDish({
+                      ...newDish,
+                      hasHalfPortion: e.target.checked,
+                      halfPortionPrice: e.target.checked ? newDish.halfPortionPrice : undefined
+                    })}
+                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-zinc-300">Disponible en media ración</span>
+                </label>
+
+                {newDish.hasHalfPortion && (
+                  <div className="ml-7">
+                    <label className="text-sm text-zinc-400 mb-1 block">
+                      Precio media ración (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={newDish.halfPortionPrice ?? ""}
+                      onChange={(e) => setNewDish({ ...newDish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                      placeholder="0.00"
+                      className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div>
                 <label className="text-sm text-zinc-300 font-medium mb-2 block">
                   Descripción o ingredientes
@@ -1251,7 +1345,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                 onClick={() => {
                   setShowAddDishDialog(false);
                   setCurrentEditingCategory(null);
-                  setNewDish({ name: "", description: "", allergens: [] });
+                  setNewDish({ name: "", description: "", allergens: [], price: undefined, hasHalfPortion: false, halfPortionPrice: undefined });
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
               >
@@ -1357,6 +1451,171 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                   setEditingCategory(null);
                 }}
                 disabled={!editingCategory.name}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
+              >
+                Guardar cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diálogo: Editar plato */}
+      {editingDish && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+                ✏️ Editar plato
+              </h3>
+              <p className="text-sm text-zinc-400">
+                Modifica los datos del plato
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Nombre del plato *
+                </label>
+                <input
+                  type="text"
+                  value={editingDish.dish.name}
+                  onChange={(e) => setEditingDish({
+                    ...editingDish,
+                    dish: { ...editingDish.dish, name: e.target.value }
+                  })}
+                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Precio */}
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Precio (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editingDish.dish.price ?? ""}
+                  onChange={(e) => setEditingDish({
+                    ...editingDish,
+                    dish: { ...editingDish.dish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) }
+                  })}
+                  placeholder="0.00"
+                  className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Media ración */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingDish.dish.hasHalfPortion ?? false}
+                    onChange={(e) => setEditingDish({
+                      ...editingDish,
+                      dish: {
+                        ...editingDish.dish,
+                        hasHalfPortion: e.target.checked,
+                        halfPortionPrice: e.target.checked ? editingDish.dish.halfPortionPrice : undefined
+                      }
+                    })}
+                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-zinc-300">Disponible en media ración</span>
+                </label>
+
+                {editingDish.dish.hasHalfPortion && (
+                  <div className="ml-7">
+                    <label className="text-sm text-zinc-400 mb-1 block">
+                      Precio media ración (€)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingDish.dish.halfPortionPrice ?? ""}
+                      onChange={(e) => setEditingDish({
+                        ...editingDish,
+                        dish: { ...editingDish.dish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) }
+                      })}
+                      placeholder="0.00"
+                      className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Descripción o ingredientes
+                </label>
+                <textarea
+                  value={editingDish.dish.description || ""}
+                  onChange={(e) => setEditingDish({
+                    ...editingDish,
+                    dish: { ...editingDish.dish, description: e.target.value }
+                  })}
+                  placeholder="Ej: Lechuga romana, pollo, parmesano, crutones..."
+                  rows={3}
+                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Alérgenos
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {COMMON_ALLERGENS.map((allergen) => (
+                    <button
+                      key={allergen}
+                      type="button"
+                      onClick={() => toggleAllergenInEditDialog(allergen)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        editingDish.dish.allergens?.includes(allergen)
+                          ? "bg-amber-900/50 text-amber-200 border border-amber-800"
+                          : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700"
+                      }`}
+                    >
+                      {editingDish.dish.allergens?.includes(allergen) ? "✓ " : ""}
+                      {allergen}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {editingDish.dish.allergens && editingDish.dish.allergens.length > 0 && (
+                <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400 mb-2">Alérgenos seleccionados:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {editingDish.dish.allergens.map((allergen) => (
+                      <span
+                        key={allergen}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-900/30 text-amber-200 border border-amber-800/50"
+                      >
+                        ⚠️ {allergen}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setEditingDish(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={saveDishEdit}
+                disabled={!editingDish.dish.name}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
               >
                 Guardar cambios
