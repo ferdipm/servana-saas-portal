@@ -1236,54 +1236,69 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                 />
               </div>
 
-              {/* Precio */}
+              {/* Precios - Diseño en línea */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
-                  Precio (€)
+                <label className="text-sm text-zinc-300 font-medium mb-3 block">
+                  Precios
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={newDish.price ?? ""}
-                  onChange={(e) => setNewDish({ ...newDish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
-                  placeholder="0.00"
-                  className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Media ración */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newDish.hasHalfPortion ?? false}
-                    onChange={(e) => setNewDish({
-                      ...newDish,
-                      hasHalfPortion: e.target.checked,
-                      halfPortionPrice: e.target.checked ? newDish.halfPortionPrice : undefined
-                    })}
-                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-zinc-300">Disponible en media ración</span>
-                </label>
-
-                {newDish.hasHalfPortion && (
-                  <div className="ml-7">
-                    <label className="text-sm text-zinc-400 mb-1 block">
-                      Precio media ración (€)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={newDish.halfPortionPrice ?? ""}
-                      onChange={(e) => setNewDish({ ...newDish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
-                      placeholder="0.00"
-                      className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                <div className="flex flex-wrap items-end gap-4">
+                  {/* Precio normal */}
+                  <div>
+                    <label className="text-xs text-zinc-400 mb-1 block">Ración completa</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={newDish.price ?? ""}
+                        onChange={(e) => setNewDish({ ...newDish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                        placeholder="0.00"
+                        className="w-28 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                    </div>
                   </div>
-                )}
+
+                  {/* Separador visual */}
+                  <div className="hidden sm:flex items-center pb-2">
+                    <div className="w-px h-8 bg-zinc-700"></div>
+                  </div>
+
+                  {/* Media ración toggle + precio */}
+                  <div className="flex items-end gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer pb-2">
+                      <input
+                        type="checkbox"
+                        checked={newDish.hasHalfPortion ?? false}
+                        onChange={(e) => setNewDish({
+                          ...newDish,
+                          hasHalfPortion: e.target.checked,
+                          halfPortionPrice: e.target.checked ? newDish.halfPortionPrice : undefined
+                        })}
+                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-zinc-300 whitespace-nowrap">½ ración</span>
+                    </label>
+
+                    {newDish.hasHalfPortion && (
+                      <div className="animate-in fade-in slide-in-from-left-2 duration-200">
+                        <label className="text-xs text-zinc-400 mb-1 block">Precio ½</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={newDish.halfPortionPrice ?? ""}
+                            onChange={(e) => setNewDish({ ...newDish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                            placeholder="0.00"
+                            className="w-24 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>
@@ -1489,63 +1504,78 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                 />
               </div>
 
-              {/* Precio */}
+              {/* Precios - Diseño en línea */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
-                  Precio (€)
+                <label className="text-sm text-zinc-300 font-medium mb-3 block">
+                  Precios
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editingDish.dish.price ?? ""}
-                  onChange={(e) => setEditingDish({
-                    ...editingDish,
-                    dish: { ...editingDish.dish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) }
-                  })}
-                  placeholder="0.00"
-                  className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-
-              {/* Media ración */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editingDish.dish.hasHalfPortion ?? false}
-                    onChange={(e) => setEditingDish({
-                      ...editingDish,
-                      dish: {
-                        ...editingDish.dish,
-                        hasHalfPortion: e.target.checked,
-                        halfPortionPrice: e.target.checked ? editingDish.dish.halfPortionPrice : undefined
-                      }
-                    })}
-                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm text-zinc-300">Disponible en media ración</span>
-                </label>
-
-                {editingDish.dish.hasHalfPortion && (
-                  <div className="ml-7">
-                    <label className="text-sm text-zinc-400 mb-1 block">
-                      Precio media ración (€)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editingDish.dish.halfPortionPrice ?? ""}
-                      onChange={(e) => setEditingDish({
-                        ...editingDish,
-                        dish: { ...editingDish.dish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) }
-                      })}
-                      placeholder="0.00"
-                      className="w-32 text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                <div className="flex flex-wrap items-end gap-4">
+                  {/* Precio normal */}
+                  <div>
+                    <label className="text-xs text-zinc-400 mb-1 block">Ración completa</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editingDish.dish.price ?? ""}
+                        onChange={(e) => setEditingDish({
+                          ...editingDish,
+                          dish: { ...editingDish.dish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) }
+                        })}
+                        placeholder="0.00"
+                        className="w-28 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                    </div>
                   </div>
-                )}
+
+                  {/* Separador visual */}
+                  <div className="hidden sm:flex items-center pb-2">
+                    <div className="w-px h-8 bg-zinc-700"></div>
+                  </div>
+
+                  {/* Media ración toggle + precio */}
+                  <div className="flex items-end gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer pb-2">
+                      <input
+                        type="checkbox"
+                        checked={editingDish.dish.hasHalfPortion ?? false}
+                        onChange={(e) => setEditingDish({
+                          ...editingDish,
+                          dish: {
+                            ...editingDish.dish,
+                            hasHalfPortion: e.target.checked,
+                            halfPortionPrice: e.target.checked ? editingDish.dish.halfPortionPrice : undefined
+                          }
+                        })}
+                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-zinc-300 whitespace-nowrap">½ ración</span>
+                    </label>
+
+                    {editingDish.dish.hasHalfPortion && (
+                      <div className="animate-in fade-in slide-in-from-left-2 duration-200">
+                        <label className="text-xs text-zinc-400 mb-1 block">Precio ½</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editingDish.dish.halfPortionPrice ?? ""}
+                            onChange={(e) => setEditingDish({
+                              ...editingDish,
+                              dish: { ...editingDish.dish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) }
+                            })}
+                            placeholder="0.00"
+                            className="w-24 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div>
