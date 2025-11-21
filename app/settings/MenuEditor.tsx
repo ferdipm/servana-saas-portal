@@ -29,6 +29,7 @@ type MenuDish = {
   allergens?: string[];
   hasHalfPortion?: boolean;      // ¿Tiene opción de media ración?
   halfPortionPrice?: number;     // Precio de la media ración
+  notes?: string;                // Notas prácticas (ej: "Se puede hacer sin gluten")
 };
 
 type MenuCategory = {
@@ -284,6 +285,13 @@ function SortableDish({
             <p className="text-xs text-zinc-400">{dish.description}</p>
           )}
 
+          {/* Notas */}
+          {dish.notes && (
+            <p className="text-xs text-cyan-400/80 italic">
+              📝 {dish.notes}
+            </p>
+          )}
+
           {/* Alérgenos, media ración badge y botones */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex flex-wrap gap-1 items-center">
@@ -361,6 +369,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
         price: dish.price !== undefined && dish.price !== null ? dish.price : undefined,
         description: dish.description || "",
         allergens: dish.allergens || [],
+        hasHalfPortion: dish.hasHalfPortion || false,
+        halfPortionPrice: dish.halfPortionPrice,
+        notes: dish.notes || "",
       })),
     }));
   };
@@ -396,6 +407,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
     price: undefined,
     hasHalfPortion: false,
     halfPortionPrice: undefined,
+    notes: "",
   });
 
   // Estado para editar categoría
@@ -570,6 +582,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
       price: undefined,
       hasHalfPortion: false,
       halfPortionPrice: undefined,
+      notes: "",
     });
     setShowAddDishDialog(true);
   };
@@ -586,6 +599,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
       price: newDish.price,
       hasHalfPortion: newDish.hasHalfPortion,
       halfPortionPrice: newDish.hasHalfPortion ? newDish.halfPortionPrice : undefined,
+      notes: newDish.notes,
     };
 
     setCategories((prev) =>
@@ -1065,6 +1079,11 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                       {dish.description && (
                         <p className="text-sm text-zinc-600 leading-relaxed">{dish.description}</p>
                       )}
+                      {dish.notes && (
+                        <p className="text-sm text-cyan-700 italic mt-1">
+                          📝 {dish.notes}
+                        </p>
+                      )}
                       {dish.allergens && dish.allergens.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {dish.allergens.map((allergen) => (
@@ -1316,6 +1335,22 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
 
               <div>
                 <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Notas
+                </label>
+                <textarea
+                  value={newDish.notes}
+                  onChange={(e) => setNewDish({ ...newDish, notes: e.target.value })}
+                  placeholder="Ej: 'Se puede preparar sin gluten', 'Picante bajo demanda', 'Mínimo 2 personas'..."
+                  rows={2}
+                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Información práctica adicional sobre el plato
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
                   Alérgenos
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1360,7 +1395,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                 onClick={() => {
                   setShowAddDishDialog(false);
                   setCurrentEditingCategory(null);
-                  setNewDish({ name: "", description: "", allergens: [], price: undefined, hasHalfPortion: false, halfPortionPrice: undefined });
+                  setNewDish({ name: "", description: "", allergens: [], price: undefined, hasHalfPortion: false, halfPortionPrice: undefined, notes: "" });
                 }}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
               >
@@ -1592,6 +1627,25 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                   rows={3}
                   className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 />
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  Notas
+                </label>
+                <textarea
+                  value={editingDish.dish.notes || ""}
+                  onChange={(e) => setEditingDish({
+                    ...editingDish,
+                    dish: { ...editingDish.dish, notes: e.target.value }
+                  })}
+                  placeholder="Ej: 'Se puede preparar sin gluten', 'Picante bajo demanda', 'Mínimo 2 personas'..."
+                  rows={2}
+                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Información práctica adicional sobre el plato
+                </p>
               </div>
 
               <div>
