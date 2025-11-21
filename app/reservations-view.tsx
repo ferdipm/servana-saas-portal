@@ -21,14 +21,18 @@ import { Plus } from "lucide-react";
 
 type Props = {
   tenantId: string;
+  restaurantId?: string;
   defaultTz?: string;
   initialStatus?: string; // undefined en "/", "pending" en /pending
+  onReservationChange?: () => void; // Callback para notificar cambios
 };
 
 export function ReservationsView({
   tenantId,
+  restaurantId,
   defaultTz = "Europe/Zurich",
   initialStatus,
+  onReservationChange,
 }: Props) {
   const isPendingMode = initialStatus === "pending";
 
@@ -65,6 +69,7 @@ export function ReservationsView({
     try {
       const res = await getReservations({
         tenantId,
+        restaurantId,
         q,
         status,
         from,
@@ -82,7 +87,7 @@ export function ReservationsView({
   useEffect(() => {
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantId, q, status, from, to]);
+  }, [tenantId, restaurantId, q, status, from, to]);
 
   const visibleRows = useMemo(() => {
     if (isPendingMode) return rows;
@@ -241,7 +246,16 @@ export function ReservationsView({
                     mode="single"
                     locale={es}
                     selected={from ? new Date(from) : undefined}
-                    onSelect={(d) => setFrom(d ? d.toISOString() : "")}
+                    onSelect={(d) => {
+                      if (d) {
+                        // Setear al inicio del día (00:00:00.000)
+                        const startOfDay = new Date(d);
+                        startOfDay.setHours(0, 0, 0, 0);
+                        setFrom(startOfDay.toISOString());
+                      } else {
+                        setFrom("");
+                      }
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -265,7 +279,16 @@ export function ReservationsView({
                     mode="single"
                     locale={es}
                     selected={to ? new Date(to) : undefined}
-                    onSelect={(d) => setTo(d ? d.toISOString() : "")}
+                    onSelect={(d) => {
+                      if (d) {
+                        // Setear al final del día (23:59:59.999)
+                        const endOfDay = new Date(d);
+                        endOfDay.setHours(23, 59, 59, 999);
+                        setTo(endOfDay.toISOString());
+                      } else {
+                        setTo("");
+                      }
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -378,6 +401,7 @@ export function ReservationsView({
           onUpdated={() => {
             setSelected(null);
             load(true);
+            onReservationChange?.(); // Notificar cambio
           }}
           isPendingMode={isPendingMode}
         />
@@ -386,12 +410,14 @@ export function ReservationsView({
       {creating && (
         <NewReservationDrawer
           tenantId={tenantId}
+          restaurantId={restaurantId}  // 👈 AQUÍ
           defaultTz={defaultTz}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);
             // refrescamos lista (se verá en el rango actual)
             load(true);
+            onReservationChange?.(); // Notificar cambio
           }}
         />
       )}
@@ -951,11 +977,13 @@ function ReservationDrawer({
 
 function NewReservationDrawer({
   tenantId,
+  restaurantId,
   defaultTz,
   onClose,
   onCreated,
 }: {
   tenantId: string;
+  restaurantId?: string;
   defaultTz: string;
   onClose: () => void;
   onCreated: () => void;
@@ -998,6 +1026,7 @@ function NewReservationDrawer({
     try {
       await createReservation({
         tenantId,
+        restaurantId: restaurantId || undefined,
         name: name.trim(),
         phone: phone || null,
         party_size: numericPartySize,

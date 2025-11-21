@@ -31,6 +31,7 @@ export type Reservation = {
 
 type GetReservationsOpts = {
   tenantId: string;
+  restaurantId?: string; // 👈 NUEVO: filtro opcional por restaurante específico
   q?: string;
   status?: string;
   from?: string;
@@ -40,7 +41,7 @@ type GetReservationsOpts = {
 };
 
 export async function getReservations(opts: GetReservationsOpts) {
-  const { tenantId, q, status, from, to, limit = 50, cursorCreatedAt } = opts;
+  const { tenantId, restaurantId, q, status, from, to, limit = 50, cursorCreatedAt } = opts;
   const supabase = await supabaseServer();
 
   // NUEVO: Obtener restaurantes accesibles para el usuario
@@ -50,6 +51,18 @@ export async function getReservations(opts: GetReservationsOpts) {
   // Si el usuario no tiene acceso a ningún restaurante, devolver vacío
   if (accessibleRestaurantIds.length === 0) {
     return { data: [], nextCursor: null };
+  }
+
+  // Si viene restaurantId específico, verificar que el usuario tiene acceso
+  let filterRestaurantIds = accessibleRestaurantIds;
+  if (restaurantId) {
+    // Verificar que el restaurantId solicitado está en la lista de accesibles
+    if (accessibleRestaurantIds.includes(restaurantId)) {
+      filterRestaurantIds = [restaurantId]; // Filtrar solo por este restaurante
+    } else {
+      // Usuario pidió un restaurante al que no tiene acceso → devolver vacío
+      return { data: [], nextCursor: null };
+    }
   }
 
   let query = supabase
@@ -63,7 +76,7 @@ export async function getReservations(opts: GetReservationsOpts) {
       )
     `)
     .eq("tenant_id", tenantId) // 👈 clave: filtramos por tenant_id
-    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO: filtrar por restaurantes accesibles
+    .in("restaurant_id", filterRestaurantIds) // 👈 NUEVO: filtrar por restaurante(s) específico(s)
     .order("datetime_utc", { ascending: false })
     .limit(limit);
 
@@ -106,10 +119,12 @@ export async function getReservations(opts: GetReservationsOpts) {
 
 type GetReservationsSummaryOpts = {
   tenantId: string;
+  restaurantId?: string; // 👈 NUEVO: filtro opcional por restaurante específico
 };
 
 export async function getReservationsSummary({
   tenantId,
+  restaurantId, // 👈 NUEVO
 }: GetReservationsSummaryOpts) {
   const supabase = await supabaseServer();
   const now = new Date();
@@ -121,6 +136,18 @@ export async function getReservationsSummary({
   // Si el usuario no tiene acceso a ningún restaurante, devolver ceros
   if (accessibleRestaurantIds.length === 0) {
     return { today: 0, tomorrow: 0, weekRest: 0, monthRest: 0 };
+  }
+
+  // Si viene restaurantId específico, verificar que el usuario tiene acceso
+  let filterRestaurantIds = accessibleRestaurantIds;
+  if (restaurantId) {
+    // Verificar que el restaurantId solicitado está en la lista de accesibles
+    if (accessibleRestaurantIds.includes(restaurantId)) {
+      filterRestaurantIds = [restaurantId]; // Filtrar solo por este restaurante
+    } else {
+      // Usuario pidió un restaurante al que no tiene acceso → devolver ceros
+      return { today: 0, tomorrow: 0, weekRest: 0, monthRest: 0 };
+    }
   }
 
   // Fechas en UTC
@@ -155,7 +182,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO: filtrar por restaurantes accesibles
+    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds (específico o todos)
     .gte("datetime_utc", startOfToday.toISOString())
     .lt("datetime_utc", startOfTomorrow.toISOString());
 
@@ -163,7 +190,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
+    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
     .gte("datetime_utc", startOfTomorrow.toISOString())
     .lt("datetime_utc", startOfDayAfterTomorrow.toISOString());
 
@@ -171,7 +198,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
+    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonday.toISOString());
 
@@ -179,7 +206,7 @@ export async function getReservationsSummary({
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", accessibleRestaurantIds) // 👈 NUEVO
+    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonth.toISOString());
 

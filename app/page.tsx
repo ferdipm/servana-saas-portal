@@ -1,13 +1,18 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { getCurrentTenantId } from "@/lib/getCurrentTenant";
+import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 import DashboardShell from "./dashboard-shell";
-import { SummaryCards } from "./summary-cards";
-import { ReservationsView } from "./reservations-view";
+import { ReservationsPageContent } from "./reservations-page-content";
 
+type PageProps = {
+  searchParams?: Promise<{
+    restaurantId?: string;
+  }>;
+};
 
-
-export default async function Page() {
+export default async function Page({ searchParams }: PageProps) {
   const supabase = await supabaseServer();
 
   const {
@@ -19,24 +24,40 @@ export default async function Page() {
     redirect(`/login?redirectTo=/`);
   }
 
-  const { tenantId } = await getCurrentTenantId();
+  const params = await searchParams;
+  const requestedRestaurantId = params?.restaurantId;
+
+  const {
+    tenantId,
+    accessibleRestaurants,
+    currentRestaurantId,
+    canSwitch,
+  } = await getTenantAndRestaurants(requestedRestaurantId);
+
+  // Obtener nombre y logo del restaurante actual
+  const { data: restaurantInfo } = await supabase
+    .from("restaurant_info")
+    .select("name, logo_url")
+    .eq("id", currentRestaurantId)
+    .single();
+
   const defaultTz = "Europe/Zurich";
 
   return (
-    <DashboardShell userEmail={user.email}>
-      <div className="p-6 space-y-6">
-        <div className="relative">
-          <div className="pt-6">
-            <SummaryCards tenantId={tenantId} />
-          </div>
-        </div>
-
-        <section className="mt-6">
-          <ReservationsView tenantId={tenantId} defaultTz={defaultTz} />
-        </section>
-      </div>
+    <DashboardShell
+      userEmail={user.email}
+      restaurants={accessibleRestaurants}
+      currentRestaurantId={currentRestaurantId}
+      canSwitch={canSwitch}
+      restaurantName={restaurantInfo?.name}
+      restaurantLogoUrl={restaurantInfo?.logo_url}
+    >
+      <ReservationsPageContent
+        key={currentRestaurantId}
+        tenantId={tenantId}
+        restaurantId={currentRestaurantId}
+        defaultTz={defaultTz}
+      />
     </DashboardShell>
   );
 }
-
-

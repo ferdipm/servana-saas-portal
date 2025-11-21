@@ -1,6 +1,6 @@
 # Esquema de Base de Datos - Supabase
 
-> Documentación generada automáticamente el 15/11/2025, 1:11:27
+> Documentación generada automáticamente el 18/11/2025, 19:10:18
 
 ## Información General
 
@@ -15,14 +15,14 @@
 
 Total de tablas: **8**
 
-- [`chat_history`](#tabla-chat_history) (6 columnas)
-- [`conversations`](#tabla-conversations) (6 columnas)
-- [`reservations`](#tabla-reservations) (15 columnas)
-- [`restaurant_info`](#tabla-restaurant_info) (16 columnas)
-- [`restaurants`](#tabla-restaurants) (6 columnas)
-- [`session_state`](#tabla-session_state) (9 columnas)
+- [`chat_history`](#tabla-chat_history) (7 columnas)
+- [`conversations`](#tabla-conversations) (8 columnas)
+- [`reservations`](#tabla-reservations) (16 columnas)
+- [`restaurant_info`](#tabla-restaurant_info) (17 columnas)
+- [`session_state`](#tabla-session_state) (10 columnas)
 - [`tenant_users`](#tabla-tenant_users) (8 columnas)
-- [`tenants`](#tabla-tenants) (25 columnas)
+- [`tenants`](#tabla-tenants) (27 columnas)
+- [`user_restaurants`](#tabla-user_restaurants) (8 columnas)
 
 ---
 
@@ -38,12 +38,16 @@ Total de tablas: **8**
 | `message` | text | NO | - |  | - |
 | `created_at` | timestamp with time zone | YES | now() |  | - |
 | `tenant_id` | uuid | YES | - |  | - |
+| `restaurant_id` | uuid | NO | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
 - `tenant_id` → [`tenants.id`](#tabla-tenants)
   - Constraint: `chat_history_tenant_id_fkey`
   - ON UPDATE: NO ACTION, ON DELETE: NO ACTION
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `fk_chat_history_restaurant`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
 
 ### Índices
 
@@ -54,6 +58,14 @@ Total de tablas: **8**
 - **idx_chat_history_phone**
   ```sql
   CREATE INDEX idx_chat_history_phone ON public.chat_history USING btree (phone)
+  ```
+- **idx_chat_history_restaurant_id**
+  ```sql
+  CREATE INDEX idx_chat_history_restaurant_id ON public.chat_history USING btree (restaurant_id)
+  ```
+- **idx_chat_history_restaurant_phone**
+  ```sql
+  CREATE INDEX idx_chat_history_restaurant_phone ON public.chat_history USING btree (restaurant_id, phone)
   ```
 - **idx_chat_history_tenant**
   ```sql
@@ -83,12 +95,31 @@ Total de tablas: **8**
 | `message` | text | NO | - |  | - |
 | `session_id` | text | YES | - |  | - |
 | `created_at` | timestamp with time zone | NO | now() |  | - |
+| `restaurant_id` | uuid | YES | - |  | - |
+| `tenant_id` | uuid | YES | - |  | - |
+
+### Relaciones (Foreign Keys)
+
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `fk_conversations_restaurant`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+- `tenant_id` → [`tenants.id`](#tabla-tenants)
+  - Constraint: `fk_conversations_tenant`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
 
 ### Índices
 
 - **idx_conversations_phone**
   ```sql
   CREATE INDEX idx_conversations_phone ON public.conversations USING btree (phone)
+  ```
+- **idx_conversations_restaurant_id**
+  ```sql
+  CREATE INDEX idx_conversations_restaurant_id ON public.conversations USING btree (restaurant_id)
+  ```
+- **idx_conversations_tenant_id**
+  ```sql
+  CREATE INDEX idx_conversations_tenant_id ON public.conversations USING btree (tenant_id)
   ```
 
 ### Políticas RLS (Row Level Security)
@@ -107,7 +138,7 @@ Total de tablas: **8**
 | Columna | Tipo | Nullable | Default | PK | Longitud Max |
 |---------|------|----------|---------|----|--------------|
 | `id` | uuid | NO | gen_random_uuid() | 🔑 | - |
-| `phone` | text | NO | - |  | - |
+| `phone` | text | YES | - |  | - |
 | `name` | text | NO | - |  | - |
 | `source` | text | YES | 'WhatsApp'::text |  | - |
 | `created_at` | timestamp with time zone | NO | now() |  | - |
@@ -121,9 +152,13 @@ Total de tablas: **8**
 | `notes` | text | YES | - |  | - |
 | `tenant_id` | uuid | YES | - |  | - |
 | `reminder_sent` | boolean | YES | false |  | - |
+| `restaurant_id` | uuid | NO | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `fk_reservations_restaurant`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
 - `tenant_id` → [`tenants.id`](#tabla-tenants)
   - Constraint: `reservations_tenant_id_fkey`
   - ON UPDATE: NO ACTION, ON DELETE: NO ACTION
@@ -150,6 +185,14 @@ Total de tablas: **8**
   ```sql
   CREATE INDEX idx_reservations_reminder_lookup ON public.reservations USING btree (datetime_utc, reminder_sent, status) WHERE ((status = 'confirmed'::text) AND (reminder_sent = false))
   ```
+- **idx_reservations_restaurant_datetime**
+  ```sql
+  CREATE INDEX idx_reservations_restaurant_datetime ON public.reservations USING btree (restaurant_id, datetime_utc DESC)
+  ```
+- **idx_reservations_restaurant_id**
+  ```sql
+  CREATE INDEX idx_reservations_restaurant_id ON public.reservations USING btree (restaurant_id)
+  ```
 - **idx_reservations_tenant**
   ```sql
   CREATE INDEX idx_reservations_tenant ON public.reservations USING btree (tenant_id)
@@ -166,9 +209,13 @@ Total de tablas: **8**
    FROM tenant_users
   WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.is_active = true))))`
 - **Portal users can select own reservations** (SELECT) - PERMISSIVE
-  - USING: `(tenant_id IN ( SELECT tenant_users.tenant_id
+  - USING: `((tenant_id IN ( SELECT tenant_users.tenant_id
    FROM tenant_users
-  WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.is_active = true))))`
+  WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.is_active = true)))) AND ((EXISTS ( SELECT 1
+   FROM tenant_users
+  WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.tenant_id = reservations.tenant_id) AND (tenant_users.role = ANY (ARRAY['owner'::text, 'admin'::text])) AND (tenant_users.is_active = true)))) OR (EXISTS ( SELECT 1
+   FROM user_restaurants
+  WHERE ((user_restaurants.auth_user_id = auth.uid()) AND (user_restaurants.restaurant_id = reservations.restaurant_id) AND (user_restaurants.is_active = true))))))`
 - **Portal users can update own reservations** (UPDATE) - PERMISSIVE
   - USING: `(tenant_id IN ( SELECT tenant_users.tenant_id
    FROM tenant_users
@@ -206,7 +253,7 @@ Total de tablas: **8**
 
 | Columna | Tipo | Nullable | Default | PK | Longitud Max |
 |---------|------|----------|---------|----|--------------|
-| `restaurant_id` | uuid | NO | - | 🔑 | - |
+| `id` | uuid | NO | gen_random_uuid() | 🔑 | - |
 | `name` | text | YES | - |  | - |
 | `address` | text | YES | - |  | - |
 | `phone` | text | YES | - |  | - |
@@ -222,6 +269,7 @@ Total de tablas: **8**
 | `tenant_id` | uuid | YES | - |  | - |
 | `max_party_size` | integer | YES | 8 |  | - |
 | `min_hours_advance` | integer | YES | 1 |  | - |
+| `slug` | text | NO | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
@@ -231,9 +279,17 @@ Total de tablas: **8**
 
 ### Índices
 
+- **idx_restaurant_info_slug**
+  ```sql
+  CREATE INDEX idx_restaurant_info_slug ON public.restaurant_info USING btree (slug)
+  ```
 - **idx_restaurant_info_tenant**
   ```sql
   CREATE INDEX idx_restaurant_info_tenant ON public.restaurant_info USING btree (tenant_id)
+  ```
+- **idx_restaurant_info_tenant_slug**
+  ```sql
+  CREATE UNIQUE INDEX idx_restaurant_info_tenant_slug ON public.restaurant_info USING btree (tenant_id, slug)
   ```
 
 ### Políticas RLS (Row Level Security)
@@ -247,28 +303,27 @@ Total de tablas: **8**
   WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.is_active = true))))`
 - **Tenants can only access their own restaurant info** (ALL) - PERMISSIVE
   - USING: `(tenant_id = (current_setting('app.current_tenant_id'::text, true))::uuid)`
+- **Users can view restaurants they have access to** (SELECT) - PERMISSIVE
+  - USING: `((tenant_id IN ( SELECT tenant_users.tenant_id
+   FROM tenant_users
+  WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.role = ANY (ARRAY['owner'::text, 'admin'::text])) AND (tenant_users.is_active = true)))) OR (id IN ( SELECT user_restaurants.restaurant_id
+   FROM user_restaurants
+  WHERE ((user_restaurants.auth_user_id = auth.uid()) AND (user_restaurants.is_active = true)))))`
 
----
+### Triggers
 
-## Tabla: `restaurants`
-
-### Columnas
-
-| Columna | Tipo | Nullable | Default | PK | Longitud Max |
-|---------|------|----------|---------|----|--------------|
-| `id` | uuid | NO | gen_random_uuid() | 🔑 | - |
-| `name` | text | NO | - |  | - |
-| `whatsapp_number` | text | YES | - |  | - |
-| `email` | text | YES | - |  | - |
-| `supabase_user_id` | uuid | YES | - |  | - |
-| `created_at` | timestamp with time zone | NO | now() |  | - |
-
-### Políticas RLS (Row Level Security)
-
-- **server can insert** (INSERT) - PERMISSIVE
-  - WITH CHECK: `true`
-- **server can read all** (SELECT) - PERMISSIVE
-  - USING: `true`
+- **trigger_update_restaurant_count**
+  - Timing: AFTER
+  - Event: INSERT
+  - Action: `EXECUTE FUNCTION update_restaurant_count()`
+- **trigger_update_restaurant_count**
+  - Timing: AFTER
+  - Event: DELETE
+  - Action: `EXECUTE FUNCTION update_restaurant_count()`
+- **trigger_update_restaurant_count**
+  - Timing: AFTER
+  - Event: UPDATE
+  - Action: `EXECUTE FUNCTION update_restaurant_count()`
 
 ---
 
@@ -287,9 +342,20 @@ Total de tablas: **8**
 | `mode` | text | NO | 'idle'::text |  | - |
 | `turns` | integer | NO | 0 |  | - |
 | `greeted` | boolean | NO | false |  | - |
+| `restaurant_id` | uuid | YES | - |  | - |
+
+### Relaciones (Foreign Keys)
+
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `fk_session_state_restaurant`
+  - ON UPDATE: NO ACTION, ON DELETE: SET NULL
 
 ### Índices
 
+- **idx_session_state_restaurant_id**
+  ```sql
+  CREATE INDEX idx_session_state_restaurant_id ON public.session_state USING btree (restaurant_id) WHERE (restaurant_id IS NOT NULL)
+  ```
 - **idx_session_state_updated_at**
   ```sql
   CREATE INDEX idx_session_state_updated_at ON public.session_state USING btree (updated_at)
@@ -373,6 +439,8 @@ Total de tablas: **8**
 | `created_at` | timestamp with time zone | YES | now() |  | - |
 | `updated_at` | timestamp with time zone | YES | now() |  | - |
 | `use_manual_confirmation` | boolean | NO | false |  | - |
+| `is_multi_restaurant` | boolean | YES | false |  | - |
+| `restaurant_count` | integer | YES | 1 |  | - |
 
 ### Índices
 
@@ -417,9 +485,70 @@ Total de tablas: **8**
 
 ---
 
+## Tabla: `user_restaurants`
+
+### Columnas
+
+| Columna | Tipo | Nullable | Default | PK | Longitud Max |
+|---------|------|----------|---------|----|--------------|
+| `id` | uuid | NO | uuid_generate_v4() | 🔑 | - |
+| `auth_user_id` | uuid | NO | - |  | - |
+| `tenant_id` | uuid | NO | - |  | - |
+| `restaurant_id` | uuid | NO | - |  | - |
+| `role` | text | NO | - |  | - |
+| `is_active` | boolean | YES | true |  | - |
+| `created_at` | timestamp with time zone | YES | now() |  | - |
+| `updated_at` | timestamp with time zone | YES | now() |  | - |
+
+### Relaciones (Foreign Keys)
+
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `user_restaurants_restaurant_id_fkey`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+- `tenant_id` → [`tenants.id`](#tabla-tenants)
+  - Constraint: `user_restaurants_tenant_id_fkey`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+
+### Índices
+
+- **idx_user_restaurants_restaurant**
+  ```sql
+  CREATE INDEX idx_user_restaurants_restaurant ON public.user_restaurants USING btree (restaurant_id) WHERE (is_active = true)
+  ```
+- **idx_user_restaurants_tenant**
+  ```sql
+  CREATE INDEX idx_user_restaurants_tenant ON public.user_restaurants USING btree (tenant_id) WHERE (is_active = true)
+  ```
+- **idx_user_restaurants_user**
+  ```sql
+  CREATE INDEX idx_user_restaurants_user ON public.user_restaurants USING btree (auth_user_id) WHERE (is_active = true)
+  ```
+- **user_restaurants_auth_user_id_restaurant_id_key**
+  ```sql
+  CREATE UNIQUE INDEX user_restaurants_auth_user_id_restaurant_id_key ON public.user_restaurants USING btree (auth_user_id, restaurant_id)
+  ```
+
+### Políticas RLS (Row Level Security)
+
+- **Owners can manage restaurant assignments** (ALL) - PERMISSIVE
+  - USING: `(tenant_id IN ( SELECT tenant_users.tenant_id
+   FROM tenant_users
+  WHERE ((tenant_users.auth_user_id = auth.uid()) AND (tenant_users.role = ANY (ARRAY['owner'::text, 'admin'::text])) AND (tenant_users.is_active = true))))`
+- **Users can view own restaurant assignments** (SELECT) - PERMISSIVE
+  - USING: `(auth_user_id = auth.uid())`
+
+### Triggers
+
+- **update_user_restaurants_updated_at**
+  - Timing: BEFORE
+  - Event: UPDATE
+  - Action: `EXECUTE FUNCTION update_updated_at_column()`
+
+---
+
 ## Funciones de Base de Datos
 
-Total de funciones: **4**
+Total de funciones: **8**
 
 ### `check_message_limit(tenant_uuid uuid)`
 
@@ -468,6 +597,38 @@ $function$
 
 ---
 
+### `get_restaurant_by_whatsapp(p_whatsapp_number text)`
+
+**Returns**: `TABLE(id uuid, tenant_id uuid, name text, slug text)`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_restaurant_by_whatsapp(p_whatsapp_number text)
+ RETURNS TABLE(id uuid, tenant_id uuid, name text, slug text)
+ LANGUAGE plpgsql
+ STABLE
+AS $function$
+BEGIN
+  RETURN QUERY
+  SELECT
+    ri.id,
+    ri.tenant_id,
+    ri.name,
+    ri.slug
+  FROM restaurant_info ri
+  WHERE ri.phone = p_whatsapp_number
+  LIMIT 1;
+END;
+$function$
+
+```
+
+</details>
+
+---
+
 ### `get_tenant_id_by_whatsapp(phone text)`
 
 **Returns**: `uuid`
@@ -491,6 +652,58 @@ BEGIN
   LIMIT 1;
 
   RETURN tenant_uuid;
+END;
+$function$
+
+```
+
+</details>
+
+---
+
+### `get_user_accessible_restaurants(p_user_id uuid, p_tenant_id uuid)`
+
+Devuelve lista de restaurantes a los que un usuario tiene acceso. Owners/admins ven todos.
+
+**Returns**: `TABLE(restaurant_id uuid, user_role text)`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_user_accessible_restaurants(p_user_id uuid, p_tenant_id uuid)
+ RETURNS TABLE(restaurant_id uuid, user_role text)
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+AS $function$
+BEGIN
+  -- Primero verificar si el usuario es owner/admin del tenant
+  -- En ese caso, tiene acceso a TODOS los restaurantes
+  IF EXISTS (
+    SELECT 1 FROM tenant_users
+    WHERE auth_user_id = p_user_id
+      AND tenant_id = p_tenant_id
+      AND is_active = true
+      AND role IN ('owner', 'admin')
+  ) THEN
+    -- Devolver TODOS los restaurantes del tenant
+    RETURN QUERY
+    SELECT
+      ri.id AS restaurant_id,
+      'owner'::TEXT AS user_role
+    FROM restaurant_info ri
+    WHERE ri.tenant_id = p_tenant_id;
+  ELSE
+    -- Devolver solo los restaurantes asignados específicamente
+    RETURN QUERY
+    SELECT
+      ur.restaurant_id,
+      ur.role AS user_role
+    FROM user_restaurants ur
+    WHERE ur.auth_user_id = p_user_id
+      AND ur.tenant_id = p_tenant_id
+      AND ur.is_active = true;
+  END IF;
 END;
 $function$
 
@@ -525,6 +738,44 @@ $function$
 
 ---
 
+### `update_restaurant_count()`
+
+**Returns**: `trigger`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_restaurant_count()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  -- Actualizar contador en tenants
+  UPDATE tenants
+  SET
+    restaurant_count = (
+      SELECT COUNT(*)
+      FROM restaurant_info
+      WHERE tenant_id = COALESCE(NEW.tenant_id, OLD.tenant_id)
+    ),
+    is_multi_restaurant = (
+      SELECT COUNT(*) > 1
+      FROM restaurant_info
+      WHERE tenant_id = COALESCE(NEW.tenant_id, OLD.tenant_id)
+    )
+  WHERE id = COALESCE(NEW.tenant_id, OLD.tenant_id);
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$function$
+
+```
+
+</details>
+
+---
+
 ### `update_updated_at_column()`
 
 **Returns**: `trigger`
@@ -540,6 +791,50 @@ AS $function$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
+END;
+$function$
+
+```
+
+</details>
+
+---
+
+### `user_has_restaurant_access(p_user_id uuid, p_tenant_id uuid, p_restaurant_id uuid)`
+
+Verifica si un usuario tiene acceso a un restaurante específico
+
+**Returns**: `boolean`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.user_has_restaurant_access(p_user_id uuid, p_tenant_id uuid, p_restaurant_id uuid)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+AS $function$
+BEGIN
+  -- Owner/Admin del tenant → acceso total
+  IF EXISTS (
+    SELECT 1 FROM tenant_users
+    WHERE auth_user_id = p_user_id
+      AND tenant_id = p_tenant_id
+      AND is_active = true
+      AND role IN ('owner', 'admin')
+  ) THEN
+    RETURN true;
+  END IF;
+
+  -- Verificar permiso específico sobre el restaurante
+  RETURN EXISTS (
+    SELECT 1 FROM user_restaurants
+    WHERE auth_user_id = p_user_id
+      AND tenant_id = p_tenant_id
+      AND restaurant_id = p_restaurant_id
+      AND is_active = true
+  );
 END;
 $function$
 
