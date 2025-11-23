@@ -678,10 +678,36 @@ export function OpeningHoursEditor({
                 className={`rounded-lg border p-3 transition-all ${
                   isEnabled
                     ? "bg-zinc-900/40 border-zinc-700"
-                    : "bg-zinc-900/20 border-zinc-800 opacity-50"
+                    : "bg-zinc-900/20 border-zinc-800"
                 }`}
               >
-                <div className="text-xs font-medium text-zinc-400 mb-2">{day}</div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-zinc-400">{day}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSchedule((prev) => ({
+                        ...prev,
+                        [day]: {
+                          ...prev[day],
+                          enabled: !isEnabled,
+                          shifts: prev[day]?.shifts || [],
+                        },
+                      }));
+                    }}
+                    disabled={isReadOnly || isPending}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${
+                      isEnabled ? "bg-cyan-600" : "bg-zinc-700"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                        isEnabled ? "translate-x-4.5" : "translate-x-1"
+                      }`}
+                      style={{ transform: isEnabled ? "translateX(18px)" : "translateX(4px)" }}
+                    />
+                  </button>
+                </div>
                 {isEnabled ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -717,7 +743,7 @@ export function OpeningHoursEditor({
                     />
                   </div>
                 ) : (
-                  <div className="text-xs text-zinc-600 italic">Cerrado</div>
+                  <div className="text-xs text-rose-400/70 font-medium">Cerrado</div>
                 )}
               </div>
             );
