@@ -13,7 +13,7 @@ const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_U
 async function triggerRagReindex(
   restaurantId: string,
   tenantId: string,
-  kind: 'menu_item' | 'faq' | 'wine' | 'set_menu',
+  kind: 'menu_item' | 'faq' | 'wine' | 'set_menu' | 'opening_hours',
   data: any
 ): Promise<void> {
   try {
@@ -133,6 +133,7 @@ export async function updateRestaurantLogo(formData: FormData) {
  */
 export async function updateOpeningHours(formData: FormData) {
   const restaurantId = formData.get("restaurantId");
+  const tenantId = formData.get("tenantId");
   const openingHours = formData.get("openingHours");
   const specialDays = formData.get("specialDays");
 
@@ -166,12 +167,8 @@ export async function updateOpeningHours(formData: FormData) {
 
   const updateData: any = {
     opening_hours: parsedHours,
+    special_days: parsedSpecialDays, // Siempre actualizar, aunque esté vacío
   };
-
-  // Solo actualizar special_days si el campo existe en la tabla
-  if (parsedSpecialDays.length > 0) {
-    updateData.special_days = parsedSpecialDays;
-  }
 
   const { error } = await supabase
     .from("restaurant_info")
@@ -181,6 +178,14 @@ export async function updateOpeningHours(formData: FormData) {
   if (error) {
     console.error("Error en updateOpeningHours:", error);
     throw new Error("No se han podido actualizar los horarios.");
+  }
+
+  // Re-indexar en RAG (background, no bloquea)
+  if (tenantId && typeof tenantId === "string") {
+    triggerRagReindex(restaurantId, tenantId, 'opening_hours', {
+      openingHours: parsedHours,
+      specialDays: parsedSpecialDays,
+    });
   }
 
   // Volvemos a validar la página de ajustes

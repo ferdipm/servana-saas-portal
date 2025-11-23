@@ -12,6 +12,8 @@ type Shift = {
 
 type DaySchedule = {
   enabled: boolean;
+  openTime?: string;  // Hora apertura del establecimiento
+  closeTime?: string; // Hora cierre del establecimiento
   shifts: Shift[];
 };
 
@@ -176,6 +178,23 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
                       style={{ left: `${position * 100}%` }}
                     />
                   ))}
+
+                  {/* Franja de horario del establecimiento (fondo sutil) */}
+                  {isOpen && daySchedule.openTime && daySchedule.closeTime && (
+                    (() => {
+                      const position = getShiftPosition(daySchedule.openTime, daySchedule.closeTime);
+                      return (
+                        <div
+                          className="absolute top-0 bottom-0 bg-cyan-500/10 border-l border-r border-cyan-500/20"
+                          style={{
+                            left: position.left,
+                            width: position.width,
+                          }}
+                          title={`Establecimiento abierto: ${daySchedule.openTime} - ${daySchedule.closeTime}`}
+                        />
+                      );
+                    })()
+                  )}
 
                   {/* Turnos del día */}
                   {isOpen && (
@@ -354,6 +373,11 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
 
         {/* Leyenda */}
         <div className="flex gap-4 mt-4 text-[10px] flex-wrap">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-cyan-500/20 border-l border-r border-cyan-500/40 rounded-sm"></div>
+            <span className="text-zinc-400">🏪 Establecimiento abierto</span>
+          </div>
+          <div className="h-3 w-px bg-zinc-700"></div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-amber-500/80 border border-amber-400 rounded-sm"></div>
             <span className="text-zinc-400">☕ Desayuno</span>

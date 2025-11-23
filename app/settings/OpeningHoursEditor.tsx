@@ -19,7 +19,9 @@ type Shift = {
 
 type DaySchedule = {
   enabled: boolean;
-  shifts: Shift[];
+  openTime?: string;  // Hora apertura del establecimiento (ej: "12:00")
+  closeTime?: string; // Hora cierre del establecimiento (ej: "00:00")
+  shifts: Shift[];    // Turnos de cocina/servicio
 };
 
 type WeekSchedule = {
@@ -649,6 +651,114 @@ export function OpeningHoursEditor({
         </div>
       </div>
 
+      {/* Sección: Horario general del establecimiento */}
+      <div className="space-y-4 pt-4 border-t border-cyan-500/20">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+            <span className="text-lg">🏪</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-cyan-100 mb-1">
+              Horario del establecimiento
+            </h3>
+            <p className="text-xs text-cyan-200/60 leading-relaxed">
+              Horario general de apertura y cierre. Responde a preguntas como "¿A qué hora abrís?" o "¿Hasta qué hora puedo ir?".
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {DAYS.map((day) => {
+            const daySchedule = schedule[day];
+            const isEnabled = daySchedule?.enabled;
+
+            return (
+              <div
+                key={`venue-${day}`}
+                className={`rounded-lg border p-3 transition-all ${
+                  isEnabled
+                    ? "bg-zinc-900/40 border-zinc-700"
+                    : "bg-zinc-900/20 border-zinc-800 opacity-50"
+                }`}
+              >
+                <div className="text-xs font-medium text-zinc-400 mb-2">{day}</div>
+                {isEnabled ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={daySchedule.openTime || "12:00"}
+                      onChange={(e) => {
+                        setSchedule((prev) => ({
+                          ...prev,
+                          [day]: {
+                            ...prev[day],
+                            openTime: e.target.value,
+                          },
+                        }));
+                      }}
+                      disabled={isReadOnly || isPending}
+                      className="flex-1 text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-zinc-200 disabled:opacity-50"
+                    />
+                    <span className="text-zinc-500 text-xs">→</span>
+                    <input
+                      type="time"
+                      value={daySchedule.closeTime || "00:00"}
+                      onChange={(e) => {
+                        setSchedule((prev) => ({
+                          ...prev,
+                          [day]: {
+                            ...prev[day],
+                            closeTime: e.target.value,
+                          },
+                        }));
+                      }}
+                      disabled={isReadOnly || isPending}
+                      className="flex-1 text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-zinc-200 disabled:opacity-50"
+                    />
+                  </div>
+                ) : (
+                  <div className="text-xs text-zinc-600 italic">Cerrado</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Botón para aplicar horario a todos los días abiertos */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              // Encontrar el primer día abierto con horario
+              const firstOpenDay = DAYS.find(day => schedule[day]?.enabled);
+              if (!firstOpenDay) return;
+
+              const sourceSchedule = schedule[firstOpenDay];
+              const openTime = sourceSchedule.openTime || "12:00";
+              const closeTime = sourceSchedule.closeTime || "00:00";
+
+              setSchedule((prev) => {
+                const newSchedule = { ...prev };
+                DAYS.forEach(day => {
+                  if (newSchedule[day]?.enabled) {
+                    newSchedule[day] = {
+                      ...newSchedule[day],
+                      openTime,
+                      closeTime,
+                    };
+                  }
+                });
+                return newSchedule;
+              });
+            }}
+            disabled={isReadOnly || isPending}
+            className="text-xs px-3 py-1.5 rounded bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 border border-cyan-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Aplicar mismo horario a todos los días abiertos
+          </button>
+        </div>
+      </div>
+
       {/* Timeline visual */}
       <div className="pb-2">
         <WeekTimeline schedule={schedule} specialDays={specialDays} />
@@ -712,19 +822,19 @@ export function OpeningHoursEditor({
         </div>
       )}
 
-      {/* Sección: Horarios generales semanales */}
+      {/* Sección: Turnos de cocina/servicio */}
       <div className="space-y-4 pt-8 border-t-2 border-indigo-500/20">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
-            <span className="text-lg">📅</span>
+            <span className="text-lg">🍽️</span>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-semibold text-indigo-100 mb-1">
-              Horarios semanales y turnos regulares
+              Turnos de cocina / servicio
             </h3>
             <p className="text-xs text-indigo-200/60 leading-relaxed">
-              Define los días y horarios en los que tu restaurante opera normalmente cada semana.
-              Puedes configurar múltiples turnos por día (desayuno, comida, cena, etc.).
+              Horarios en los que se sirve cocina. Responde a "¿A qué hora puedo comer/cenar?".
+              Los turnos definen cuándo el cliente puede reservar mesa.
             </p>
           </div>
         </div>
