@@ -83,31 +83,36 @@ export function SettingsContent({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-zinc-800 pb-2">
-        {[
-          { key: "general", label: "General" },
-          { key: "hours", label: "Horarios" },
-          { key: "carta", label: "Carta" },
-          { key: "vinos", label: "Vinos" },
-          { key: "menus", label: "Menús" },
-          { key: "faqs", label: "FAQs" },
-          { key: "logo", label: "Logo" },
-        ].map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key as TabKey)}
-            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-              tab === t.key
-                ? "bg-indigo-600 text-white shadow-sm"
-                : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="space-y-6">
+      {/* Tabs - Modern UI with icons */}
+      <div className="pt-2">
+        <nav className="flex flex-wrap gap-1 p-1.5 bg-zinc-900/60 rounded-xl border border-zinc-800/80">
+          {[
+            { key: "general", label: "General", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
+            { key: "hours", label: "Horarios", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+            { key: "carta", label: "Carta", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
+            { key: "vinos", label: "Vinos", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
+            { key: "menus", label: "Menus", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
+            { key: "faqs", label: "FAQs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+            { key: "logo", label: "Logo", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
+          ].map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key as TabKey)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                tab === t.key
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={t.icon} />
+              </svg>
+              <span className="hidden sm:inline">{t.label}</span>
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Aviso de permisos */}

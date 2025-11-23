@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect, useRef } from "react";
 import { updateMenu } from "./actions";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { MenuPreview } from "./MenuPreview";
+import { MenuImporter } from "./MenuImporter";
 import {
   DndContext,
   closestCenter,
@@ -427,6 +428,10 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
     message: string;
     onConfirm: () => void;
   }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
+
+  // Estado para importador y vaciar carta
+  const [showImporter, setShowImporter] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -958,20 +963,47 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
             >
               <div className="space-y-3">
                 {filteredCategories.length === 0 && searchQuery === "" ? (
-                  <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
-                    <div className="text-4xl mb-3">🍽️</div>
-                    <p className="text-sm text-zinc-400 mb-4">
-                      Aún no hay categorías en tu menú
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddCategoryDialog(true)}
-                      disabled={isReadOnly}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
-                    >
-                      + Añadir primera categoría
-                    </button>
-                  </div>
+                  showImporter ? (
+                    <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-6">
+                      <MenuImporter
+                        onImport={(importedCategories) => {
+                          setCategories(importedCategories);
+                          setExpandedCategories(new Set(importedCategories.map(c => c.id)));
+                          setShowImporter(false);
+                        }}
+                        onCancel={() => setShowImporter(false)}
+                        existingCategories={categories}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                      <div className="text-4xl mb-3">🍽️</div>
+                      <p className="text-sm text-zinc-400 mb-4">
+                        Aun no hay categorias en tu menu
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => setShowImporter(true)}
+                          disabled={isReadOnly}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          Importar carta
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddCategoryDialog(true)}
+                          disabled={isReadOnly}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors disabled:opacity-50"
+                        >
+                          + Crear manualmente
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ) : filteredCategories.length === 0 ? (
                   <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
                     <div className="text-4xl mb-3">🔍</div>
@@ -1076,16 +1108,40 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
             </SortableContext>
           </DndContext>
 
-          {/* Botón añadir categoría */}
+          {/* Botones de acción al final */}
           {categories.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowAddCategoryDialog(true)}
-              disabled={isReadOnly}
-              className="w-full px-4 py-3 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
-            >
-              + Añadir categoría
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAddCategoryDialog(true)}
+                disabled={isReadOnly}
+                className="flex-1 px-4 py-3 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
+              >
+                + Añadir categoría
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImporter(true)}
+                disabled={isReadOnly}
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Importar
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(true)}
+                disabled={isReadOnly || categories.length === 0}
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-800/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Vaciar carta
+              </button>
+            </div>
           )}
         </>
       )}
@@ -1692,6 +1748,86 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               >
                 Guardar cambios
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Importar carta (cuando ya hay categorías) */}
+      {showImporter && categories.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-100">
+                  Importar carta
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Puedes reemplazar o anadir a tu carta actual
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowImporter(false)}
+                className="text-zinc-500 hover:text-zinc-300"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <MenuImporter
+                onImport={(importedCategories) => {
+                  setCategories(importedCategories);
+                  setExpandedCategories(new Set(importedCategories.map(c => c.id)));
+                  setShowImporter(false);
+                }}
+                onCancel={() => setShowImporter(false)}
+                existingCategories={categories}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar vaciar carta */}
+      {showClearConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-950/50 border border-rose-800/50 flex items-center justify-center">
+                <svg className="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+                Vaciar carta
+              </h3>
+              <p className="text-sm text-zinc-400 mb-6">
+                Se eliminaran todas las categorias y platos ({categories.length} categorias, {categories.reduce((acc, cat) => acc + cat.dishes.length, 0)} platos).
+                Esta accion no se puede deshacer.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCategories([]);
+                    setExpandedCategories(new Set());
+                    setShowClearConfirm(false);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-rose-600 hover:bg-rose-500 text-white"
+                >
+                  Vaciar carta
+                </button>
+              </div>
             </div>
           </div>
         </div>
