@@ -6,11 +6,15 @@ const API_BASE = process.env.SERVANA_API_URL || "https://servana-ia-production-e
  * POST /api/import-menu-url
  * Proxy para importar menú desde URL
  * Evita problemas de CORS al hacer la petición desde el servidor
+ *
+ * Body fields:
+ * - url: string (required)
+ * - includePrices: boolean (optional, default false)
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { url } = body;
+    const { url, includePrices } = body;
 
     if (!url || typeof url !== "string") {
       return NextResponse.json(
@@ -24,7 +28,7 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, includePrices: includePrices === true }),
     });
 
     if (!response.ok) {

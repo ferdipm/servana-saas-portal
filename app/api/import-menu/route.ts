@@ -6,11 +6,16 @@ const API_BASE = process.env.SERVANA_API_URL || "https://servana-ia-production-e
  * POST /api/import-menu
  * Proxy para importar menú desde archivo (PDF, JPG, PNG)
  * Evita problemas de CORS al hacer la petición desde el servidor
+ *
+ * Form fields:
+ * - menu: File (required)
+ * - includePrices: "true" | "false" (optional, default false)
  */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("menu") as File | null;
+    const includePrices = formData.get("includePrices") as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -22,6 +27,9 @@ export async function POST(request: NextRequest) {
     // Crear FormData para enviar al backend
     const backendFormData = new FormData();
     backendFormData.append("menu", file);
+    if (includePrices === "true") {
+      backendFormData.append("includePrices", "true");
+    }
 
     const response = await fetch(`${API_BASE}/api/onboarding/process-menu`, {
       method: "POST",

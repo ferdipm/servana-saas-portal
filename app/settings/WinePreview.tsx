@@ -6,6 +6,7 @@ type Wine = {
   id: string;
   name: string;
   winery?: string;
+  origin?: string;
   priceGlass?: number;
   priceBottle?: number;
 };
@@ -227,9 +228,9 @@ export function WinePreview({ categories, restaurantName, logoUrl }: WinePreview
                             <h3 className={`text-sm md:text-base font-semibold ${t.wineName}`}>
                               {wine.name}
                             </h3>
-                            {wine.winery && (
+                            {(wine.winery || wine.origin) && (
                               <p className={`text-xs mt-0.5 ${t.winery}`}>
-                                {wine.winery}
+                                {[wine.winery, wine.origin].filter(Boolean).join(" · ")}
                               </p>
                             )}
                           </div>

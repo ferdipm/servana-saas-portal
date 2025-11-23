@@ -6,6 +6,7 @@ type Wine = {
   id: string;
   name: string;
   winery?: string;
+  origin?: string;
   priceGlass?: number;
   priceBottle?: number;
 };
@@ -19,18 +20,58 @@ type WineCategory = {
 type WineImporterProps = {
   onImport: (categories: WineCategory[]) => void;
   onCancel?: () => void;
+  existingCategories?: WineCategory[]; // Para modo "añadir"
 };
 
 type ImportMethod = "file" | "url" | null;
 
-export function WineImporter({ onImport, onCancel }: WineImporterProps) {
+export function WineImporter({ onImport, onCancel, existingCategories = [] }: WineImporterProps) {
   const [method, setMethod] = useState<ImportMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [appendMode, setAppendMode] = useState(false); // Añadir vs reemplazar
+  const [includePrices, setIncludePrices] = useState(true); // Por defecto SÍ para vinos
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasExistingWines = existingCategories.length > 0;
+
+  // Combinar categorías nuevas con existentes
+  const mergeCategories = (newCategories: WineCategory[]): WineCategory[] => {
+    if (!appendMode || existingCategories.length === 0) {
+      return newCategories;
+    }
+
+    const merged = [...existingCategories];
+
+    for (const newCat of newCategories) {
+      // Buscar si existe una categoría con nombre similar
+      const existingCatIndex = merged.findIndex(
+        (c) => c.name.toLowerCase().trim() === newCat.name.toLowerCase().trim()
+      );
+
+      if (existingCatIndex >= 0) {
+        // Añadir vinos a la categoría existente (evitando duplicados por nombre)
+        const existingWineNames = new Set(
+          merged[existingCatIndex].wines.map((w) => w.name.toLowerCase().trim())
+        );
+        const newWines = newCat.wines.filter(
+          (w) => !existingWineNames.has(w.name.toLowerCase().trim())
+        );
+        merged[existingCatIndex].wines = [
+          ...merged[existingCatIndex].wines,
+          ...newWines,
+        ];
+      } else {
+        // Añadir la categoría completa
+        merged.push(newCat);
+      }
+    }
+
+    return merged;
+  };
 
   const handleFileSelect = (file: File) => {
     const validTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
@@ -63,21 +104,130 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
     setIsDragging(false);
   }, []);
 
+  // Extraer denominación de origen del nombre de la categoría
+  // Ej: "Vinos Tintos D.O. Ribera del Duero" -> "Ribera del Duero"
+  // Ej: "Vinos Blancos Gallegos" -> "Galicia"
+  const extractOriginFromCategoryName = (categoryName: string): string | undefined => {
+    const name = categoryName.toLowerCase();
+
+    // Patrones comunes de D.O.
+    const doPatterns = [
+      /d\.?o\.?\s+(.+)$/i,           // "D.O. Ribera del Duero" -> "Ribera del Duero"
+      /denominaci[oó]n\s+(.+)$/i,    // "Denominación Ribera del Duero"
+    ];
+
+    for (const pattern of doPatterns) {
+      const match = categoryName.match(pattern);
+      if (match) return match[1].trim();
+    }
+
+    // Mapeo de regiones conocidas
+    const regionMappings: Record<string, string> = {
+      "gallegos": "Galicia",
+      "galicia": "Galicia",
+      "rioja": "Rioja",
+      "ribera": "Ribera del Duero",
+      "rueda": "Rueda",
+      "priorat": "Priorat",
+      "penedès": "Penedès",
+      "penedes": "Penedès",
+      "navarra": "Navarra",
+      "bierzo": "Bierzo",
+      "toro": "Toro",
+      "jumilla": "Jumilla",
+      "rías baixas": "Rías Baixas",
+      "rias baixas": "Rías Baixas",
+      "monterrei": "Monterrei",
+      "valdeorras": "Valdeorras",
+      "ribeiro": "Ribeiro",
+      "cava": "Cava",
+      "champagne": "Champagne",
+      "borgoña": "Borgoña",
+      "burdeos": "Burdeos",
+      "italia": "Italia",
+      "francia": "Francia",
+      "portugal": "Portugal",
+      "argentina": "Argentina",
+      "chile": "Chile",
+    };
+
+    for (const [key, value] of Object.entries(regionMappings)) {
+      if (name.includes(key)) return value;
+    }
+
+    return undefined;
+  };
+
+  // Extraer D.O. del campo description del backend
+  // Ej: "D.O. RIAS BAIXAS" -> "Rías Baixas"
+  // Ej: "D.O. MONTERREI" -> "Monterrei"
+  const extractOriginFromDescription = (description: string): string | undefined => {
+    if (!description) return undefined;
+
+    // Limpiar y normalizar
+    const cleaned = description.trim();
+
+    // Si empieza con D.O., extraer el resto
+    const doMatch = cleaned.match(/^d\.?o\.?\s+(.+)$/i);
+    if (doMatch) {
+      // Capitalizar correctamente
+      const origin = doMatch[1].trim();
+      return capitalizeOrigin(origin);
+    }
+
+    // Si es solo el nombre de una región conocida
+    return capitalizeOrigin(cleaned);
+  };
+
+  // Capitalizar nombres de origen correctamente
+  const capitalizeOrigin = (origin: string): string => {
+    const specialCases: Record<string, string> = {
+      "rias baixas": "Rías Baixas",
+      "ribera del duero": "Ribera del Duero",
+      "castilla - león": "Castilla y León",
+      "castilla y leon": "Castilla y León",
+      "la rioja": "Rioja",
+    };
+
+    const lower = origin.toLowerCase();
+    if (specialCases[lower]) return specialCases[lower];
+
+    // Capitalizar cada palabra
+    return origin
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   // Transformar respuesta del API de menú a estructura de vinos
   const transformMenuToWineCategories = (menuData: any): WineCategory[] => {
     if (!menuData?.categories) return [];
 
-    return menuData.categories.map((cat: any, catIndex: number) => ({
-      id: `winecat-${Date.now()}-${catIndex}`,
-      name: cat.name || "Sin categoría",
-      wines: (cat.dishes || []).map((dish: any, dishIndex: number) => ({
-        id: `wine-${Date.now()}-${catIndex}-${dishIndex}`,
-        name: dish.name || "",
-        winery: dish.description || undefined, // Usamos descripción como bodega
-        priceBottle: dish.price || undefined,
-        priceGlass: undefined, // El API de menú no tiene precio por copa
-      })),
-    }));
+    return menuData.categories.map((cat: any, catIndex: number) => {
+      const categoryName = cat.name || "Sin categoría";
+      const origin = extractOriginFromCategoryName(categoryName);
+
+      return {
+        id: `winecat-${Date.now()}-${catIndex}`,
+        name: categoryName,
+        wines: (cat.dishes || []).map((dish: any, dishIndex: number) => {
+          // El backend puede devolver la D.O. en description (ej: "D.O. RIAS BAIXAS")
+          const descriptionOrigin = dish.description
+            ? extractOriginFromDescription(dish.description)
+            : undefined;
+
+          return {
+            id: `wine-${Date.now()}-${catIndex}-${dishIndex}`,
+            name: dish.name || "",
+            winery: undefined, // El backend no devuelve bodega separada
+            origin: descriptionOrigin || origin, // Preferir origen del vino, luego de categoría
+            priceBottle: dish.price || undefined,
+            priceGlass: undefined,
+          };
+        }),
+      };
+    });
   };
 
   const processFile = async () => {
@@ -89,6 +239,7 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
     try {
       const formData = new FormData();
       formData.append("menu", selectedFile);
+      formData.append("includePrices", includePrices ? "true" : "false");
 
       const response = await fetch("/api/import-menu", {
         method: "POST",
@@ -101,13 +252,17 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
       }
 
       const data = await response.json();
-      const wineCategories = transformMenuToWineCategories(data);
+      // El backend devuelve { processedMenu: { categories: [...] } }
+      const menuData = data.processedMenu || data;
+      const wineCategories = transformMenuToWineCategories(menuData);
 
       if (wineCategories.length === 0) {
         throw new Error("No se pudieron extraer vinos del archivo");
       }
 
-      onImport(wineCategories);
+      // Si está en modo añadir, combinar con existentes
+      const finalCategories = mergeCategories(wineCategories);
+      onImport(finalCategories);
     } catch (err: any) {
       setError(err.message || "Error al procesar el archivo");
     } finally {
@@ -125,7 +280,7 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
       const response = await fetch("/api/import-menu-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: url.trim(), includePrices }),
       });
 
       if (!response.ok) {
@@ -134,13 +289,17 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
       }
 
       const data = await response.json();
-      const wineCategories = transformMenuToWineCategories(data);
+      // El backend devuelve { processedMenu: { categories: [...] } }
+      const menuData = data.processedMenu || data;
+      const wineCategories = transformMenuToWineCategories(menuData);
 
       if (wineCategories.length === 0) {
         throw new Error("No se pudieron extraer vinos de la URL");
       }
 
-      onImport(wineCategories);
+      // Si está en modo añadir, combinar con existentes
+      const finalCategories = mergeCategories(wineCategories);
+      onImport(finalCategories);
     } catch (err: any) {
       setError(err.message || "Error al procesar la URL");
     } finally {
@@ -203,6 +362,48 @@ export function WineImporter({ onImport, onCancel }: WineImporterProps) {
               </div>
             </div>
           </button>
+        </div>
+
+        {/* Opciones de importación */}
+        <div className="flex flex-col items-center gap-3 pt-2">
+          {/* Toggle para incluir precios */}
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={includePrices}
+                onChange={(e) => setIncludePrices(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-600 transition-colors"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+            </div>
+            <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">
+              Importar precios
+            </span>
+          </label>
+
+          {/* Toggle para modo añadir (solo si hay vinos existentes) */}
+          {hasExistingWines && (
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={appendMode}
+                  onChange={(e) => setAppendMode(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+              </div>
+              <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">
+                Añadir a carta existente
+              </span>
+              <span className="text-xs text-zinc-500">
+                ({existingCategories.reduce((acc, cat) => acc + cat.wines.length, 0)} vinos)
+              </span>
+            </label>
+          )}
         </div>
 
         {onCancel && (
