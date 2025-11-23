@@ -7,6 +7,7 @@ import { LogoUploader } from "./LogoUploader";
 import { OpeningHoursEditor } from "./OpeningHoursEditor";
 import { MenuEditor } from "./MenuEditor";
 import { SetMenusEditor } from "./SetMenusEditor";
+import { WineEditor } from "./WineEditor";
 
 type InitialInfo = {
   name: string;
@@ -27,11 +28,12 @@ type SettingsContentProps = {
   initialFaqs: any;
   initialMenu: any;
   initialSetMenus: any;
+  initialWineMenu: any;
   initialOpeningHours: any;
   initialSpecialDays?: any[];
 };
 
-type TabKey = "general" | "carta" | "menus" | "faqs" | "hours" | "logo";
+type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo";
 
 export function SettingsContent({
   tenantId,
@@ -41,6 +43,7 @@ export function SettingsContent({
   initialFaqs,
   initialMenu,
   initialSetMenus,
+  initialWineMenu,
   initialOpeningHours,
   initialSpecialDays = [],
 }: SettingsContentProps) {
@@ -87,6 +90,7 @@ export function SettingsContent({
           { key: "general", label: "General" },
           { key: "hours", label: "Horarios" },
           { key: "carta", label: "Carta" },
+          { key: "vinos", label: "Vinos" },
           { key: "menus", label: "Menús" },
           { key: "faqs", label: "FAQs" },
           { key: "logo", label: "Logo" },
@@ -201,6 +205,20 @@ export function SettingsContent({
             restaurantId={restaurantId}
             initialMenu={initialMenu}
             isReadOnly={isReadOnly}
+            restaurantName={initialInfo.name}
+            logoUrl={initialInfo.logoUrl}
+          />
+        </section>
+      )}
+
+      {tab === "vinos" && (
+        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <WineEditor
+            restaurantId={restaurantId}
+            initialWineMenu={initialWineMenu}
+            isReadOnly={isReadOnly}
+            restaurantName={initialInfo.name}
+            logoUrl={initialInfo.logoUrl}
           />
         </section>
       )}

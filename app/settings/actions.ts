@@ -237,3 +237,44 @@ export async function updateSetMenus(formData: FormData) {
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
+
+/**
+ * Actualiza la carta de vinos de un restaurante (wine_menu)
+ */
+export async function updateWineMenu(formData: FormData) {
+  const restaurantId = formData.get("restaurantId");
+  const wineMenu = formData.get("wineMenu");
+
+  if (!restaurantId || typeof restaurantId !== "string") {
+    throw new Error("Falta el identificador del restaurante.");
+  }
+
+  if (!wineMenu || typeof wineMenu !== "string") {
+    throw new Error("Faltan los datos de la carta de vinos.");
+  }
+
+  // Parsear y validar el JSON de la carta de vinos
+  let parsedWineMenu;
+  try {
+    parsedWineMenu = JSON.parse(wineMenu);
+  } catch (err) {
+    throw new Error("Formato de carta de vinos inválido.");
+  }
+
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("restaurant_info")
+    .update({
+      wine_menu: parsedWineMenu,
+    })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("Error en updateWineMenu:", error);
+    throw new Error("No se ha podido actualizar la carta de vinos.");
+  }
+
+  // Volvemos a validar la página de ajustes
+  revalidatePath("/settings");
+}

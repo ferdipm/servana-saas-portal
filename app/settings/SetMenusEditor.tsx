@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { updateSetMenus } from "./actions";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 // Tipos para los menús cerrados
 type CourseOption = {
@@ -43,21 +44,49 @@ type SetMenusEditorProps = {
   isReadOnly: boolean;
 };
 
+// Tipo para platos con categoría
+type DishWithCategory = {
+  id: string;
+  name: string;
+  categoryName: string;
+  categoryId: string;
+};
+
+// Tipo para categorías con platos
+type CategoryWithDishes = {
+  id: string;
+  name: string;
+  emoji: string;
+  dishes: { id: string; name: string }[];
+};
+
 // Obtener platos de la carta para el selector
-function getDishesFromMenu(menu: any): { id: string; name: string; categoryName: string }[] {
+function getDishesFromMenu(menu: any): DishWithCategory[] {
   if (!menu?.categories) return [];
 
-  const dishes: { id: string; name: string; categoryName: string }[] = [];
+  const dishes: DishWithCategory[] = [];
   for (const cat of menu.categories) {
     for (const dish of cat.dishes || []) {
       dishes.push({
         id: dish.id,
         name: dish.name,
         categoryName: cat.name,
+        categoryId: cat.id,
       });
     }
   }
   return dishes;
+}
+
+// Obtener categorías con sus platos
+function getCategoriesFromMenu(menu: any): CategoryWithDishes[] {
+  if (!menu?.categories) return [];
+  return menu.categories.map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    emoji: cat.emoji || "🍽️",
+    dishes: (cat.dishes || []).map((d: any) => ({ id: d.id, name: d.name })),
+  }));
 }
 
 export function SetMenusEditor({
@@ -112,8 +141,27 @@ export function SetMenusEditor({
     price: undefined,
   });
 
+  // Estado para diálogo de confirmación
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
+
+  // Estado para el selector de platos mejorado
+  const [showDishPicker, setShowDishPicker] = useState<{
+    menuId: string;
+    courseId: string;
+  } | null>(null);
+  const [dishPickerSearch, setDishPickerSearch] = useState("");
+  const [dishPickerSelectedCategory, setDishPickerSelectedCategory] = useState<string | null>(null);
+  const [dishPickerSelectedDishes, setDishPickerSelectedDishes] = useState<Set<string>>(new Set());
+  const [dishPickerSupplements, setDishPickerSupplements] = useState<Record<string, number>>({});
+
   // Platos disponibles de la carta
   const availableDishes = getDishesFromMenu(initialMenu);
+  const availableCategories = getCategoriesFromMenu(initialMenu);
 
   // Auto-guardado
   useEffect(() => {
@@ -315,6 +363,82 @@ export function SetMenusEditor({
     );
   };
 
+  // Añadir múltiples platos desde el picker
+  const addDishesFromPicker = () => {
+    if (!showDishPicker || dishPickerSelectedDishes.size === 0) return;
+
+    const newOptions: CourseOption[] = [];
+    dishPickerSelectedDishes.forEach((dishId) => {
+      const dish = availableDishes.find((d) => d.id === dishId);
+      if (dish) {
+        newOptions.push({
+          id: `option-${Date.now()}-${dishId}`,
+          type: "dish",
+          dishId: dish.id,
+          dishName: dish.name,
+          supplement: dishPickerSupplements[dishId] || undefined,
+        });
+      }
+    });
+
+    setSetMenus((prev) =>
+      prev.map((m) =>
+        m.id === showDishPicker.menuId
+          ? {
+              ...m,
+              courses: m.courses.map((c) =>
+                c.id === showDishPicker.courseId
+                  ? { ...c, options: [...c.options, ...newOptions] }
+                  : c
+              ),
+            }
+          : m
+      )
+    );
+
+    // Reset picker state
+    setShowDishPicker(null);
+    setDishPickerSearch("");
+    setDishPickerSelectedCategory(null);
+    setDishPickerSelectedDishes(new Set());
+    setDishPickerSupplements({});
+  };
+
+  // Toggle dish selection in picker
+  const toggleDishInPicker = (dishId: string) => {
+    setDishPickerSelectedDishes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(dishId)) {
+        newSet.delete(dishId);
+      } else {
+        newSet.add(dishId);
+      }
+      return newSet;
+    });
+  };
+
+  // Filter dishes for picker
+  const getFilteredDishesForPicker = () => {
+    let dishes = availableDishes;
+
+    // Filter by category
+    if (dishPickerSelectedCategory) {
+      dishes = dishes.filter((d) => d.categoryId === dishPickerSelectedCategory);
+    }
+
+    // Filter by search
+    if (dishPickerSearch.trim()) {
+      const search = dishPickerSearch.toLowerCase();
+      dishes = dishes.filter(
+        (d) =>
+          d.name.toLowerCase().includes(search) ||
+          d.categoryName.toLowerCase().includes(search)
+      );
+    }
+
+    return dishes;
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -435,9 +559,15 @@ export function SetMenusEditor({
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm(`¿Eliminar el menú "${menu.name}"?`)) {
-                        deleteMenu(menu.id);
-                      }
+                      setConfirmDialog({
+                        isOpen: true,
+                        title: "Eliminar menú",
+                        message: `¿Eliminar el menú "${menu.name}"?`,
+                        onConfirm: () => {
+                          deleteMenu(menu.id);
+                          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                        },
+                      });
                     }}
                     disabled={isReadOnly}
                     className="px-2 py-1 rounded text-xs bg-rose-900/50 hover:bg-rose-900 text-rose-200"
@@ -489,25 +619,62 @@ export function SetMenusEditor({
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowAddOptionDialog({
-                                menuId: menu.id,
-                                courseId: course.id,
-                              })
-                            }
-                            disabled={isReadOnly}
-                            className="text-[10px] text-indigo-400 hover:text-indigo-300 px-2 py-1"
-                          >
-                            + Opción
-                          </button>
+                          {/* Dropdown para añadir opciones */}
+                          <div className="relative group">
+                            <button
+                              type="button"
+                              disabled={isReadOnly}
+                              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 border border-indigo-800/50 transition-colors disabled:opacity-50"
+                            >
+                              <span>+</span>
+                              <span>Añadir opción</span>
+                              <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 py-1 w-44 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setShowAddOptionDialog({
+                                    menuId: menu.id,
+                                    courseId: course.id,
+                                  })
+                                }
+                                disabled={isReadOnly}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors text-left"
+                              >
+                                <span>✏️</span>
+                                <span>Texto libre</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowDishPicker({
+                                    menuId: menu.id,
+                                    courseId: course.id,
+                                  });
+                                }}
+                                disabled={isReadOnly || availableDishes.length === 0}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors text-left disabled:opacity-50"
+                              >
+                                <span>🍽️</span>
+                                <span>Platos de la carta</span>
+                              </button>
+                            </div>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
-                              if (confirm(`¿Eliminar "${course.name}"?`)) {
-                                deleteCourse(menu.id, course.id);
-                              }
+                              setConfirmDialog({
+                                isOpen: true,
+                                title: "Eliminar curso",
+                                message: `¿Eliminar "${course.name}"?`,
+                                onConfirm: () => {
+                                  deleteCourse(menu.id, course.id);
+                                  setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                                },
+                              });
                             }}
                             disabled={isReadOnly}
                             className="text-[10px] text-rose-500 hover:text-rose-300 px-1"
@@ -519,9 +686,41 @@ export function SetMenusEditor({
 
                       {/* Opciones del curso */}
                       {course.options.length === 0 ? (
-                        <p className="text-xs text-zinc-500 italic pl-8">
-                          Sin opciones configuradas
-                        </p>
+                        <div className="mt-3 p-4 rounded-lg bg-zinc-900/50 border border-dashed border-zinc-700">
+                          <p className="text-xs text-zinc-500 text-center mb-3">
+                            Añade las opciones que el cliente puede elegir
+                          </p>
+                          <div className="flex flex-wrap gap-2 justify-center">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowAddOptionDialog({
+                                  menuId: menu.id,
+                                  courseId: course.id,
+                                })
+                              }
+                              disabled={isReadOnly}
+                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors"
+                            >
+                              <span>✏️</span>
+                              <span>Texto libre</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowDishPicker({
+                                  menuId: menu.id,
+                                  courseId: course.id,
+                                });
+                              }}
+                              disabled={isReadOnly || availableDishes.length === 0}
+                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
+                            >
+                              <span>🍽️</span>
+                              <span>Platos de la carta</span>
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         <div className="pl-8 space-y-1">
                           {course.options.map((option) => (
@@ -1179,6 +1378,244 @@ export function SetMenusEditor({
           </div>
         </div>
       )}
+
+      {/* Diálogo: Selector de platos mejorado */}
+      {showDishPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="p-5 border-b border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+                🍽️ Seleccionar platos de la carta
+              </h3>
+              <p className="text-sm text-zinc-400">
+                Selecciona los platos que quieres añadir como opciones
+              </p>
+            </div>
+
+            {/* Búsqueda y filtros */}
+            <div className="p-4 border-b border-zinc-800 space-y-3">
+              {/* Barra de búsqueda */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={dishPickerSearch}
+                  onChange={(e) => setDishPickerSearch(e.target.value)}
+                  placeholder="Buscar platos..."
+                  className="w-full text-sm rounded-lg bg-zinc-800 border border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  autoFocus
+                />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                {dishPickerSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setDishPickerSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Filtro por categorías */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDishPickerSelectedCategory(null)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    !dishPickerSelectedCategory
+                      ? "bg-indigo-600 text-white"
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                  }`}
+                >
+                  Todas ({availableDishes.length})
+                </button>
+                {availableCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setDishPickerSelectedCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      dishPickerSelectedCategory === cat.id
+                        ? "bg-indigo-600 text-white"
+                        : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                    }`}
+                  >
+                    {cat.emoji} {cat.name} ({cat.dishes.length})
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Lista de platos */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {getFilteredDishesForPicker().length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-3xl mb-2">🔍</div>
+                  <p className="text-sm text-zinc-400">
+                    {dishPickerSearch
+                      ? `No se encontraron platos con "${dishPickerSearch}"`
+                      : "No hay platos en esta categoría"}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {getFilteredDishesForPicker().map((dish) => {
+                    const isSelected = dishPickerSelectedDishes.has(dish.id);
+                    return (
+                      <div
+                        key={dish.id}
+                        onClick={() => toggleDishInPicker(dish.id)}
+                        className={`relative p-3 rounded-lg border cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-indigo-900/30 border-indigo-500 ring-1 ring-indigo-500"
+                            : "bg-zinc-800/50 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Checkbox visual */}
+                          <div
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                              isSelected
+                                ? "bg-indigo-600 border-indigo-600"
+                                : "border-zinc-600"
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-zinc-100 truncate">
+                              {dish.name}
+                            </p>
+                            <p className="text-xs text-zinc-500 truncate">
+                              {dish.categoryName}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Input de suplemento si está seleccionado */}
+                        {isSelected && (
+                          <div
+                            className="mt-2 pt-2 border-t border-zinc-700/50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="flex items-center gap-2">
+                              <label className="text-[10px] text-zinc-400 whitespace-nowrap">
+                                Suplemento:
+                              </label>
+                              <div className="relative flex-1">
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={dishPickerSupplements[dish.id] ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setDishPickerSupplements((prev) => ({
+                                      ...prev,
+                                      [dish.id]:
+                                        val === "" ? 0 : parseFloat(val),
+                                    }));
+                                  }}
+                                  placeholder="0.00"
+                                  className="w-full text-xs rounded bg-zinc-900 border border-zinc-600 pl-5 pr-2 py-1 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                />
+                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500">
+                                  +€
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer con seleccionados y acciones */}
+            <div className="p-4 border-t border-zinc-800 bg-zinc-900/80">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-zinc-400">
+                  {dishPickerSelectedDishes.size > 0 ? (
+                    <span>
+                      <span className="text-indigo-400 font-medium">
+                        {dishPickerSelectedDishes.size}
+                      </span>{" "}
+                      plato{dishPickerSelectedDishes.size !== 1 ? "s" : ""}{" "}
+                      seleccionado{dishPickerSelectedDishes.size !== 1 ? "s" : ""}
+                    </span>
+                  ) : (
+                    <span>Selecciona al menos un plato</span>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDishPicker(null);
+                      setDishPickerSearch("");
+                      setDishPickerSelectedCategory(null);
+                      setDishPickerSelectedDishes(new Set());
+                      setDishPickerSupplements({});
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addDishesFromPicker}
+                    disabled={dishPickerSelectedDishes.size === 0}
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Añadir {dishPickerSelectedDishes.size > 0 && `(${dishPickerSelectedDishes.size})`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diálogo de confirmación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText="Eliminar"
+        variant="danger"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

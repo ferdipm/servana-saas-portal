@@ -2,6 +2,8 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import { updateMenu } from "./actions";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { MenuPreview } from "./MenuPreview";
 import {
   DndContext,
   closestCenter,
@@ -44,6 +46,8 @@ type MenuEditorProps = {
   restaurantId: string;
   initialMenu: any;
   isReadOnly: boolean;
+  restaurantName?: string;
+  logoUrl?: string;
 };
 
 type ViewMode = "edit" | "preview";
@@ -351,7 +355,7 @@ function SortableDish({
   );
 }
 
-export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditorProps) {
+export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantName, logoUrl }: MenuEditorProps) {
   // Parsear menú inicial
   const parseInitialMenu = (): MenuCategory[] => {
     if (!initialMenu || !initialMenu.categories || !Array.isArray(initialMenu.categories)) {
@@ -415,6 +419,14 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
 
   // Estado para editar plato existente
   const [editingDish, setEditingDish] = useState<{ categoryId: string; dish: MenuDish } | null>(null);
+
+  // Estado para diálogo de confirmación
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -950,9 +962,15 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                         onToggle={() => toggleCategory(category.id)}
                         onEdit={() => setEditingCategory(category)}
                         onDelete={() => {
-                          if (confirm(`¿Eliminar la categoría "${category.name}" y todos sus platos?`)) {
-                            deleteCategory(category.id);
-                          }
+                          setConfirmDialog({
+                            isOpen: true,
+                            title: "Eliminar categoría",
+                            message: `¿Eliminar la categoría "${category.name}" y todos sus platos?`,
+                            onConfirm: () => {
+                              deleteCategory(category.id);
+                              setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                            },
+                          });
                         }}
                         onDuplicate={() => duplicateCategory(category.id)}
                         isReadOnly={isReadOnly}
@@ -990,9 +1008,15 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
                                       dish={dish}
                                       onEdit={() => openEditDishDialog(category.id, dish)}
                                       onDelete={() => {
-                                        if (confirm(`¿Eliminar "${dish.name}"?`)) {
-                                          deleteDish(category.id, dish.id);
-                                        }
+                                        setConfirmDialog({
+                                          isOpen: true,
+                                          title: "Eliminar plato",
+                                          message: `¿Eliminar "${dish.name}"?`,
+                                          onConfirm: () => {
+                                            deleteDish(category.id, dish.id);
+                                            setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                                          },
+                                        });
                                       }}
                                       onDuplicate={() => duplicateDish(category.id, dish.id)}
                                       isReadOnly={isReadOnly}
@@ -1039,76 +1063,11 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
 
       {/* Modo Preview (Vista Cliente) */}
       {viewMode === "preview" && (
-        <div className="bg-white rounded-xl shadow-xl p-8 max-w-3xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-zinc-900 mb-2">Nuestro Menú</h2>
-            <p className="text-zinc-600">Descubre nuestros deliciosos platos</p>
-          </div>
-
-          <div className="space-y-8">
-            {categories.map((category) => (
-              <div key={category.id} className="space-y-4">
-                {/* Categoría */}
-                <div className="flex items-center gap-3 pb-3 border-b-2 border-zinc-200">
-                  <div
-                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                    style={{
-                      backgroundColor: category.color ? `${category.color}20` : "#6366f120",
-                      borderWidth: "2px",
-                      borderStyle: "solid",
-                      borderColor: category.color || "#6366f1",
-                    }}
-                  >
-                    {category.emoji}
-                  </div>
-                  <h3 className="text-2xl font-bold text-zinc-900">{category.name}</h3>
-                </div>
-
-                {/* Platos */}
-                <div className="space-y-4">
-                  {category.dishes.map((dish) => (
-                    <div key={dish.id} className="space-y-1">
-                      <div className="flex justify-between items-start gap-4">
-                        <h4 className="text-lg font-semibold text-zinc-900 flex-1">{dish.name}</h4>
-                        {dish.price !== undefined && dish.price !== null && (
-                          <span className="text-lg font-bold text-indigo-600 whitespace-nowrap">
-                            {dish.price.toFixed(2)}€
-                          </span>
-                        )}
-                      </div>
-                      {dish.description && (
-                        <p className="text-sm text-zinc-600 leading-relaxed">{dish.description}</p>
-                      )}
-                      {dish.notes && (
-                        <p className="text-sm text-cyan-700 italic mt-1">
-                          📝 {dish.notes}
-                        </p>
-                      )}
-                      {dish.allergens && dish.allergens.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {dish.allergens.map((allergen) => (
-                            <span
-                              key={allergen}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-800 border border-amber-300"
-                            >
-                              ⚠️ {allergen}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {categories.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-zinc-500">No hay platos en el menú</p>
-            </div>
-          )}
-        </div>
+        <MenuPreview
+          categories={categories}
+          restaurantName={restaurantName}
+          logoUrl={logoUrl}
+        />
       )}
 
       {/* Diálogo: Añadir categoría */}
@@ -1708,6 +1667,17 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly }: MenuEditor
           </div>
         </div>
       )}
+
+      {/* Diálogo de confirmación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText="Eliminar"
+        variant="danger"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
     </form>
   );
 }
