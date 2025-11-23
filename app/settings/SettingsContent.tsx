@@ -8,6 +8,7 @@ import { OpeningHoursEditor } from "./OpeningHoursEditor";
 import { MenuEditor } from "./MenuEditor";
 import { SetMenusEditor } from "./SetMenusEditor";
 import { WineEditor } from "./WineEditor";
+import { FAQEditor } from "./FAQEditor";
 
 type InitialInfo = {
   name: string;
@@ -241,17 +242,11 @@ export function SettingsContent({
 
       {tab === "faqs" && (
         <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-100">FAQs</h2>
-          <p className="text-xs text-zinc-400">
-            Preguntas frecuentes que el bot puede usar para responder mejor a
-            tus clientes.
-          </p>
-          <div className="text-xs text-zinc-400">
-            FAQs (JSON):
-            <pre className="mt-2 bg-zinc-900/60 rounded-lg p-3 text-[10px] text-zinc-300 overflow-auto max-h-72">
-{JSON.stringify(initialFaqs ?? [], null, 2)}
-            </pre>
-          </div>
+          <FAQEditor
+            restaurantId={restaurantId}
+            initialFaqs={initialFaqs}
+            isReadOnly={isReadOnly}
+          />
         </section>
       )}
 

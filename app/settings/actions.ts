@@ -3,6 +3,38 @@
 import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+// URL del backend para RAG
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://servana-ai-production.up.railway.app';
+
+/**
+ * Función auxiliar para re-indexar contenido en RAG
+ * Se llama en background después de guardar cambios
+ */
+async function triggerRagReindex(
+  restaurantId: string,
+  tenantId: string,
+  kind: 'menu_item' | 'faq' | 'wine' | 'set_menu',
+  data: any
+): Promise<void> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/rag/reindex`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ restaurantId, tenantId, kind, data }),
+    });
+
+    if (!response.ok) {
+      console.warn('[RAG] Reindex warning:', await response.text());
+    } else {
+      const result = await response.json();
+      console.log(`[RAG] Reindexed ${result.indexed} ${kind} chunks`);
+    }
+  } catch (error) {
+    // No bloquear la operación principal si RAG falla
+    console.warn('[RAG] Reindex failed (non-blocking):', error);
+  }
+}
+
 /**
  * Actualiza los datos generales de un restaurante:
  * - name
@@ -160,6 +192,7 @@ export async function updateOpeningHours(formData: FormData) {
  */
 export async function updateMenu(formData: FormData) {
   const restaurantId = formData.get("restaurantId");
+  const tenantId = formData.get("tenantId");
   const menu = formData.get("menu");
 
   if (!restaurantId || typeof restaurantId !== "string") {
@@ -193,6 +226,11 @@ export async function updateMenu(formData: FormData) {
     throw new Error("No se ha podido actualizar el menú.");
   }
 
+  // Re-indexar en RAG (background, no bloquea)
+  if (tenantId && typeof tenantId === "string") {
+    triggerRagReindex(restaurantId, tenantId, 'menu_item', parsedMenu);
+  }
+
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
@@ -202,6 +240,7 @@ export async function updateMenu(formData: FormData) {
  */
 export async function updateSetMenus(formData: FormData) {
   const restaurantId = formData.get("restaurantId");
+  const tenantId = formData.get("tenantId");
   const setMenus = formData.get("setMenus");
 
   if (!restaurantId || typeof restaurantId !== "string") {
@@ -234,6 +273,11 @@ export async function updateSetMenus(formData: FormData) {
     throw new Error("No se han podido actualizar los menús.");
   }
 
+  // Re-indexar en RAG (background, no bloquea)
+  if (tenantId && typeof tenantId === "string") {
+    triggerRagReindex(restaurantId, tenantId, 'set_menu', parsedSetMenus);
+  }
+
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
@@ -243,6 +287,7 @@ export async function updateSetMenus(formData: FormData) {
  */
 export async function updateWineMenu(formData: FormData) {
   const restaurantId = formData.get("restaurantId");
+  const tenantId = formData.get("tenantId");
   const wineMenu = formData.get("wineMenu");
 
   if (!restaurantId || typeof restaurantId !== "string") {
@@ -273,6 +318,58 @@ export async function updateWineMenu(formData: FormData) {
   if (error) {
     console.error("Error en updateWineMenu:", error);
     throw new Error("No se ha podido actualizar la carta de vinos.");
+  }
+
+  // Re-indexar en RAG (background, no bloquea)
+  if (tenantId && typeof tenantId === "string") {
+    triggerRagReindex(restaurantId, tenantId, 'wine', parsedWineMenu);
+  }
+
+  // Volvemos a validar la página de ajustes
+  revalidatePath("/settings");
+}
+
+/**
+ * Actualiza las FAQs de un restaurante
+ */
+export async function updateFaqs(formData: FormData) {
+  const restaurantId = formData.get("restaurantId");
+  const tenantId = formData.get("tenantId");
+  const faqs = formData.get("faqs");
+
+  if (!restaurantId || typeof restaurantId !== "string") {
+    throw new Error("Falta el identificador del restaurante.");
+  }
+
+  if (!faqs || typeof faqs !== "string") {
+    throw new Error("Faltan los datos de las FAQs.");
+  }
+
+  // Parsear y validar el JSON de las FAQs
+  let parsedFaqs;
+  try {
+    parsedFaqs = JSON.parse(faqs);
+  } catch (err) {
+    throw new Error("Formato de FAQs inválido.");
+  }
+
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("restaurant_info")
+    .update({
+      faqs: parsedFaqs,
+    })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("Error en updateFaqs:", error);
+    throw new Error("No se han podido actualizar las FAQs.");
+  }
+
+  // Re-indexar en RAG (background, no bloquea)
+  if (tenantId && typeof tenantId === "string") {
+    triggerRagReindex(restaurantId, tenantId, 'faq', parsedFaqs);
   }
 
   // Volvemos a validar la página de ajustes
