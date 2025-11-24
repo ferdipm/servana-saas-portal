@@ -681,11 +681,11 @@ export function OpeningHoursEditor({
                     : "bg-zinc-900/20 border-zinc-800"
                 }`}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-zinc-400">{day}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
+                <label className="flex items-center gap-2 mb-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isEnabled}
+                    onChange={() => {
                       setSchedule((prev) => ({
                         ...prev,
                         [day]: {
@@ -696,18 +696,10 @@ export function OpeningHoursEditor({
                       }));
                     }}
                     disabled={isReadOnly || isPending}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors disabled:opacity-50 ${
-                      isEnabled ? "bg-cyan-600" : "bg-zinc-700"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                        isEnabled ? "translate-x-4.5" : "translate-x-1"
-                      }`}
-                      style={{ transform: isEnabled ? "translateX(18px)" : "translateX(4px)" }}
-                    />
-                  </button>
-                </div>
+                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-zinc-900 disabled:opacity-50"
+                  />
+                  <span className={`text-xs font-medium ${isEnabled ? "text-zinc-300" : "text-zinc-500"}`}>{day}</span>
+                </label>
                 {isEnabled ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -743,7 +735,7 @@ export function OpeningHoursEditor({
                     />
                   </div>
                 ) : (
-                  <div className="text-xs text-rose-400/70 font-medium">Cerrado</div>
+                  <div className="text-xs text-rose-400/70 italic pl-6">Cerrado</div>
                 )}
               </div>
             );
