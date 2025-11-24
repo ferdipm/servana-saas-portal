@@ -512,61 +512,6 @@ export function OpeningHoursEditor({
     });
   };
 
-  // Generar preview en lenguaje natural
-  const generatePreview = (): string => {
-    const openDays: string[] = [];
-    const closedDays: string[] = [];
-
-    DAYS.forEach((day) => {
-      if (schedule[day].enabled && schedule[day].shifts.length > 0) {
-        openDays.push(day);
-      } else {
-        closedDays.push(day);
-      }
-    });
-
-    if (openDays.length === 0) {
-      return "⚠️ El restaurante está cerrado todos los días";
-    }
-
-    if (openDays.length === 7) {
-      // Ver si todos tienen los mismos horarios
-      const firstDayShifts = schedule[DAYS[0]].shifts;
-      const allSame = DAYS.every((day) => {
-        const dayShifts = schedule[day].shifts;
-        if (dayShifts.length !== firstDayShifts.length) return false;
-        return dayShifts.every((shift, i) =>
-          shift.startTime === firstDayShifts[i].startTime &&
-          shift.endTime === firstDayShifts[i].endTime
-        );
-      });
-
-      if (allSame) {
-        const shiftsText = firstDayShifts
-          .map((s) => `${s.startTime} a ${s.endTime}`)
-          .join(" y ");
-        return `🟢 Abierto todos los días de ${shiftsText}`;
-      }
-    }
-
-    // Agrupar días consecutivos
-    let preview = "🟢 Abierto ";
-
-    if (openDays.length === 5 && !openDays.includes("Sábado") && !openDays.includes("Domingo")) {
-      preview += "lunes a viernes";
-    } else if (openDays.length >= 5) {
-      preview += openDays.slice(0, -1).join(", ") + " y " + openDays[openDays.length - 1];
-    } else {
-      preview += openDays.join(", ");
-    }
-
-    if (closedDays.length > 0 && closedDays.length <= 2) {
-      preview += ` • 🔴 Cerrado ${closedDays.join(" y ")}`;
-    }
-
-    return preview;
-  };
-
   // Validar cambios con reservas existentes
   const validateWithReservations = async (): Promise<{ hasConflicts: boolean; message?: string }> => {
     try {
@@ -644,13 +589,6 @@ export function OpeningHoursEditor({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Preview en lenguaje natural */}
-      <div className="bg-indigo-950/20 border border-indigo-500/30 rounded-lg px-4 py-3">
-        <div className="text-sm text-indigo-200 font-medium">
-          {generatePreview()}
-        </div>
-      </div>
-
       {/* Sección: Horario general del establecimiento */}
       <div className="space-y-4 pt-4 border-t border-cyan-500/20">
         <div className="flex items-start gap-3">
@@ -662,7 +600,7 @@ export function OpeningHoursEditor({
               Horario del establecimiento
             </h3>
             <p className="text-xs text-cyan-200/60 leading-relaxed">
-              Horario general de apertura y cierre. Responde a preguntas como "¿A qué hora abrís?" o "¿Hasta qué hora puedo ir?".
+              Horario general de apertura y cierre del local.
             </p>
           </div>
         </div>

@@ -121,7 +121,7 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
 
   return (
     <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-zinc-200">Vista semanal</h3>
+      <h3 className="text-sm font-semibold text-zinc-200">Vista semanal de horarios de apertura y turnos de comida</h3>
 
       {/* Timeline grid */}
       <div className="relative pt-6">

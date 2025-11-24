@@ -252,12 +252,6 @@ export function SettingsContent({
 
       {tab === "hours" && (
         <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-100">
-            Horarios de apertura
-          </h2>
-          <p className="text-xs text-zinc-400">
-            Configura los días y horarios en los que tu restaurante está abierto
-          </p>
           <OpeningHoursEditor
             restaurantId={restaurantId}
             initialHours={initialOpeningHours}
