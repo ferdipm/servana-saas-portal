@@ -17,10 +17,24 @@ function InfoTooltip({
   examples?: string[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+
+  // Calcular posición del popup cuando se abre
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopupPosition({
+        top: rect.bottom + 8, // 8px debajo del botón
+        left: rect.left
+      });
+    }
+  }, [isOpen]);
 
   return (
     <div className="relative inline-block">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="ml-1 w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center justify-center text-[10px] font-bold"
@@ -33,18 +47,24 @@ function InfoTooltip({
         <>
           {/* Overlay para cerrar al hacer clic fuera */}
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[9998]"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Popup */}
-          <div className="absolute left-0 top-6 z-50 w-80 bg-zinc-800 border border-indigo-500/30 rounded-lg shadow-xl p-4">
+          {/* Popup - posición fija para que no se corte */}
+          <div
+            className="fixed z-[9999] w-96 max-h-[80vh] overflow-y-auto bg-zinc-800 border border-indigo-500/30 rounded-lg shadow-2xl p-4"
+            style={{
+              top: `${popupPosition.top}px`,
+              left: `${popupPosition.left}px`,
+            }}
+          >
             <div className="flex items-start justify-between mb-2">
               <h4 className="text-sm font-semibold text-indigo-200">{title}</h4>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-zinc-200 text-lg leading-none"
+                className="text-zinc-400 hover:text-zinc-200 text-lg leading-none flex-shrink-0"
               >
                 ×
               </button>
@@ -876,7 +896,7 @@ export function OpeningHoursEditor({
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="flex-shrink-0">🪑</span>
-                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que el bot puede reservar. El sistema cuenta en tiempo real y libera plazas cuando hay cancelaciones.</span>
+                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. El sistema cuenta en tiempo real y libera plazas cuando hay cancelaciones.</span>
                 </div>
               </div>
               <p className="text-[10px] text-indigo-300/60 italic pt-1">
@@ -1029,10 +1049,10 @@ export function OpeningHoursEditor({
                         />
                         <InfoTooltip
                           title="👥 Máx. personas por reserva"
-                          description="Define cuántas personas puede tener una reserva individual en este turno. El bot rechazará automáticamente grupos más grandes y les pedirá que llamen al restaurante para atención personalizada."
+                          description="Define cuántas personas puede tener una reserva individual en este turno. La IA de Servana rechazará automáticamente grupos más grandes y les pedirá que llamen al restaurante para atención personalizada."
                           examples={[
-                            "Si pones 8: el bot acepta reservas de 1 a 8 personas",
-                            "Grupo de 12 personas: el bot dice 'Para grupos grandes, llama al restaurante'",
+                            "Si pones 8: la IA acepta reservas de 1 a 8 personas",
+                            "Grupo de 12 personas: la IA dice 'Para grupos grandes, llama al restaurante'",
                             "Útil para controlar grupos que requieren preparación especial"
                           ]}
                         />
@@ -1052,10 +1072,10 @@ export function OpeningHoursEditor({
                         />
                         <InfoTooltip
                           title="🪑 Máx. comensales por turno"
-                          description="Capacidad total que el bot puede reservar en este turno. El sistema cuenta en tiempo real todas las reservas activas y suma el número de personas. Cuando se alcanza este límite, el bot recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
+                          description="Capacidad total que la IA de Servana puede reservar en este turno. El sistema cuenta en tiempo real todas las reservas activas y suma el número de personas. Cuando se alcanza este límite, la IA recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
                           examples={[
-                            "Si pones 50: el bot acepta reservas hasta llegar a 50 comensales",
-                            "Tienes 30 comensales reservados y llega una reserva de 25: el bot dice 'solo quedan 20 plazas'",
+                            "Si pones 50: la IA acepta reservas hasta llegar a 50 comensales",
+                            "Tienes 30 comensales reservados y llega una reserva de 25: la IA dice 'solo quedan 20 plazas'",
                             "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool disponible",
                             "Reservas telefónicas y walk-ins NO cuentan en este límite (lo gestiona el encargado)"
                           ]}
