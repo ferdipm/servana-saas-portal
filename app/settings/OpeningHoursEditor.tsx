@@ -896,7 +896,7 @@ export function OpeningHoursEditor({
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="flex-shrink-0">🪑</span>
-                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. El sistema cuenta en tiempo real y libera plazas cuando hay cancelaciones.</span>
+                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. Cuenta todas las reservas registradas en tiempo real (online, telefónicas, walk-ins). Las cancelaciones liberan plazas automáticamente.</span>
                 </div>
               </div>
               <p className="text-[10px] text-indigo-300/60 italic pt-1">
@@ -1072,12 +1072,12 @@ export function OpeningHoursEditor({
                         />
                         <InfoTooltip
                           title="🪑 Máx. comensales por turno"
-                          description="Capacidad total que la IA de Servana puede reservar en este turno. El sistema cuenta en tiempo real todas las reservas activas y suma el número de personas. Cuando se alcanza este límite, la IA recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
+                          description="Capacidad total que la IA de Servana puede reservar en este turno. El sistema cuenta en tiempo real TODAS las reservas registradas (online, telefónicas, walk-ins) y suma el número de personas. Cuando se alcanza este límite, la IA recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
                           examples={[
-                            "Si pones 50: la IA acepta reservas hasta llegar a 50 comensales",
-                            "Tienes 30 comensales reservados y llega una reserva de 25: la IA dice 'solo quedan 20 plazas'",
-                            "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool disponible",
-                            "Reservas telefónicas y walk-ins NO cuentan en este límite (lo gestiona el encargado)"
+                            "Si pones 50: la IA acepta reservas hasta llegar a 50 comensales totales",
+                            "Tienes 30 comensales (20 online + 10 telefónicas): quedan 20 plazas disponibles",
+                            "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool",
+                            "Walk-ins sin registrar NO cuentan - solo reservas guardadas en el sistema"
                           ]}
                         />
                       </div>
