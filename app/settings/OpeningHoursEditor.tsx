@@ -6,6 +6,71 @@ import { WeekTimeline } from "./WeekTimeline";
 import { SpecialDaysManager } from "./SpecialDaysManager";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
+// Componente de tooltip informativo
+function InfoTooltip({
+  title,
+  description,
+  examples
+}: {
+  title: string;
+  description: string;
+  examples?: string[];
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="ml-1 w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center justify-center text-[10px] font-bold"
+        title="Más información"
+      >
+        ?
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Overlay para cerrar al hacer clic fuera */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Popup */}
+          <div className="absolute left-0 top-6 z-50 w-80 bg-zinc-800 border border-indigo-500/30 rounded-lg shadow-xl p-4">
+            <div className="flex items-start justify-between mb-2">
+              <h4 className="text-sm font-semibold text-indigo-200">{title}</h4>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-zinc-400 hover:text-zinc-200 text-lg leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-300 leading-relaxed mb-3">
+              {description}
+            </p>
+
+            {examples && examples.length > 0 && (
+              <div className="bg-zinc-900/50 rounded p-2 space-y-1">
+                <p className="text-[10px] font-semibold text-indigo-300 mb-1">Ejemplos:</p>
+                {examples.map((example, idx) => (
+                  <p key={idx} className="text-[10px] text-zinc-400 leading-relaxed">
+                    • {example}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Tipos para los turnos
 type Shift = {
   id: string;
@@ -798,13 +863,25 @@ export function OpeningHoursEditor({
             <h3 className="text-base font-semibold text-indigo-100 mb-1">
               Turnos de cocina / servicio
             </h3>
-            <p className="text-xs text-indigo-200/60 leading-relaxed">
+            <p className="text-xs text-indigo-200/60 leading-relaxed mb-3">
               Horarios en los que se sirve cocina. Responde a "¿A qué hora puedo comer/cenar?".
               Los turnos definen cuándo el cliente puede reservar mesa.
             </p>
-            <div className="flex gap-4 mt-2 text-[10px] text-zinc-500">
-              <span>👥 = Máx. personas por reserva</span>
-              <span>🪑 = Máx. comensales por turno (límite del bot)</span>
+            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 space-y-2">
+              <p className="text-[11px] font-semibold text-indigo-200">Control de capacidad por turno:</p>
+              <div className="space-y-1.5 text-[10px] text-indigo-200/80">
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0">👥</span>
+                  <span><strong>Máx. personas por reserva:</strong> Límite para una reserva individual. Grupos más grandes se redirigen al teléfono.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0">🪑</span>
+                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que el bot puede reservar. El sistema cuenta en tiempo real y libera plazas cuando hay cancelaciones.</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-indigo-300/60 italic pt-1">
+                💡 Haz clic en los iconos <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-indigo-500/30 text-[8px]">?</span> junto a cada campo para ver ejemplos detallados
+              </p>
             </div>
           </div>
         </div>
@@ -939,7 +1016,7 @@ export function OpeningHoursEditor({
                       <div className="w-px h-5 bg-zinc-700 mx-1"></div>
 
                       {/* Max personas por reserva */}
-                      <div className="flex items-center gap-1" title="Máx. personas por reserva">
+                      <div className="flex items-center gap-1">
                         <span className="text-zinc-500 text-xs">👥</span>
                         <input
                           type="number"
@@ -950,10 +1027,19 @@ export function OpeningHoursEditor({
                           disabled={isReadOnly || isPending}
                           className="w-12 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
                         />
+                        <InfoTooltip
+                          title="👥 Máx. personas por reserva"
+                          description="Define cuántas personas puede tener una reserva individual en este turno. El bot rechazará automáticamente grupos más grandes y les pedirá que llamen al restaurante para atención personalizada."
+                          examples={[
+                            "Si pones 8: el bot acepta reservas de 1 a 8 personas",
+                            "Grupo de 12 personas: el bot dice 'Para grupos grandes, llama al restaurante'",
+                            "Útil para controlar grupos que requieren preparación especial"
+                          ]}
+                        />
                       </div>
 
                       {/* Max covers por turno */}
-                      <div className="flex items-center gap-1" title="Máx. comensales en este turno">
+                      <div className="flex items-center gap-1">
                         <span className="text-zinc-500 text-xs">🪑</span>
                         <input
                           type="number"
@@ -963,6 +1049,16 @@ export function OpeningHoursEditor({
                           onChange={(e) => updateShift(day, shift.id, "maxCovers", e.target.value)}
                           disabled={isReadOnly || isPending}
                           className="w-14 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                        />
+                        <InfoTooltip
+                          title="🪑 Máx. comensales por turno"
+                          description="Capacidad total que el bot puede reservar en este turno. El sistema cuenta en tiempo real todas las reservas activas y suma el número de personas. Cuando se alcanza este límite, el bot recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
+                          examples={[
+                            "Si pones 50: el bot acepta reservas hasta llegar a 50 comensales",
+                            "Tienes 30 comensales reservados y llega una reserva de 25: el bot dice 'solo quedan 20 plazas'",
+                            "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool disponible",
+                            "Reservas telefónicas y walk-ins NO cuentan en este límite (lo gestiona el encargado)"
+                          ]}
                         />
                       </div>
 
