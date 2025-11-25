@@ -15,6 +15,8 @@ type Shift = {
   endTime: string;
   color?: string; // Color personalizado (hex)
   isCustom?: boolean; // Si es un turno personalizado
+  maxCovers?: number; // Máx comensales que el bot puede reservar en este turno (default: 50)
+  maxPartySize?: number; // Máx personas por reserva individual (default: 8)
 };
 
 type DaySchedule = {
@@ -454,9 +456,17 @@ export function OpeningHoursEditor({
   // Actualizar turno
   const updateShift = (day: string, shiftId: string, field: keyof Shift, value: string) => {
     setSchedule((prev) => {
-      const updatedShifts = prev[day].shifts.map((shift) =>
-        shift.id === shiftId ? { ...shift, [field]: value } : shift
-      );
+      const updatedShifts = prev[day].shifts.map((shift) => {
+        if (shift.id !== shiftId) return shift;
+
+        // Convertir a número para campos numéricos
+        let parsedValue: string | number = value;
+        if (field === 'maxCovers' || field === 'maxPartySize') {
+          parsedValue = parseInt(value) || (field === 'maxCovers' ? 50 : 8);
+        }
+
+        return { ...shift, [field]: parsedValue };
+      });
 
       // Si se actualizó startTime, reordenar
       const shouldSort = field === 'startTime';
@@ -792,6 +802,10 @@ export function OpeningHoursEditor({
               Horarios en los que se sirve cocina. Responde a "¿A qué hora puedo comer/cenar?".
               Los turnos definen cuándo el cliente puede reservar mesa.
             </p>
+            <div className="flex gap-4 mt-2 text-[10px] text-zinc-500">
+              <span>👥 = Máx. personas por reserva</span>
+              <span>🪑 = Máx. comensales por turno (límite del bot)</span>
+            </div>
           </div>
         </div>
 
@@ -920,6 +934,37 @@ export function OpeningHoursEditor({
                         disabled={isReadOnly || isPending}
                         className="text-sm rounded bg-zinc-800 border border-zinc-700 px-2 py-1 text-zinc-200 disabled:opacity-50"
                       />
+
+                      {/* Separador */}
+                      <div className="w-px h-5 bg-zinc-700 mx-1"></div>
+
+                      {/* Max personas por reserva */}
+                      <div className="flex items-center gap-1" title="Máx. personas por reserva">
+                        <span className="text-zinc-500 text-xs">👥</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={shift.maxPartySize ?? 8}
+                          onChange={(e) => updateShift(day, shift.id, "maxPartySize", e.target.value)}
+                          disabled={isReadOnly || isPending}
+                          className="w-12 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                        />
+                      </div>
+
+                      {/* Max covers por turno */}
+                      <div className="flex items-center gap-1" title="Máx. comensales en este turno">
+                        <span className="text-zinc-500 text-xs">🪑</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="500"
+                          value={shift.maxCovers ?? 50}
+                          onChange={(e) => updateShift(day, shift.id, "maxCovers", e.target.value)}
+                          disabled={isReadOnly || isPending}
+                          className="w-14 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                        />
+                      </div>
 
                       {/* Botón eliminar */}
                       <button

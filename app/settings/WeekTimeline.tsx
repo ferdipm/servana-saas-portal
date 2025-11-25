@@ -8,6 +8,8 @@ type Shift = {
   emoji: string;
   color?: string; // Color personalizado (hex)
   isCustom?: boolean; // Si es un turno personalizado
+  maxCovers?: number; // Máx comensales que el bot puede reservar en este turno
+  maxPartySize?: number; // Máx personas por reserva individual
 };
 
 type DaySchedule = {
