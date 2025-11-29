@@ -324,14 +324,23 @@ async function groupReservationsByTurn(
   openingHours: any,
   periodDays: number
 ) {
-  const turnMap = new Map<string, { count: number; guests: number; capacity: number }>();
+  const turnMap = new Map<string, { count: number; guests: number; capacity: number; daysActive: number }>();
 
   // Extract turns from opening hours
   const turns = extractTurnsFromOpeningHours(openingHours);
 
+  // Calculate how many days per week each turn is active
+  const turnDaysActive = calculateTurnDaysActive(openingHours, turns);
+
   // Initialize turns
   turns.forEach((turn) => {
-    turnMap.set(turn.name, { count: 0, guests: 0, capacity: turn.capacity || 50 });
+    const daysActive = turnDaysActive.get(turn.name) || 7; // Default to 7 if not found
+    turnMap.set(turn.name, {
+      count: 0,
+      guests: 0,
+      capacity: turn.capacity || 50,
+      daysActive
+    });
   });
 
   // Assign reservations to turns
@@ -341,11 +350,12 @@ async function groupReservationsByTurn(
     const turn = findTurnForHour(hour, turns);
 
     if (turn) {
-      const existing = turnMap.get(turn.name) || { count: 0, guests: 0, capacity: turn.capacity || 50 };
+      const existing = turnMap.get(turn.name) || { count: 0, guests: 0, capacity: turn.capacity || 50, daysActive: 7 };
       turnMap.set(turn.name, {
         count: existing.count + 1,
         guests: existing.guests + (r.party_size || 0),
         capacity: existing.capacity,
+        daysActive: existing.daysActive,
       });
     }
   });
@@ -357,8 +367,47 @@ async function groupReservationsByTurn(
     turn,
     count: Math.round(data.count / numDays), // Average reservations per day
     guests: Math.round(data.guests / numDays), // Average guests per day
-    capacity: data.capacity, // Capacity stays the same (it's per service)
+    capacity: data.capacity, // Daily capacity (already accounts for one service per day)
   }));
+}
+
+function calculateTurnDaysActive(openingHours: any, turns: any[]): Map<string, number> {
+  const daysActiveMap = new Map<string, number>();
+
+  if (!openingHours || typeof openingHours !== 'object') {
+    // If no opening hours, assume all turns are active every day
+    turns.forEach(turn => daysActiveMap.set(turn.name, 7));
+    return daysActiveMap;
+  }
+
+  // Initialize counters for each turn
+  turns.forEach(turn => daysActiveMap.set(turn.name, 0));
+
+  const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+  days.forEach(day => {
+    const daySchedule = openingHours[day];
+
+    if (!daySchedule?.enabled || !Array.isArray(daySchedule.shifts)) {
+      return;
+    }
+
+    // For each shift in this day, increment the counter for that turn
+    daySchedule.shifts.forEach((shift: any) => {
+      if (shift.name && daysActiveMap.has(shift.name)) {
+        daysActiveMap.set(shift.name, (daysActiveMap.get(shift.name) || 0) + 1);
+      }
+    });
+  });
+
+  // If any turn has 0 days active, default to 7
+  daysActiveMap.forEach((count, turnName) => {
+    if (count === 0) {
+      daysActiveMap.set(turnName, 7);
+    }
+  });
+
+  return daysActiveMap;
 }
 
 function groupReservationsBySource(reservations: any[]) {

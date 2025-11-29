@@ -23,6 +23,8 @@ import { ReservationSourcesChart } from "@/components/analytics/ReservationSourc
 import { OccupancyRealTimeView } from "@/components/analytics/OccupancyRealTimeView";
 import { PeriodSelector } from "@/components/analytics/PeriodSelector";
 import { ChartHelpButton } from "@/components/analytics/ChartHelpButton";
+import { KeyInsights } from "@/components/analytics/KeyInsights";
+import { exportAnalyticsToCSV } from "@/lib/exportAnalytics";
 
 interface AnalyticsContentProps {
   restaurantId: string;
@@ -114,8 +116,8 @@ export function AnalyticsContent({
   }, [restaurantId, period]);
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log("Exporting data...");
+    if (!data) return;
+    exportAnalyticsToCSV(data, period);
   };
 
   if (loading) {
@@ -248,8 +250,8 @@ export function AnalyticsContent({
             </h3>
             <ChartHelpButton
               title="Ocupación por Turno"
-              description="Compara el promedio diario de comensales contra la capacidad total del restaurante para cada turno (Comida y Cena). Las barras apiladas muestran comensales ocupados vs. plazas disponibles."
-              interpretation="Los colores indican el nivel de ocupación: verde (<70%), ámbar (70-90%), rojo (>90%). Un turno constantemente en rojo puede indicar oportunidad para ampliar capacidad. Un turno en verde puede beneficiarse de promociones para atraer más clientes."
+              description="Muestra el promedio diario de comensales comparado con la capacidad diaria de cada turno. Por ejemplo, si seleccionas 'Últimos 30 días', verás cuántos comensales promedio tuviste por día en cada turno vs. la capacidad máxima de ese turno por día."
+              interpretation="Los colores de la barra de ocupación indican: verde (<70%), ámbar (70-90%), rojo (>90%). Un turno constantemente en rojo puede indicar oportunidad para ampliar capacidad. Un turno en verde puede beneficiarse de promociones para atraer más clientes. El porcentaje te muestra qué tan lleno está cada turno en promedio."
             />
           </div>
           <TurnDistributionChart data={data.reservationsByTurn} />
@@ -271,6 +273,9 @@ export function AnalyticsContent({
           <ReservationSourcesChart data={data.reservationsBySources} />
         </div>
       </div>
+
+      {/* Key Insights - Summary */}
+      <KeyInsights data={data} />
     </div>
   );
 }

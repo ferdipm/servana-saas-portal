@@ -5,17 +5,17 @@
 -- Index for filtering reservations by restaurant and date range with status
 -- This is the most common query pattern in analytics
 CREATE INDEX IF NOT EXISTS idx_reservations_analytics
-ON reservations(restaurant_id, reservation_date, status)
+ON reservations(restaurant_id, datetime_utc, status)
 WHERE status IN ('confirmed', 'seated', 'finished');
 
 -- Index for filtering by tenant, date, and status
 -- Useful for multi-tenant queries
 CREATE INDEX IF NOT EXISTS idx_reservations_tenant_date
-ON reservations(tenant_id, reservation_date, status);
+ON reservations(tenant_id, datetime_utc, status);
 
 -- Index for datetime-based queries (real-time occupancy)
 CREATE INDEX IF NOT EXISTS idx_reservations_datetime
-ON reservations(restaurant_id, reservation_datetime)
+ON reservations(restaurant_id, datetime_utc)
 WHERE status IN ('confirmed', 'seated', 'finished');
 
 -- Index for status filtering (general queries)
@@ -24,7 +24,7 @@ ON reservations(status);
 
 -- Composite index for source analytics
 CREATE INDEX IF NOT EXISTS idx_reservations_source_analytics
-ON reservations(restaurant_id, source, reservation_date)
+ON reservations(restaurant_id, source, datetime_utc)
 WHERE status IN ('confirmed', 'seated', 'finished');
 
 -- Comment on indexes for documentation
