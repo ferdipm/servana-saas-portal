@@ -96,18 +96,46 @@ export async function GET(request: NextRequest) {
         startDate = startOfDaySpain(subDays(spainTime, 7));
     }
 
-    // Fetch reservations in the period
-    console.log(`[Analytics API] Fetching reservations for restaurant ${restaurantId}, period: ${period}`);
+    // Calculate previous period dates for trend comparison
+    const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const prevStartDate = startOfDaySpain(subDays(spainTime, periodDays * 2));
+    const prevEndDate = endOfDaySpain(subDays(spainTime, periodDays));
+
+    // Fetch all data in parallel for better performance
+    console.log(`[Analytics API] Fetching data in parallel for restaurant ${restaurantId}, period: ${period}`);
     console.log(`[Analytics API] Date range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
-    const { data: reservations, error: reservationsError } = await supabase
-      .from("reservations")
-      .select("id, datetime_utc, party_size, source, status")
-      .eq("restaurant_id", restaurantId)
-      .gte("datetime_utc", startDate.toISOString())
-      .lte("datetime_utc", endDate.toISOString())
-      .neq("status", "cancelled")
-      .order("datetime_utc", { ascending: true });
+    const [
+      { data: reservations, error: reservationsError },
+      { data: prevReservations },
+      { data: restaurantInfo }
+    ] = await Promise.all([
+      // Current period reservations
+      supabase
+        .from("reservations")
+        .select("id, datetime_utc, party_size, source, status")
+        .eq("restaurant_id", restaurantId)
+        .gte("datetime_utc", startDate.toISOString())
+        .lte("datetime_utc", endDate.toISOString())
+        .neq("status", "cancelled")
+        .order("datetime_utc", { ascending: true }),
+
+      // Previous period reservations for trend comparison
+      supabase
+        .from("reservations")
+        .select("id, party_size")
+        .eq("restaurant_id", restaurantId)
+        .gte("datetime_utc", prevStartDate.toISOString())
+        .lte("datetime_utc", prevEndDate.toISOString())
+        .neq("status", "cancelled"),
+
+      // Restaurant info for capacity/opening hours
+      supabase
+        .from("restaurant_info")
+        .select("opening_hours")
+        .eq("id", restaurantId)
+        .single()
+    ]);
 
     if (reservationsError) {
       console.error("[Analytics API] Error fetching reservations:", reservationsError);
@@ -123,19 +151,6 @@ export async function GET(request: NextRequest) {
       console.log("[Analytics API] No reservations found, returning empty analytics");
       return NextResponse.json(getEmptyAnalytics());
     }
-
-    // Calculate previous period for trend comparison using Spain timezone
-    const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const prevStartDate = startOfDaySpain(subDays(spainTime, periodDays * 2));
-    const prevEndDate = endOfDaySpain(subDays(spainTime, periodDays));
-
-    const { data: prevReservations } = await supabase
-      .from("reservations")
-      .select("id, party_size")
-      .eq("restaurant_id", restaurantId)
-      .gte("datetime_utc", prevStartDate.toISOString())
-      .lte("datetime_utc", prevEndDate.toISOString())
-      .neq("status", "cancelled");
 
     // Calculate KPIs
     const totalReservations = reservations.length;
@@ -156,13 +171,6 @@ export async function GET(request: NextRequest) {
     const avgPartySizeTrend = prevAvgPartySize > 0
       ? ((avgPartySize - prevAvgPartySize) / prevAvgPartySize) * 100
       : 0;
-
-    // Fetch restaurant capacity info
-    const { data: restaurantInfo } = await supabase
-      .from("restaurant_info")
-      .select("opening_hours")
-      .eq("id", restaurantId)
-      .single();
 
     // Calculate occupancy rate (requires capacity info from opening_hours)
     let occupancyRate = 0;
