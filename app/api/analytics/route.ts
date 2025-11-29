@@ -430,7 +430,7 @@ async function getRealTimeOccupancy(
     });
   });
 
-  todayReservations?.forEach((r) => {
+  todayReservations?.forEach((r: any) => {
     const date = new Date(r.datetime_utc);
     const hour = date.getUTCHours();
     const turn = findTurnForHour(hour, turns);
