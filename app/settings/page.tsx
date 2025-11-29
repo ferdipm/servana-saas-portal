@@ -5,6 +5,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 import DashboardShell from "../dashboard-shell";
 import { SettingsContent } from "./SettingsContent";
+import { getPendingTodayCount } from "../actions";
 
 type SettingsPageProps = {
   searchParams?: Promise<{
@@ -84,6 +85,12 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const initialOpeningHours = infoRow?.opening_hours ?? {};
   const initialSpecialDays = infoRow?.special_days ?? [];
 
+  // Obtener conteo de pendientes para hoy
+  const pendingCount = await getPendingTodayCount({
+    tenantId,
+    restaurantId: currentRestaurantId,
+  });
+
   return (
     <DashboardShell
       userEmail={user.email}
@@ -92,6 +99,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       canSwitch={canSwitch}
       restaurantName={infoRow?.name}
       restaurantLogoUrl={infoRow?.logo_url}
+      pendingCount={pendingCount}
     >
       <div className="space-y-4">
         <header className="mb-2">

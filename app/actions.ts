@@ -77,7 +77,7 @@ export async function getReservations(opts: GetReservationsOpts) {
     `)
     .eq("tenant_id", tenantId) // 👈 clave: filtramos por tenant_id
     .in("restaurant_id", filterRestaurantIds) // 👈 NUEVO: filtrar por restaurante(s) específico(s)
-    .order("datetime_utc", { ascending: false })
+    .order("datetime_utc", { ascending: true }) // 👈 CAMBIADO: orden ascendente (más temprano primero)
     .limit(limit);
 
   if (status && status !== "all") {
@@ -150,65 +150,95 @@ export async function getReservationsSummary({
     }
   }
 
-  // Fechas en UTC
-  const startOfToday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
-  const startOfTomorrow = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1)
-  );
-  const startOfDayAfterTomorrow = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 2)
-  );
+  // Calcular fechas basadas en la zona horaria de España (Europe/Madrid)
+  // Convertir la hora actual a timezone de España para saber qué día es "hoy" allí
+  const spainTimeString = now.toLocaleString('en-US', { timeZone: 'Europe/Madrid' });
+  const spainTime = new Date(spainTimeString);
 
-  const todayWeekday = startOfToday.getUTCDay(); // 0=domingo...
+  // Inicio y fin del día "hoy" en España, pero expresado en UTC
+  // Ejemplo: Si en España son las 00:30 del 29, "hoy" es 29, que empieza en UTC a las 23:00 del 28
+  const startOfToday = new Date(Date.UTC(
+    spainTime.getFullYear(),
+    spainTime.getMonth(),
+    spainTime.getDate(),
+    0, 0, 0, 0
+  ));
+  // Ajustar por el offset de España (GMT+1 en invierno, GMT+2 en verano)
+  const spainOffset = -spainTime.getTimezoneOffset() / 60; // En horas
+  startOfToday.setUTCHours(startOfToday.getUTCHours() - spainOffset);
+
+  const startOfTomorrow = new Date(startOfToday);
+  startOfTomorrow.setUTCDate(startOfTomorrow.getUTCDate() + 1);
+
+  const startOfDayAfterTomorrow = new Date(startOfToday);
+  startOfDayAfterTomorrow.setUTCDate(startOfDayAfterTomorrow.getUTCDate() + 2);
+
+  const todayWeekday = spainTime.getDay(); // 0=domingo...
   const daysUntilNextMonday = (8 - todayWeekday) % 7 || 7;
-  const startOfNextMonday = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + daysUntilNextMonday
-    )
-  );
+  const startOfNextMonday = new Date(startOfToday);
+  startOfNextMonday.setUTCDate(startOfNextMonday.getUTCDate() + daysUntilNextMonday);
 
-  const startOfMonth = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
-  );
-  const startOfNextMonth = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
-  );
+  const startOfMonth = new Date(Date.UTC(
+    spainTime.getFullYear(),
+    spainTime.getMonth(),
+    1,
+    0, 0, 0, 0
+  ));
+  startOfMonth.setUTCHours(startOfMonth.getUTCHours() - spainOffset);
+
+  const startOfNextMonth = new Date(Date.UTC(
+    spainTime.getFullYear(),
+    spainTime.getMonth() + 1,
+    1,
+    0, 0, 0, 0
+  ));
+  startOfNextMonth.setUTCHours(startOfNextMonth.getUTCHours() - spainOffset);
+
+  // DEBUG: Log para verificar qué estamos consultando
+  console.log('[getReservationsSummary] Consultando reservas para hoy:', {
+    tenantId,
+    filterRestaurantIds,
+    startOfToday: startOfToday.toISOString(),
+    startOfTomorrow: startOfTomorrow.toISOString(),
+  });
 
   const { count: today, error: todayError } = await supabase
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds (específico o todos)
+    .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfToday.toISOString())
-    .lt("datetime_utc", startOfTomorrow.toISOString());
+    .lt("datetime_utc", startOfTomorrow.toISOString())
+    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
+
+  console.log('[getReservationsSummary] Resultado para hoy:', { today, todayError });
 
   const { count: tomorrow, error: tomorrowError } = await supabase
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
+    .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfTomorrow.toISOString())
-    .lt("datetime_utc", startOfDayAfterTomorrow.toISOString());
+    .lt("datetime_utc", startOfDayAfterTomorrow.toISOString())
+    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
 
   const { count: weekRest, error: weekRestError } = await supabase
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
+    .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
-    .lt("datetime_utc", startOfNextMonday.toISOString());
+    .lt("datetime_utc", startOfNextMonday.toISOString())
+    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
 
   const { count: monthRest, error: monthRestError } = await supabase
     .from("reservations")
     .select("id", { count: "exact", head: true })
     .eq("tenant_id", tenantId)
-    .in("restaurant_id", filterRestaurantIds) // 👈 Usar filterRestaurantIds
+    .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
-    .lt("datetime_utc", startOfNextMonth.toISOString());
+    .lt("datetime_utc", startOfNextMonth.toISOString())
+    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
 
   if (todayError || tomorrowError || weekRestError || monthRestError) {
     console.error("Error obteniendo summary", {
@@ -225,6 +255,41 @@ export async function getReservationsSummary({
     weekRest: weekRest ?? 0,
     monthRest: monthRest ?? 0,
   };
+}
+
+/**
+ * Obtiene el conteo de TODAS las reservas pendientes (sin filtro de fecha)
+ */
+export async function getPendingTodayCount(opts: {
+  tenantId: string;
+  restaurantId?: string;
+}) {
+  const { tenantId, restaurantId } = opts;
+  const supabase = await supabaseServer();
+
+  // Obtener restaurantes accesibles para el usuario
+  const accessibleRestaurants = await getUserAccessibleRestaurants();
+  const accessibleRestaurantIds = accessibleRestaurants.map((r) => r.restaurant_id);
+
+  if (accessibleRestaurantIds.length === 0) {
+    return 0;
+  }
+
+  // Filtrar por restaurante específico o todos accesibles
+  let filterRestaurantIds = accessibleRestaurantIds;
+  if (restaurantId && accessibleRestaurantIds.includes(restaurantId)) {
+    filterRestaurantIds = [restaurantId];
+  }
+
+  // Contar TODAS las reservas pendientes (sin filtro de fecha)
+  const { count } = await supabase
+    .from("reservations")
+    .select("id", { count: "exact", head: true })
+    .eq("tenant_id", tenantId)
+    .in("restaurant_id", filterRestaurantIds)
+    .eq("status", "pending");
+
+  return count ?? 0;
 }
 
 /* ------------------------------------------------------------------

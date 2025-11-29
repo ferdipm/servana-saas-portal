@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 import DashboardShell from "../dashboard-shell";
-import { ReservationsView } from "../reservations-view";
+import { PendingPageContent } from "./pending-page-content";
+import { getPendingTodayCount } from "../actions";
 
 type PendingPageProps = {
   searchParams?: Promise<{
@@ -41,6 +42,12 @@ export default async function PendingPage({ searchParams }: PendingPageProps) {
     .eq("id", currentRestaurantId)
     .single();
 
+  // Obtener conteo de pendientes para hoy
+  const pendingCount = await getPendingTodayCount({
+    tenantId,
+    restaurantId: currentRestaurantId,
+  });
+
   const defaultTz = "Europe/Zurich";
 
   return (
@@ -51,26 +58,14 @@ export default async function PendingPage({ searchParams }: PendingPageProps) {
       canSwitch={canSwitch}
       restaurantName={restaurantInfo?.name}
       restaurantLogoUrl={restaurantInfo?.logo_url}
+      pendingCount={pendingCount}
     >
-      <div className="space-y-6">
-        {/* Header de la página */}
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            Reservas pendientes
-          </h1>
-          <p className="text-sm text-zinc-400 mt-1">
-            Solicitudes que requieren revisión y confirmación manual
-          </p>
-        </header>
-
-        <ReservationsView
-          key={currentRestaurantId}
-          tenantId={tenantId}
-          restaurantId={currentRestaurantId}
-          defaultTz={defaultTz}
-          initialStatus="pending"
-        />
-      </div>
+      <PendingPageContent
+        key={currentRestaurantId}
+        tenantId={tenantId}
+        restaurantId={currentRestaurantId}
+        defaultTz={defaultTz}
+      />
     </DashboardShell>
   );
 }

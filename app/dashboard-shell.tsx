@@ -1,6 +1,6 @@
 import { RestaurantSwitcher } from "@/components/RestaurantSwitcher";
 
-import { Home, Settings, Clock3 } from "lucide-react";
+import { Home, Settings, Clock3, BarChart3 } from "lucide-react";
 import React from "react";
 import { logout } from "./actions";
 
@@ -9,6 +9,7 @@ type Item = { href: string; label: string; icon: React.ReactElement };
 const nav: Item[] = [
   { href: "/", label: "Reservas", icon: <Home className="w-4 h-4" /> },
   { href: "/pending", label: "Pendientes", icon: <Clock3 className="w-4 h-4" /> },
+  { href: "/analytics", label: "Analíticas", icon: <BarChart3 className="w-4 h-4" /> },
   { href: "/settings", label: "Ajustes", icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -20,6 +21,7 @@ export default function DashboardShell({
   canSwitch,
   restaurantName,
   restaurantLogoUrl,
+  pendingCount = 0,
 }: {
   children: React.ReactNode;
   userEmail?: string | null;
@@ -28,6 +30,7 @@ export default function DashboardShell({
   canSwitch?: boolean;
   restaurantName?: string;
   restaurantLogoUrl?: string;
+  pendingCount?: number;
 }) {
   // Función helper para construir URLs con restaurantId
   const buildNavUrl = (href: string) => {
@@ -85,7 +88,12 @@ export default function DashboardShell({
                   <span className="shrink-0 text-zinc-400 group-hover:text-zinc-100">
                     {n.icon}
                   </span>
-                  <span className="text-[14px] leading-none">{n.label}</span>
+                  <span className="text-[14px] leading-none flex-1">{n.label}</span>
+                  {n.label === "Pendientes" && pendingCount > 0 && (
+                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-semibold animate-pulse">
+                      {pendingCount}
+                    </span>
+                  )}
                 </a>
               </li>
             ))}

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SummaryCards } from "./summary-cards";
-import { ReservationsView } from "./reservations-view";
+import { ReservationsView } from "../reservations-view";
 
 type Props = {
   tenantId: string;
@@ -11,13 +9,10 @@ type Props = {
   defaultTz: string;
 };
 
-export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: Props) {
+export function PendingPageContent({ tenantId, restaurantId, defaultTz }: Props) {
   const router = useRouter();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleReservationChange = () => {
-    // Incrementar el trigger para que SummaryCards se recargue
-    setRefreshTrigger((prev) => prev + 1);
     // Forzar refresh del Server Component para actualizar el badge de pendientes
     router.refresh();
   };
@@ -27,23 +22,18 @@ export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: P
       {/* Header de la página */}
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-          Reservas
+          Reservas pendientes
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Vista general de todas las reservas confirmadas
+          Solicitudes que requieren revisión y confirmación manual
         </p>
       </header>
-
-      <SummaryCards
-        tenantId={tenantId}
-        restaurantId={restaurantId}
-        refreshTrigger={refreshTrigger}
-      />
 
       <ReservationsView
         tenantId={tenantId}
         restaurantId={restaurantId}
         defaultTz={defaultTz}
+        initialStatus="pending"
         onReservationChange={handleReservationChange}
       />
     </div>

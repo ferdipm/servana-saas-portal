@@ -3,17 +3,18 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
-import DashboardShell from "./dashboard-shell";
-import { ReservationsPageContent } from "./reservations-page-content";
-import { getPendingTodayCount } from "./actions";
+import DashboardShell from "../dashboard-shell";
+import { AnalyticsContent } from "./analytics-content";
+import { getPendingTodayCount } from "../actions";
 
 type PageProps = {
   searchParams?: Promise<{
     restaurantId?: string;
+    period?: string;
   }>;
 };
 
-export default async function Page({ searchParams }: PageProps) {
+export default async function AnalyticsPage({ searchParams }: PageProps) {
   const supabase = await supabaseServer();
 
   const {
@@ -22,11 +23,12 @@ export default async function Page({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    redirect(`/login?redirectTo=/`);
+    redirect(`/login?redirectTo=/analytics`);
   }
 
   const params = await searchParams;
   const requestedRestaurantId = params?.restaurantId;
+  const period = params?.period || '7d';
 
   const {
     tenantId,
@@ -48,8 +50,6 @@ export default async function Page({ searchParams }: PageProps) {
     restaurantId: currentRestaurantId,
   });
 
-  const defaultTz = "Europe/Zurich";
-
   return (
     <DashboardShell
       userEmail={user.email}
@@ -60,11 +60,11 @@ export default async function Page({ searchParams }: PageProps) {
       restaurantLogoUrl={restaurantInfo?.logo_url}
       pendingCount={pendingCount}
     >
-      <ReservationsPageContent
+      <AnalyticsContent
         key={currentRestaurantId}
-        tenantId={tenantId}
         restaurantId={currentRestaurantId}
-        defaultTz={defaultTz}
+        tenantId={tenantId}
+        initialPeriod={period}
       />
     </DashboardShell>
   );
