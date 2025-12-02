@@ -380,3 +380,38 @@ export async function updateFaqs(formData: FormData) {
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
+
+/**
+ * Actualiza la configuración de notificaciones de un restaurante
+ */
+export async function updateNotificationSettings(
+  restaurantId: string,
+  settings: {
+    reminder_24h_enabled: boolean;
+    reminder_message_template?: string;
+    confirmation_required: boolean;
+    notify_on_cancellation: boolean;
+    notify_on_new_reservation: boolean;
+  }
+) {
+  if (!restaurantId) {
+    throw new Error("Falta el identificador del restaurante.");
+  }
+
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("restaurant_info")
+    .update({
+      notification_settings: settings,
+    })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("Error en updateNotificationSettings:", error);
+    throw new Error("No se ha podido actualizar la configuración de notificaciones.");
+  }
+
+  // Volvemos a validar la página de ajustes
+  revalidatePath("/settings");
+}

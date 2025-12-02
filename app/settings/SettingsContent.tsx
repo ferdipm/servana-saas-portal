@@ -9,6 +9,7 @@ import { MenuEditor } from "./MenuEditor";
 import { SetMenusEditor } from "./SetMenusEditor";
 import { WineEditor } from "./WineEditor";
 import { FAQEditor } from "./FAQEditor";
+import { NotificationsEditor } from "./NotificationsEditor";
 
 type InitialInfo = {
   name: string;
@@ -19,6 +20,14 @@ type InitialInfo = {
   country: string;
   timezone: string;
   logoUrl: string;
+};
+
+type NotificationSettings = {
+  reminder_24h_enabled: boolean;
+  reminder_message_template?: string;
+  confirmation_required: boolean;
+  notify_on_cancellation: boolean;
+  notify_on_new_reservation: boolean;
 };
 
 type SettingsContentProps = {
@@ -32,9 +41,10 @@ type SettingsContentProps = {
   initialWineMenu: any;
   initialOpeningHours: any;
   initialSpecialDays?: any[];
+  initialNotificationSettings?: NotificationSettings;
 };
 
-type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo";
+type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo" | "notifications";
 
 export function SettingsContent({
   tenantId,
@@ -47,6 +57,7 @@ export function SettingsContent({
   initialWineMenu,
   initialOpeningHours,
   initialSpecialDays = [],
+  initialNotificationSettings,
 }: SettingsContentProps) {
   const [tab, setTab] = useState<TabKey>("general");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -95,6 +106,7 @@ export function SettingsContent({
             { key: "vinos", label: "Vinos", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
             { key: "menus", label: "Menus", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
             { key: "faqs", label: "FAQs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+            { key: "notifications", label: "Notificaciones", icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
             { key: "logo", label: "Logo", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
           ].map((t) => (
             <button
@@ -271,6 +283,21 @@ export function SettingsContent({
             tenantId={tenantId}
             restaurantId={restaurantId}
             currentLogoUrl={initialInfo.logoUrl}
+            isReadOnly={isReadOnly}
+          />
+        </section>
+      )}
+
+      {tab === "notifications" && (
+        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <NotificationsEditor
+            restaurantId={restaurantId}
+            initialSettings={initialNotificationSettings ?? {
+              reminder_24h_enabled: true,
+              confirmation_required: true,
+              notify_on_cancellation: true,
+              notify_on_new_reservation: false,
+            }}
             isReadOnly={isReadOnly}
           />
         </section>

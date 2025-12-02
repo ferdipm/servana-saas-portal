@@ -22,6 +22,10 @@ export type Reservation = {
   tenant_id: string | null;
   restaurant_id: string; // NUEVO: Ahora es NOT NULL en la BD
   reminder_sent: boolean | null;
+  // Campos de confirmación
+  confirmation_status: 'not_required' | 'pending' | 'confirmed' | 'declined' | 'no_response' | null;
+  confirmation_sent_at: string | null;
+  confirmation_replied_at: string | null;
   restaurant_info?: {
     id: string;
     name: string;

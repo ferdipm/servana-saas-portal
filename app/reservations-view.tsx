@@ -17,7 +17,6 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { Plus } from "lucide-react";
 
 type Props = {
   tenantId: string;
@@ -427,6 +426,57 @@ export function ReservationsView({
 
 /* -------------------------- STATUS CHIP -------------------------- */
 
+/* -------------------------- CONFIRMATION CHIP -------------------------- */
+
+function ConfirmationChip({ status }: { status?: string | null }) {
+  if (!status || status === 'not_required') return null;
+
+  const map: Record<string, { icon: string; label: string; txt: string; bg: string; brd: string }> = {
+    pending: {
+      icon: '⏳',
+      label: 'Esperando respuesta',
+      txt: 'text-amber-900 dark:text-amber-200',
+      bg: 'bg-amber-50/80 dark:bg-amber-900/20',
+      brd: 'border-amber-200/60 dark:border-amber-800/50',
+    },
+    confirmed: {
+      icon: '✅',
+      label: 'Cliente confirmó',
+      txt: 'text-emerald-900 dark:text-emerald-200',
+      bg: 'bg-emerald-50/80 dark:bg-emerald-900/20',
+      brd: 'border-emerald-200/60 dark:border-emerald-800/50',
+    },
+    declined: {
+      icon: '❌',
+      label: 'Cliente canceló',
+      txt: 'text-rose-900 dark:text-rose-200',
+      bg: 'bg-rose-50/80 dark:bg-rose-900/20',
+      brd: 'border-rose-200/60 dark:border-rose-800/50',
+    },
+    no_response: {
+      icon: '🔕',
+      label: 'Sin respuesta',
+      txt: 'text-zinc-700 dark:text-zinc-300',
+      bg: 'bg-zinc-100/80 dark:bg-zinc-800/40',
+      brd: 'border-zinc-300/60 dark:border-zinc-700/50',
+    },
+  };
+
+  const k = map[status];
+  if (!k) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border ${k.bg} ${k.txt} ${k.brd}`}
+    >
+      <span>{k.icon}</span>
+      {k.label}
+    </span>
+  );
+}
+
+/* -------------------------- STATUS CHIP -------------------------- */
+
 function StatusChip({ s }: { s?: string }) {
   const map: Record<
     string,
@@ -592,6 +642,8 @@ function ReservationDrawer({
   const [notes, setNotes] = useState<string>(reservation.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [reminderSuccess, setReminderSuccess] = useState(false);
 
   async function handleSave() {
     // limpiamos error previo
@@ -659,6 +711,43 @@ function ReservationDrawer({
       setSaving(false);
     }
   }
+
+  async function handleSendReminder() {
+    setSendingReminder(true);
+    setError(null);
+    setReminderSuccess(false);
+    try {
+      const response = await fetch('/api/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reservationId: reservation.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Error al enviar recordatorio');
+        return;
+      }
+
+      setReminderSuccess(true);
+      // Refrescar después de 1.5s para mostrar el estado actualizado
+      setTimeout(() => onUpdated(), 1500);
+    } catch (err) {
+      setError('Error de conexión al enviar recordatorio');
+    } finally {
+      setSendingReminder(false);
+    }
+  }
+
+  // Determinar si se puede enviar recordatorio
+  // Usamos chat_id o phone (si tiene formato de teléfono válido)
+  const hasWhatsAppNumber = reservation.chat_id || reservation.phone;
+  const canSendReminder =
+    reservation.status === 'confirmed' &&
+    hasWhatsAppNumber &&
+    new Date(reservation.datetime_utc) > new Date() &&
+    !sendingReminder;
 
   return (
     <>
@@ -765,9 +854,6 @@ function ReservationDrawer({
                 onChange={(e) => setEditTime(e.target.value)}
                 className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
               />
-              <div className="text-[11px] text-zinc-500 mt-1">
-                Se usará la zona horaria del restaurante ({tz}).
-              </div>
             </div>
           </div>
 
@@ -811,6 +897,83 @@ function ReservationDrawer({
             <div className="text-xs text-zinc-500 mb-1">Estado actual</div>
             <StatusChip s={reservation.status} />
           </div>
+
+          {/* Estado confirmación cliente */}
+          {reservation.confirmation_status && reservation.confirmation_status !== 'not_required' && (
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Confirmación del cliente</div>
+              <ConfirmationChip status={reservation.confirmation_status} />
+              {reservation.confirmation_sent_at && (
+                <div className="text-[11px] text-zinc-500 mt-1">
+                  Recordatorio enviado: {new Date(reservation.confirmation_sent_at).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
+              )}
+              {reservation.confirmation_replied_at && (
+                <div className="text-[11px] text-zinc-500">
+                  Respuesta: {new Date(reservation.confirmation_replied_at).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Enviar recordatorio manual */}
+          {canSendReminder && (
+            <div className="pt-2">
+              <div className="text-xs text-zinc-500 mb-2">Enviar recordatorio por WhatsApp</div>
+              {reminderSuccess ? (
+                <div className="text-xs text-emerald-300 bg-emerald-950/50 border border-emerald-500/40 rounded-md px-3 py-2">
+                  ✅ Recordatorio enviado correctamente
+                </div>
+              ) : (
+                <button
+                  disabled={sendingReminder}
+                  onClick={handleSendReminder}
+                  className="
+                    px-4 py-2 rounded-lg text-sm font-medium
+                    border border-sky-400/60
+                    bg-sky-500/10 text-sky-100
+                    hover:bg-sky-500/20
+                    disabled:opacity-60
+                    inline-flex items-center gap-2
+                  "
+                >
+                  {sendingReminder ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <span>📲</span>
+                      Enviar recordatorio
+                    </>
+                  )}
+                </button>
+              )}
+              <div className="text-[11px] text-zinc-500 mt-1.5">
+                El cliente recibirá un mensaje con opción de confirmar o cancelar.
+              </div>
+            </div>
+          )}
+
+          {/* Mensaje si no hay WhatsApp */}
+          {reservation.status === 'confirmed' && !hasWhatsAppNumber && (
+            <div className="pt-2">
+              <div className="text-xs text-zinc-400 bg-zinc-800/50 border border-zinc-700/50 rounded-md px-3 py-2">
+                📵 Esta reserva no tiene número de teléfono asociado.
+              </div>
+            </div>
+          )}
 
           {/* Notas internas */}
           <div className="pt-2">
