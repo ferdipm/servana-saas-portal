@@ -32,6 +32,7 @@ type FAQ = {
 
 type FAQEditorProps = {
   restaurantId: string;
+  tenantId: string;
   initialFaqs: any;
   isReadOnly: boolean;
 };
@@ -358,7 +359,7 @@ type ChatMessage = {
   timestamp: Date;
 };
 
-export function FAQEditor({ restaurantId, initialFaqs, isReadOnly }: FAQEditorProps) {
+export function FAQEditor({ restaurantId, tenantId, initialFaqs, isReadOnly }: FAQEditorProps) {
   // Parse initial FAQs
   const parseInitialFaqs = (): FAQ[] => {
     if (!initialFaqs || !Array.isArray(initialFaqs)) {
@@ -463,6 +464,7 @@ export function FAQEditor({ restaurantId, initialFaqs, isReadOnly }: FAQEditorPr
     try {
       const formData = new FormData();
       formData.set("restaurantId", restaurantId);
+      formData.set("tenantId", tenantId);
       formData.set("faqs", JSON.stringify(faqs));
 
       await updateFaqs(formData);

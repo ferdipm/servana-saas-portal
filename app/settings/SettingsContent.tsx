@@ -256,6 +256,7 @@ export function SettingsContent({
         <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <FAQEditor
             restaurantId={restaurantId}
+            tenantId={tenantId}
             initialFaqs={initialFaqs}
             isReadOnly={isReadOnly}
           />
