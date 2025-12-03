@@ -102,6 +102,7 @@ type Shift = {
   isCustom?: boolean; // Si es un turno personalizado
   maxCovers?: number; // Máx comensales que el bot puede reservar en este turno (default: 50)
   maxPartySize?: number; // Máx personas por reserva individual (default: 8)
+  lastReservationMargin?: number; // Minutos antes del cierre para última reserva (default: 60)
 };
 
 type DaySchedule = {
@@ -896,7 +897,11 @@ export function OpeningHoursEditor({
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="flex-shrink-0">🪑</span>
-                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. Cuenta todas las reservas registradas en tiempo real (online, telefónicas, walk-ins). Las cancelaciones liberan plazas automáticamente.</span>
+                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. Cuenta todas las reservas registradas en tiempo real.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0">⏱️</span>
+                  <span><strong>Margen última reserva:</strong> Minutos antes del cierre del turno en que se deja de aceptar reservas online.</span>
                 </div>
               </div>
               <p className="text-[10px] text-indigo-300/60 italic pt-1">
@@ -1078,6 +1083,32 @@ export function OpeningHoursEditor({
                             "Tienes 30 comensales (20 online + 10 telefónicas): quedan 20 plazas disponibles",
                             "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool",
                             "Walk-ins sin registrar NO cuentan - solo reservas guardadas en el sistema"
+                          ]}
+                        />
+                      </div>
+
+                      {/* Margen última reserva */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-500 text-xs">⏱️</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="180"
+                          step="15"
+                          value={shift.lastReservationMargin ?? 60}
+                          onChange={(e) => updateShift(day, shift.id, "lastReservationMargin", e.target.value)}
+                          disabled={isReadOnly || isPending}
+                          className="w-14 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                        />
+                        <span className="text-zinc-500 text-[10px]">min</span>
+                        <InfoTooltip
+                          title="⏱️ Margen última reserva"
+                          description="Minutos antes del cierre del turno en que se deja de ofrecer reservas online. Por ejemplo, si el turno cierra a las 00:00 y pones 60 minutos, la última reserva sugerida será a las 23:00."
+                          examples={[
+                            "60 min: turno cierra a 00:00 → última reserva a las 23:00",
+                            "30 min: turno cierra a 16:00 → última reserva a las 15:30",
+                            "0 min: se pueden reservar hasta el cierre (no recomendado)",
+                            "Útil para dar tiempo a que los clientes disfruten sin prisa"
                           ]}
                         />
                       </div>
