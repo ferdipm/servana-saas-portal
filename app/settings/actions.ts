@@ -363,7 +363,7 @@ export async function updateFaqs(formData: FormData) {
   const { error } = await supabase
     .from("restaurant_info")
     .update({
-      faqs: parsedFaqs,
+      faq: parsedFaqs,  // Columna es "faq" (singular) en la DB
     })
     .eq("id", restaurantId);
 
