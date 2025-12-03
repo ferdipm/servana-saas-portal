@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 // URL del backend para RAG
-const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://servana-ai-production.up.railway.app';
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'https://servana-ia-production-e083.up.railway.app';
 
 /**
  * Función auxiliar para re-indexar contenido en RAG
