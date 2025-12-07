@@ -61,13 +61,14 @@ export function MobileShell({ tenantId, restaurantId, restaurantName, children }
             </Link>
           )}
 
-          {/* Logo y nombre */}
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-              Servana
-            </span>
-            <span className="text-zinc-400 dark:text-zinc-600">·</span>
-            <span className="text-sm text-zinc-600 dark:text-zinc-400 truncate">
+          {/* Logo */}
+          <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+            Servana
+          </span>
+
+          {/* Nombre restaurante - alineado derecha, destacado */}
+          <div className="flex-1 min-w-0 text-right">
+            <span className="text-base font-semibold text-zinc-800 dark:text-zinc-100 truncate">
               {restaurantName}
             </span>
           </div>

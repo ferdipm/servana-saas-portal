@@ -92,13 +92,26 @@ export function ReservationsView({
     loadingRef.current = true;
     setLoading(true);
     try {
+      // Si hay búsqueda activa, buscar desde hoy hacia el futuro (sin límite de fecha final)
+      let searchFrom = from;
+      let searchTo = to;
+      if (q.trim()) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        searchFrom = today.toISOString();
+        // Fecha muy lejana para incluir todas las reservas futuras
+        const farFuture = new Date();
+        farFuture.setFullYear(farFuture.getFullYear() + 2);
+        searchTo = farFuture.toISOString();
+      }
+
       const res = await getReservations({
         tenantId,
         restaurantId,
         q,
         status,
-        from,
-        to,
+        from: searchFrom,
+        to: searchTo,
         limit: 50,
         cursorCreatedAt: null,
       });
@@ -116,13 +129,25 @@ export function ReservationsView({
     loadingRef.current = true;
     setLoading(true);
     try {
+      // Si hay búsqueda activa, buscar desde hoy hacia el futuro
+      let searchFrom = from;
+      let searchTo = to;
+      if (q.trim()) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        searchFrom = today.toISOString();
+        const farFuture = new Date();
+        farFuture.setFullYear(farFuture.getFullYear() + 2);
+        searchTo = farFuture.toISOString();
+      }
+
       const res = await getReservations({
         tenantId,
         restaurantId,
         q,
         status,
-        from,
-        to,
+        from: searchFrom,
+        to: searchTo,
         limit: 50,
         cursorCreatedAt: nextCursorRef.current,
       });
@@ -256,12 +281,25 @@ export function ReservationsView({
           <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
             {/* Buscador (+ estado solo en vista general) */}
             <div className="flex items-center gap-2 flex-1">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar por nombre, teléfono o localizador"
-                className="h-9 w-full md:w-80 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-900/60 px-3 text-sm focus:ring-2 focus:ring-indigo-400/30 outline-none"
-              />
+              <div className="relative w-full md:w-80">
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Buscar por nombre, teléfono o localizador"
+                  className="h-9 w-full rounded-lg border border-zinc-300/60 dark:border-zinc-700/60 bg-white/80 dark:bg-zinc-900/60 px-3 pr-8 text-sm focus:ring-2 focus:ring-indigo-400/30 outline-none"
+                />
+                {q && (
+                  <button
+                    onClick={() => setQ("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
 
               {!isPendingMode && (
                 <select
