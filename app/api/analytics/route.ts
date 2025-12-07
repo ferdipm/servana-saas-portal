@@ -421,11 +421,46 @@ function groupReservationsBySource(reservations: any[]) {
   });
 
   const total = reservations.length;
-  return Array.from(sourceMap.entries()).map(([source, count]) => ({
-    source,
-    count,
-    percentage: total > 0 ? (count / total) * 100 : 0,
-  }));
+  if (total === 0) {
+    return Array.from(sourceMap.entries()).map(([source, count]) => ({
+      source,
+      count,
+      percentage: 0,
+    }));
+  }
+
+  // Use "largest remainder" method to ensure percentages sum to exactly 100%
+  const entries = Array.from(sourceMap.entries()).map(([source, count]) => {
+    const exactPercentage = (count / total) * 100;
+    return {
+      source,
+      count,
+      exactPercentage,
+      floorPercentage: Math.floor(exactPercentage),
+      remainder: exactPercentage - Math.floor(exactPercentage),
+    };
+  });
+
+  // Calculate how many percentage points we need to distribute
+  const floorSum = entries.reduce((sum, e) => sum + e.floorPercentage, 0);
+  let remaining = 100 - floorSum;
+
+  // Sort by remainder (descending) to distribute the extra points
+  entries.sort((a, b) => b.remainder - a.remainder);
+
+  // Distribute remaining points to items with largest remainders
+  return entries.map((entry) => {
+    let percentage = entry.floorPercentage;
+    if (remaining > 0 && entry.remainder > 0) {
+      percentage += 1;
+      remaining -= 1;
+    }
+    return {
+      source: entry.source,
+      count: entry.count,
+      percentage,
+    };
+  }).sort((a, b) => b.count - a.count); // Sort by count for display
 }
 
 async function getRealTimeOccupancy(

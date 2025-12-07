@@ -80,7 +80,7 @@ function SortableWine({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-2.5 hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-colors"
+      className="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/50 rounded-lg p-2.5 hover:bg-white dark:bg-zinc-900/40 hover:border-zinc-200 dark:border-zinc-700/60 transition-colors"
     >
       <div className="flex items-start gap-2">
         {/* Drag handle */}
@@ -101,7 +101,7 @@ function SortableWine({
           {/* Name and prices */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex-1">
-              <span className="text-sm font-medium text-zinc-100">{wine.name}</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{wine.name}</span>
               {(wine.winery || wine.origin) && (
                 <span className="text-xs text-zinc-500 ml-2">
                   ({[wine.winery, wine.origin].filter(Boolean).join(" · ")})
@@ -130,7 +130,7 @@ function SortableWine({
               type="button"
               onClick={onEdit}
               disabled={isReadOnly}
-              className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+              className="px-2 py-0.5 text-[10px] rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition-colors"
               title="Editar vino"
             >
               Editar
@@ -139,7 +139,7 @@ function SortableWine({
               type="button"
               onClick={onDelete}
               disabled={isReadOnly}
-              className="text-[10px] text-rose-500 hover:text-rose-300 disabled:opacity-50"
+              className="px-2 py-0.5 text-[10px] rounded bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 disabled:opacity-50 transition-colors"
               title="Eliminar vino"
             >
               Eliminar
@@ -188,17 +188,17 @@ function SortableCategory({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-zinc-900/40 border border-zinc-800 rounded-lg"
+      className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg"
     >
       {/* Category Header */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 hover:bg-zinc-800/50 transition-colors bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-800/50 rounded-t-lg">
+      <div className="sticky top-0 z-20 flex items-center justify-between p-3 hover:bg-zinc-100 dark:bg-zinc-800/50 transition-colors bg-white/95 dark:bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-200 dark:border-zinc-800/50 rounded-t-lg">
         <div className="flex items-center gap-3 flex-1">
           {/* Drag handle */}
           {!isReadOnly && (
             <button
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"
+              className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
               aria-label="Arrastrar categoria"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -217,7 +217,7 @@ function SortableCategory({
 
           {/* Name */}
           <div className="cursor-pointer flex-1" onClick={onToggle}>
-            <div className="font-medium text-zinc-100">{category.name}</div>
+            <div className="font-medium text-zinc-900 dark:text-zinc-100">{category.name}</div>
             <div className="text-xs text-zinc-500">
               {category.wines.length} vino{category.wines.length !== 1 ? "s" : ""}
             </div>
@@ -230,7 +230,7 @@ function SortableCategory({
             type="button"
             onClick={onEdit}
             disabled={isReadOnly}
-            className="px-2 py-1 text-xs rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+            className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/50 disabled:opacity-50 transition-colors"
           >
             Editar
           </button>
@@ -240,7 +240,7 @@ function SortableCategory({
             type="button"
             onClick={onDelete}
             disabled={isReadOnly}
-            className="px-2 py-1 text-xs rounded bg-rose-900/50 hover:bg-rose-900 text-rose-200 disabled:opacity-50"
+            className="px-2.5 py-1 text-xs rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/50 disabled:opacity-50 transition-colors"
           >
             Eliminar
           </button>
@@ -551,7 +551,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Header with view toggle and save indicator */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-base font-semibold text-zinc-100">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Carta de vinos
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
@@ -564,14 +564,14 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
 
         <div className="flex items-center gap-3">
           {/* View mode toggle */}
-          <div className="flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1">
             <button
               type="button"
               onClick={() => setViewMode("edit")}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "edit"
                   ? "bg-indigo-600 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-200"
               }`}
             >
               Editar
@@ -582,7 +582,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "preview"
                   ? "bg-indigo-600 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-200"
               }`}
             >
               Preview
@@ -627,13 +627,13 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar vinos o categorias..."
-                className="w-full text-sm rounded-lg bg-zinc-900/60 border border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-sm rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
                 >
                   ✕
                 </button>
@@ -646,7 +646,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                   type="button"
                   onClick={() => setExpandedCategories(new Set(categories.map(c => c.id)))}
                   disabled={expandedCategories.size === categories.length}
-                  className="p-2 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   title="Expandir todas"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -657,7 +657,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                   type="button"
                   onClick={() => setExpandedCategories(new Set())}
                   disabled={expandedCategories.size === 0}
-                  className="p-2 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="p-2 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   title="Colapsar todas"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -670,12 +670,12 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
 
           {/* Stats summary */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-zinc-100">{categories.length}</div>
+            <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
+              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{categories.length}</div>
               <div className="text-xs text-zinc-400 mt-1">Categorias</div>
             </div>
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-zinc-100">
+            <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
+              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 {categories.reduce((acc, cat) => acc + cat.wines.length, 0)}
               </div>
               <div className="text-xs text-zinc-400 mt-1">Vinos totales</div>
@@ -695,7 +695,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               <div className="space-y-3">
                 {filteredCategories.length === 0 && searchQuery === "" ? (
                   showImporter ? (
-                    <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-6">
+                    <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
                       <WineImporter
                         onImport={(importedCategories) => {
                           setCategories(importedCategories);
@@ -707,7 +707,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                       />
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                    <div className="text-center py-12 bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                       <div className="text-4xl mb-3">🍷</div>
                       <p className="text-sm text-zinc-400 mb-4">
                         Aun no hay vinos en tu carta
@@ -725,7 +725,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                           type="button"
                           onClick={() => setShowAddCategoryDialog(true)}
                           disabled={isReadOnly}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors disabled:opacity-50"
                         >
                           + Anadir manualmente
                         </button>
@@ -733,7 +733,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                     </div>
                   )
                 ) : filteredCategories.length === 0 ? (
-                  <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                  <div className="text-center py-12 bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                     <div className="text-4xl mb-3">🔍</div>
                     <p className="text-sm text-zinc-400">
                       No se encontraron resultados para "{searchQuery}"
@@ -764,9 +764,9 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                         isReadOnly={isReadOnly}
                       >
                         {/* Wines list with drag & drop */}
-                        <div className="border-t border-zinc-800 p-4">
+                        <div className="border-t border-zinc-200 dark:border-zinc-800 p-4">
                           {category.wines.length === 0 ? (
-                            <div className="text-center py-6 bg-zinc-900/60 rounded-lg border border-dashed border-zinc-700">
+                            <div className="text-center py-6 bg-white dark:bg-zinc-900/60 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700">
                               <p className="text-xs text-zinc-500 mb-3">
                                 No hay vinos en esta categoria
                               </p>
@@ -774,7 +774,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                                 type="button"
                                 onClick={() => openAddWineDialog(category.id)}
                                 disabled={isReadOnly}
-                                className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 disabled:opacity-50"
                               >
                                 + Anadir vino
                               </button>
@@ -820,7 +820,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                               type="button"
                               onClick={() => openAddWineDialog(category.id)}
                               disabled={isReadOnly}
-                              className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-dashed border-zinc-700 disabled:opacity-50"
+                              className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-dashed border-zinc-200 dark:border-zinc-700 disabled:opacity-50"
                             >
                               + Anadir vino
                             </button>
@@ -849,7 +849,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                 type="button"
                 onClick={() => setShowImporter(true)}
                 disabled={isReadOnly}
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -860,7 +860,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                 type="button"
                 onClick={() => setShowClearConfirm(true)}
                 disabled={isReadOnly}
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-800/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-rose-100 dark:bg-rose-950/50 hover:bg-rose-200 dark:hover:bg-rose-900/70 text-rose-700 dark:text-rose-300 border border-rose-300 dark:border-rose-800/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -884,9 +884,9 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Dialog: Add category */}
       {showAddCategoryDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Nueva categoria de vinos
               </h3>
               <p className="text-sm text-zinc-400">
@@ -896,7 +896,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre de la categoria *
                 </label>
                 <input
@@ -904,20 +904,20 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                   placeholder="Ej: Tintos Ribera del Duero"
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   autoFocus
                 />
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowAddCategoryDialog(false);
                   setNewCategory({ name: "" });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -937,16 +937,16 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Dialog: Add wine */}
       {showAddWineDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Nuevo vino
               </h3>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del vino *
                 </label>
                 <input
@@ -954,14 +954,14 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                   value={newWine.name}
                   onChange={(e) => setNewWine({ ...newWine, name: e.target.value })}
                   placeholder="Ej: Protos Reserva 2019"
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Bodega
                   </label>
                   <input
@@ -969,11 +969,11 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                     value={newWine.winery}
                     onChange={(e) => setNewWine({ ...newWine, winery: e.target.value })}
                     placeholder="Ej: Bodegas Protos"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Origen / D.O.
                   </label>
                   <input
@@ -981,14 +981,14 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                     value={newWine.origin}
                     onChange={(e) => setNewWine({ ...newWine, origin: e.target.value })}
                     placeholder="Ej: Ribera del Duero"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Precio copa
                   </label>
                   <div className="relative">
@@ -999,13 +999,13 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                       value={newWine.priceGlass ?? ""}
                       onChange={(e) => setNewWine({ ...newWine, priceGlass: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                       placeholder="0.00"
-                      className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Precio botella
                   </label>
                   <div className="relative">
@@ -1016,7 +1016,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                       value={newWine.priceBottle ?? ""}
                       onChange={(e) => setNewWine({ ...newWine, priceBottle: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                       placeholder="0.00"
-                      className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
                   </div>
@@ -1024,7 +1024,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -1032,7 +1032,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                   setCurrentEditingCategory(null);
                   setNewWine({ name: "", winery: "", origin: "", priceGlass: undefined, priceBottle: undefined });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1052,32 +1052,32 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Dialog: Edit category */}
       {editingCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Editar categoria
               </h3>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre *
                 </label>
                 <input
                   type="text"
                   value={editingCategory.name}
                   onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingCategory(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1106,16 +1106,16 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Dialog: Edit wine */}
       {editingWine && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Editar vino
               </h3>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del vino *
                 </label>
                 <input
@@ -1125,13 +1125,13 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                     ...editingWine,
                     wine: { ...editingWine.wine, name: e.target.value }
                   })}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Bodega
                   </label>
                   <input
@@ -1141,11 +1141,11 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                       ...editingWine,
                       wine: { ...editingWine.wine, winery: e.target.value }
                     })}
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Origen / D.O.
                   </label>
                   <input
@@ -1156,14 +1156,14 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                       wine: { ...editingWine.wine, origin: e.target.value }
                     })}
                     placeholder="Ej: Ribera del Duero"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Precio copa
                   </label>
                   <div className="relative">
@@ -1177,13 +1177,13 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                         wine: { ...editingWine.wine, priceGlass: e.target.value === "" ? undefined : parseFloat(e.target.value) }
                       })}
                       placeholder="0.00"
-                      className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Precio botella
                   </label>
                   <div className="relative">
@@ -1197,7 +1197,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
                         wine: { ...editingWine.wine, priceBottle: e.target.value === "" ? undefined : parseFloat(e.target.value) }
                       })}
                       placeholder="0.00"
-                      className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
                   </div>
@@ -1205,11 +1205,11 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingWine(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1229,10 +1229,10 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Import dialog (when there's existing data) */}
       {showImporter && categories.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-zinc-100">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Importar carta de vinos
                 </h3>
                 <p className="text-xs text-zinc-400 mt-1">
@@ -1242,7 +1242,7 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               <button
                 type="button"
                 onClick={() => setShowImporter(false)}
-                className="text-zinc-500 hover:text-zinc-300"
+                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1267,9 +1267,9 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
       {/* Clear all wines confirm dialog */}
       {showClearConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                 Vaciar carta de vinos
               </h3>
             </div>
@@ -1277,15 +1277,15 @@ export function WineEditor({ restaurantId, initialWineMenu, isReadOnly, restaura
               <p className="text-sm text-zinc-400">
                 Esto eliminara todas las categorias y vinos de tu carta. Esta accion no se puede deshacer.
               </p>
-              <p className="text-sm text-zinc-300 mt-3">
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-3">
                 Tienes actualmente <span className="font-semibold text-white">{categories.length}</span> categorias con un total de <span className="font-semibold text-white">{categories.reduce((acc, cat) => acc + cat.wines.length, 0)}</span> vinos.
               </p>
             </div>
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>

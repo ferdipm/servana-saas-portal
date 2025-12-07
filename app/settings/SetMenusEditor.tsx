@@ -444,7 +444,7 @@ export function SetMenusEditor({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-base font-semibold text-zinc-100">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Menús del restaurante
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
@@ -482,7 +482,7 @@ export function SetMenusEditor({
 
       {/* Lista de menús */}
       {setMenus.length === 0 ? (
-        <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+        <div className="text-center py-12 bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg">
           <div className="text-4xl mb-3">📋</div>
           <p className="text-sm text-zinc-400 mb-4">
             Aún no hay menús creados
@@ -501,21 +501,21 @@ export function SetMenusEditor({
           {setMenus.map((menu) => (
             <div
               key={menu.id}
-              className={`bg-zinc-900/40 border rounded-lg overflow-hidden transition-all ${
+              className={`bg-white dark:bg-zinc-900/40 border rounded-lg overflow-hidden transition-all ${
                 menu.isActive
-                  ? "border-zinc-700"
-                  : "border-zinc-800 opacity-60"
+                  ? "border-zinc-200 dark:border-zinc-700"
+                  : "border-zinc-200 dark:border-zinc-800 opacity-60"
               }`}
             >
               {/* Header del menú */}
-              <div className="flex items-center justify-between p-4 bg-zinc-900/60 border-b border-zinc-800">
+              <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
                     {menu.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-zinc-100">{menu.name}</h4>
+                      <h4 className="font-semibold text-zinc-900 dark:text-zinc-100">{menu.name}</h4>
                       {!menu.isActive && (
                         <span className="px-2 py-0.5 rounded text-[10px] bg-zinc-700 text-zinc-400">
                           Inactivo
@@ -543,7 +543,7 @@ export function SetMenusEditor({
                     className={`px-2 py-1 rounded text-xs transition-colors ${
                       menu.isActive
                         ? "bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50"
-                        : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                     }`}
                   >
                     {menu.isActive ? "✓ Activo" : "Activar"}
@@ -552,7 +552,7 @@ export function SetMenusEditor({
                     type="button"
                     onClick={() => setEditingMenu(menu)}
                     disabled={isReadOnly}
-                    className="px-2 py-1 rounded text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                    className="px-2 py-1 rounded text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
                   >
                     ✏️
                   </button>
@@ -579,7 +579,7 @@ export function SetMenusEditor({
 
               {/* Descripción */}
               {menu.description && (
-                <div className="px-4 py-2 text-xs text-zinc-400 border-b border-zinc-800/50">
+                <div className="px-4 py-2 text-xs text-zinc-400 border-b border-zinc-200 dark:border-zinc-800/50">
                   {menu.description}
                 </div>
               )}
@@ -587,7 +587,7 @@ export function SetMenusEditor({
               {/* Cursos */}
               <div className="p-4 space-y-3">
                 {menu.courses.length === 0 ? (
-                  <div className="text-center py-4 bg-zinc-900/30 rounded-lg border border-dashed border-zinc-700">
+                  <div className="text-center py-4 bg-white dark:bg-zinc-900/30 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700">
                     <p className="text-xs text-zinc-500 mb-2">
                       Este menú no tiene cursos
                     </p>
@@ -607,14 +607,14 @@ export function SetMenusEditor({
                   menu.courses.map((course, courseIndex) => (
                     <div
                       key={course.id}
-                      className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-3"
+                      className="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/50 rounded-lg p-3"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 rounded-full bg-indigo-900/40 text-indigo-300 text-xs flex items-center justify-center font-medium">
                             {courseIndex + 1}
                           </span>
-                          <span className="text-sm font-medium text-zinc-200">
+                          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200">
                             {course.name}
                           </span>
                         </div>
@@ -632,7 +632,7 @@ export function SetMenusEditor({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            <div className="absolute right-0 top-full mt-1 py-1 w-44 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                            <div className="absolute right-0 top-full mt-1 py-1 w-44 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -642,7 +642,7 @@ export function SetMenusEditor({
                                   })
                                 }
                                 disabled={isReadOnly}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors text-left"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-left"
                               >
                                 <span>✏️</span>
                                 <span>Texto libre</span>
@@ -656,7 +656,7 @@ export function SetMenusEditor({
                                   });
                                 }}
                                 disabled={isReadOnly || availableDishes.length === 0}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors text-left disabled:opacity-50"
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-left disabled:opacity-50"
                               >
                                 <span>🍽️</span>
                                 <span>Platos de la carta</span>
@@ -686,7 +686,7 @@ export function SetMenusEditor({
 
                       {/* Opciones del curso */}
                       {course.options.length === 0 ? (
-                        <div className="mt-3 p-4 rounded-lg bg-zinc-900/50 border border-dashed border-zinc-700">
+                        <div className="mt-3 p-4 rounded-lg bg-white dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-700">
                           <p className="text-xs text-zinc-500 text-center mb-3">
                             Añade las opciones que el cliente puede elegir
                           </p>
@@ -700,7 +700,7 @@ export function SetMenusEditor({
                                 })
                               }
                               disabled={isReadOnly}
-                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors"
+                              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors"
                             >
                               <span>✏️</span>
                               <span>Texto libre</span>
@@ -730,20 +730,20 @@ export function SetMenusEditor({
                             >
                               <div className="flex items-center gap-2">
                                 <span className="text-zinc-500">•</span>
-                                <span className="text-zinc-300">
+                                <span className="text-zinc-700 dark:text-zinc-300">
                                   {option.type === "text"
                                     ? option.text
                                     : option.dishName}
                                 </span>
                                 {option.type === "dish" && (
-                                  <span className="px-1.5 py-0.5 rounded bg-indigo-900/20 text-indigo-400 text-[9px]">
+                                  <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[9px] font-medium border border-indigo-200 dark:border-indigo-800/50">
                                     De carta
                                   </span>
                                 )}
                                 {option.supplement !== undefined &&
                                   option.supplement > 0 && (
-                                    <span className="text-amber-400 text-[10px]">
-                                      (+{option.supplement.toFixed(2)}€)
+                                    <span className="text-amber-600 dark:text-amber-400 text-[10px] font-medium bg-amber-50 dark:bg-amber-900/20 px-1 py-0.5 rounded">
+                                      +{option.supplement.toFixed(2)}€
                                     </span>
                                   )}
                               </div>
@@ -774,7 +774,7 @@ export function SetMenusEditor({
                       setShowAddCourseDialog(true);
                     }}
                     disabled={isReadOnly}
-                    className="w-full py-2 rounded-lg text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-900/30 hover:bg-zinc-900/50 border border-dashed border-zinc-700 transition-colors"
+                    className="w-full py-2 rounded-lg text-xs text-zinc-400 hover:text-zinc-900 dark:text-zinc-200 bg-white dark:bg-zinc-900/30 hover:bg-white dark:bg-zinc-900/50 border border-dashed border-zinc-200 dark:border-zinc-700 transition-colors"
                   >
                     + Añadir curso
                   </button>
@@ -784,22 +784,22 @@ export function SetMenusEditor({
               {/* Suplementos */}
               {(menu.supplements.length > 0 || !isReadOnly) && (
                 <div className="px-4 pb-4 pt-0">
-                  <div className="border-t border-zinc-800/50 pt-3">
+                  <div className="border-t border-zinc-200 dark:border-zinc-800/50 pt-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-zinc-400">
+                      <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
                         Suplementos opcionales
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowAddSupplementDialog(menu.id)}
                         disabled={isReadOnly}
-                        className="text-[10px] text-indigo-400 hover:text-indigo-300"
+                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium"
                       >
                         + Añadir
                       </button>
                     </div>
                     {menu.supplements.length === 0 ? (
-                      <p className="text-xs text-zinc-500 italic">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 italic">
                         Sin suplementos configurados
                       </p>
                     ) : (
@@ -807,10 +807,10 @@ export function SetMenusEditor({
                         {menu.supplements.map((supp) => (
                           <div
                             key={supp.id}
-                            className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-900/20 border border-amber-800/40 text-xs group"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-800/40 text-xs group"
                           >
-                            <span className="text-amber-300">{supp.name}</span>
-                            <span className="text-amber-400 font-medium">
+                            <span className="text-amber-700 dark:text-amber-300">{supp.name}</span>
+                            <span className="text-amber-600 dark:text-amber-400 font-semibold">
                               +{supp.price.toFixed(2)}€
                             </span>
                             <button
@@ -846,9 +846,9 @@ export function SetMenusEditor({
       {/* Diálogo: Crear menú */}
       {showCreateDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 📋 Nuevo menú
               </h3>
               <p className="text-sm text-zinc-400">
@@ -858,7 +858,7 @@ export function SetMenusEditor({
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del menú *
                 </label>
                 <input
@@ -868,13 +868,13 @@ export function SetMenusEditor({
                     setNewMenu({ ...newMenu, name: e.target.value })
                   }
                   placeholder="Ej: Menú del día, Menú degustación..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Precio *
                 </label>
                 <div className="relative w-32">
@@ -893,7 +893,7 @@ export function SetMenusEditor({
                       })
                     }
                     placeholder="0.00"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 pl-6 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
                     €
@@ -902,7 +902,7 @@ export function SetMenusEditor({
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Descripción
                 </label>
                 <textarea
@@ -912,12 +912,12 @@ export function SetMenusEditor({
                   }
                   placeholder="Ej: Incluye pan, bebida y café"
                   rows={2}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm resize-none"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Condiciones
                 </label>
                 <input
@@ -927,12 +927,12 @@ export function SetMenusEditor({
                     setNewMenu({ ...newMenu, conditions: e.target.value })
                   }
                   placeholder="Ej: L-V mediodía, Mínimo 2 personas..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 />
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -944,7 +944,7 @@ export function SetMenusEditor({
                     conditions: "",
                   });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-5 py-2.5 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 transition-colors"
               >
                 Cancelar
               </button>
@@ -952,9 +952,9 @@ export function SetMenusEditor({
                 type="button"
                 onClick={createMenu}
                 disabled={!newMenu.name || newMenu.price === undefined}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:shadow-none transition-all"
               >
-                Crear menú
+                ✨ Crear menú
               </button>
             </div>
           </div>
@@ -964,16 +964,16 @@ export function SetMenusEditor({
       {/* Diálogo: Editar menú */}
       {editingMenu && !showAddCourseDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 ✏️ Editar menú
               </h3>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre *
                 </label>
                 <input
@@ -982,12 +982,12 @@ export function SetMenusEditor({
                   onChange={(e) =>
                     setEditingMenu({ ...editingMenu, name: e.target.value })
                   }
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Precio *
                 </label>
                 <div className="relative w-32">
@@ -1002,7 +1002,7 @@ export function SetMenusEditor({
                         price: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
                     €
@@ -1011,7 +1011,7 @@ export function SetMenusEditor({
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Descripción
                 </label>
                 <textarea
@@ -1023,12 +1023,12 @@ export function SetMenusEditor({
                     })
                   }
                   rows={2}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Condiciones
                 </label>
                 <input
@@ -1040,16 +1040,16 @@ export function SetMenusEditor({
                       conditions: e.target.value,
                     })
                   }
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingMenu(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1083,9 +1083,9 @@ export function SetMenusEditor({
       {/* Diálogo: Añadir curso */}
       {showAddCourseDialog && editingMenu && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Añadir curso
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1094,7 +1094,7 @@ export function SetMenusEditor({
             </div>
 
             <div className="p-6">
-              <label className="text-sm text-zinc-300 font-medium mb-2 block">
+              <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                 Nombre del curso *
               </label>
               <input
@@ -1102,12 +1102,12 @@ export function SetMenusEditor({
                 value={newCourse.name}
                 onChange={(e) => setNewCourse({ name: e.target.value })}
                 placeholder="Ej: Primero, Segundo, Postre..."
-                className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 autoFocus
               />
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -1115,7 +1115,7 @@ export function SetMenusEditor({
                   setNewCourse({ name: "" });
                   setEditingMenu(null);
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1138,9 +1138,9 @@ export function SetMenusEditor({
       {/* Diálogo: Añadir opción */}
       {showAddOptionDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Añadir opción
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1159,7 +1159,7 @@ export function SetMenusEditor({
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                     newOption.type === "text"
                       ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
                 >
                   ✏️ Texto libre
@@ -1172,7 +1172,7 @@ export function SetMenusEditor({
                   className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                     newOption.type === "dish"
                       ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
                 >
                   🍽️ De la carta
@@ -1182,7 +1182,7 @@ export function SetMenusEditor({
               {/* Input según tipo */}
               {newOption.type === "text" ? (
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Nombre de la opción *
                   </label>
                   <input
@@ -1192,13 +1192,13 @@ export function SetMenusEditor({
                       setNewOption({ ...newOption, text: e.target.value })
                     }
                     placeholder="Ej: Ensalada mixta, Sopa del día..."
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     autoFocus
                   />
                 </div>
               ) : (
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Seleccionar plato de la carta *
                   </label>
                   {availableDishes.length === 0 ? (
@@ -1211,7 +1211,7 @@ export function SetMenusEditor({
                       onChange={(e) =>
                         setNewOption({ ...newOption, dishId: e.target.value })
                       }
-                      className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       <option value="">Selecciona un plato...</option>
                       {availableDishes.map((dish) => (
@@ -1226,7 +1226,7 @@ export function SetMenusEditor({
 
               {/* Suplemento opcional */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Suplemento (opcional)
                 </label>
                 <div className="relative w-32">
@@ -1245,19 +1245,19 @@ export function SetMenusEditor({
                       })
                     }
                     placeholder="0.00"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
                     +€
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 mt-1">
+                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
                   Coste extra por elegir esta opción
                 </p>
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -1269,7 +1269,7 @@ export function SetMenusEditor({
                     supplement: undefined,
                   });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1297,9 +1297,9 @@ export function SetMenusEditor({
       {/* Diálogo: Añadir suplemento */}
       {showAddSupplementDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Añadir suplemento
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1309,7 +1309,7 @@ export function SetMenusEditor({
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre *
                 </label>
                 <input
@@ -1319,13 +1319,13 @@ export function SetMenusEditor({
                     setNewSupplement({ ...newSupplement, name: e.target.value })
                   }
                   placeholder="Ej: Postre especial, Copa de vino..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Precio *
                 </label>
                 <div className="relative w-32">
@@ -1344,7 +1344,7 @@ export function SetMenusEditor({
                       })
                     }
                     placeholder="0.00"
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-6 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
                     +€
@@ -1353,14 +1353,14 @@ export function SetMenusEditor({
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowAddSupplementDialog(null);
                   setNewSupplement({ name: "", price: undefined });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1382,10 +1382,10 @@ export function SetMenusEditor({
       {/* Diálogo: Selector de platos mejorado */}
       {showDishPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col">
             {/* Header */}
-            <div className="p-5 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-1">
+            <div className="p-5 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
                 🍽️ Seleccionar platos de la carta
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1394,7 +1394,7 @@ export function SetMenusEditor({
             </div>
 
             {/* Búsqueda y filtros */}
-            <div className="p-4 border-b border-zinc-800 space-y-3">
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 space-y-3">
               {/* Barra de búsqueda */}
               <div className="relative">
                 <input
@@ -1402,7 +1402,7 @@ export function SetMenusEditor({
                   value={dishPickerSearch}
                   onChange={(e) => setDishPickerSearch(e.target.value)}
                   placeholder="Buscar platos..."
-                  className="w-full text-sm rounded-lg bg-zinc-800 border border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm pl-10 pr-4 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   autoFocus
                 />
                 <svg
@@ -1422,7 +1422,7 @@ export function SetMenusEditor({
                   <button
                     type="button"
                     onClick={() => setDishPickerSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
                   >
                     ✕
                   </button>
@@ -1437,7 +1437,7 @@ export function SetMenusEditor({
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     !dishPickerSelectedCategory
                       ? "bg-indigo-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
                 >
                   Todas ({availableDishes.length})
@@ -1450,7 +1450,7 @@ export function SetMenusEditor({
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                       dishPickerSelectedCategory === cat.id
                         ? "bg-indigo-600 text-white"
-                        : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                     }`}
                   >
                     {cat.emoji} {cat.name} ({cat.dishes.length})
@@ -1481,7 +1481,7 @@ export function SetMenusEditor({
                         className={`relative p-3 rounded-lg border cursor-pointer transition-all ${
                           isSelected
                             ? "bg-indigo-900/30 border-indigo-500 ring-1 ring-indigo-500"
-                            : "bg-zinc-800/50 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-600"
+                            : "bg-zinc-100 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 hover:border-zinc-600"
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -1511,7 +1511,7 @@ export function SetMenusEditor({
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-100 truncate">
+                            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
                               {dish.name}
                             </p>
                             <p className="text-xs text-zinc-500 truncate">
@@ -1523,7 +1523,7 @@ export function SetMenusEditor({
                         {/* Input de suplemento si está seleccionado */}
                         {isSelected && (
                           <div
-                            className="mt-2 pt-2 border-t border-zinc-700/50"
+                            className="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700/50"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <div className="flex items-center gap-2">
@@ -1545,7 +1545,7 @@ export function SetMenusEditor({
                                     }));
                                   }}
                                   placeholder="0.00"
-                                  className="w-full text-xs rounded bg-zinc-900 border border-zinc-600 pl-5 pr-2 py-1 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  className="w-full text-xs rounded bg-white dark:bg-zinc-900 border border-zinc-600 pl-5 pr-2 py-1 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                 />
                                 <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500">
                                   +€
@@ -1562,7 +1562,7 @@ export function SetMenusEditor({
             </div>
 
             {/* Footer con seleccionados y acciones */}
-            <div className="p-4 border-t border-zinc-800 bg-zinc-900/80">
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-zinc-400">
                   {dishPickerSelectedDishes.size > 0 ? (
@@ -1587,7 +1587,7 @@ export function SetMenusEditor({
                       setDishPickerSelectedDishes(new Set());
                       setDishPickerSupplements({});
                     }}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
                   >
                     Cancelar
                   </button>

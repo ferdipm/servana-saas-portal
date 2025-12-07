@@ -53,7 +53,7 @@ export function NotificationsEditor({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-sm font-semibold text-zinc-100">Notificaciones</h2>
+        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Notificaciones</h2>
         <p className="text-xs text-zinc-400 mt-1">
           Configura los recordatorios automáticos y notificaciones por WhatsApp.
         </p>
@@ -73,7 +73,7 @@ export function NotificationsEditor({
 
       {/* Sección: Recordatorios */}
       <div className="space-y-4">
-        <h3 className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
+        <h3 className="text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
           Recordatorios automáticos
         </h3>
 
@@ -95,8 +95,8 @@ export function NotificationsEditor({
       </div>
 
       {/* Sección: Notificaciones al restaurante */}
-      <div className="space-y-4 pt-4 border-t border-zinc-800">
-        <h3 className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
+      <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <h3 className="text-xs font-medium text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
           Notificaciones al restaurante
         </h3>
 
@@ -118,9 +118,9 @@ export function NotificationsEditor({
       </div>
 
       {/* Info sobre funcionamiento */}
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 space-y-2">
-        <h4 className="text-xs font-medium text-zinc-300">Cómo funcionan los recordatorios</h4>
-        <ul className="text-xs text-zinc-500 space-y-1.5 list-disc list-inside">
+      <div className="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-2">
+        <h4 className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Cómo funcionan los recordatorios</h4>
+        <ul className="text-xs text-zinc-600 dark:text-zinc-500 space-y-1.5 list-disc list-inside">
           <li>Los recordatorios se envían automáticamente entre 23:30 y 24:30 horas antes de la reserva.</li>
           <li>Solo se envían a reservas confirmadas con número de WhatsApp válido.</li>
           <li>Si activas la confirmación, el cliente podrá responder SI o NO para confirmar su asistencia.</li>
@@ -166,9 +166,9 @@ function ToggleItem({
         className={`
           relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full
           border-2 border-transparent transition-colors duration-200 ease-in-out
-          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-900
+          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-900
           disabled:opacity-60 disabled:cursor-not-allowed
-          ${enabled ? "bg-indigo-600" : "bg-zinc-700"}
+          ${enabled ? "bg-indigo-600" : "bg-zinc-300 dark:bg-zinc-700"}
         `}
       >
         <span
@@ -180,7 +180,7 @@ function ToggleItem({
         />
       </button>
       <div className="flex-1">
-        <div className="text-sm text-zinc-200">{title}</div>
+        <div className="text-sm text-zinc-900 dark:text-zinc-200">{title}</div>
         <div className="text-xs text-zinc-500 mt-0.5">{description}</div>
       </div>
     </div>

@@ -23,7 +23,7 @@ export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none pl-4 pr-10 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm font-medium transition-colors border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+        className="appearance-none pl-4 pr-10 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg text-sm font-medium transition-colors border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
       >
         {periods.map((period) => (
           <option key={period.value} value={period.value}>

@@ -73,23 +73,25 @@ const SUGGESTED_COLORS = [
   "#14b8a6", // teal
 ];
 
-// Alérgenos comunes
-const COMMON_ALLERGENS = [
-  "Gluten",
-  "Lácteos",
-  "Huevo",
-  "Frutos secos",
-  "Pescado",
-  "Marisco",
-  "Soja",
-  "Apio",
-  "Mostaza",
-  "Sésamo",
-  "Sulfitos",
-  "Altramuces",
-  "Moluscos",
-  "Cacahuetes",
-];
+// Alérgenos comunes con colores y emojis
+const ALLERGEN_CONFIG: Record<string, { emoji: string; color: string; lightBg: string; darkBg: string }> = {
+  "Gluten": { emoji: "🌾", color: "#d97706", lightBg: "bg-amber-100", darkBg: "bg-amber-900/40" },
+  "Lácteos": { emoji: "🥛", color: "#0ea5e9", lightBg: "bg-sky-100", darkBg: "bg-sky-900/40" },
+  "Huevo": { emoji: "🥚", color: "#eab308", lightBg: "bg-yellow-100", darkBg: "bg-yellow-900/40" },
+  "Frutos secos": { emoji: "🥜", color: "#92400e", lightBg: "bg-amber-100", darkBg: "bg-amber-900/40" },
+  "Pescado": { emoji: "🐟", color: "#0891b2", lightBg: "bg-cyan-100", darkBg: "bg-cyan-900/40" },
+  "Marisco": { emoji: "🦐", color: "#e11d48", lightBg: "bg-rose-100", darkBg: "bg-rose-900/40" },
+  "Soja": { emoji: "🫘", color: "#65a30d", lightBg: "bg-lime-100", darkBg: "bg-lime-900/40" },
+  "Apio": { emoji: "🥬", color: "#16a34a", lightBg: "bg-green-100", darkBg: "bg-green-900/40" },
+  "Mostaza": { emoji: "🟡", color: "#ca8a04", lightBg: "bg-yellow-100", darkBg: "bg-yellow-900/40" },
+  "Sésamo": { emoji: "🫘", color: "#a16207", lightBg: "bg-amber-100", darkBg: "bg-amber-900/40" },
+  "Sulfitos": { emoji: "🍷", color: "#7c3aed", lightBg: "bg-violet-100", darkBg: "bg-violet-900/40" },
+  "Altramuces": { emoji: "🌸", color: "#c026d3", lightBg: "bg-fuchsia-100", darkBg: "bg-fuchsia-900/40" },
+  "Moluscos": { emoji: "🦪", color: "#64748b", lightBg: "bg-slate-100", darkBg: "bg-slate-800/40" },
+  "Cacahuetes": { emoji: "🥜", color: "#b45309", lightBg: "bg-orange-100", darkBg: "bg-orange-900/40" },
+};
+
+const COMMON_ALLERGENS = Object.keys(ALLERGEN_CONFIG);
 
 // Componente para categoría sortable
 function SortableCategory({
@@ -130,17 +132,17 @@ function SortableCategory({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-zinc-900/40 border border-zinc-800 rounded-lg"
+      className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm"
     >
       {/* Header de la categoría - STICKY */}
-      <div className="sticky top-0 z-20 flex items-center justify-between p-3 hover:bg-zinc-800/50 transition-colors bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-800/50 rounded-t-lg">
+      <div className="sticky top-0 z-20 flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors bg-white/95 dark:bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-200/50 dark:border-zinc-800/50 rounded-t-lg">
         <div className="flex items-center gap-3 flex-1">
           {/* Drag handle */}
           {!isReadOnly && (
             <button
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"
+              className="cursor-grab active:cursor-grabbing text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
               aria-label="Arrastrar categoría"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -165,8 +167,8 @@ function SortableCategory({
 
           {/* Nombre */}
           <div className="cursor-pointer flex-1" onClick={onToggle}>
-            <div className="font-medium text-zinc-100">{category.name}</div>
-            <div className="text-xs text-zinc-500">
+            <div className="font-semibold text-zinc-900 dark:text-zinc-100">{category.name}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500">
               {category.dishes.length} plato{category.dishes.length !== 1 ? "s" : ""}
             </div>
           </div>
@@ -178,10 +180,10 @@ function SortableCategory({
             type="button"
             onClick={onDuplicate}
             disabled={isReadOnly}
-            className="px-2 py-1 text-xs rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+            className="px-2.5 py-1.5 text-xs rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium border border-zinc-200 dark:border-zinc-700 disabled:opacity-50 transition-colors"
             title="Duplicar categoría"
           >
-            📋
+            Duplicar
           </button>
 
           {/* Botón editar */}
@@ -189,9 +191,9 @@ function SortableCategory({
             type="button"
             onClick={onEdit}
             disabled={isReadOnly}
-            className="px-2 py-1 text-xs rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+            className="px-2.5 py-1.5 text-xs rounded-lg bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-medium border border-indigo-200 dark:border-indigo-800/50 disabled:opacity-50 transition-colors"
           >
-            ✏️
+            Editar
           </button>
 
           {/* Botón eliminar */}
@@ -199,13 +201,13 @@ function SortableCategory({
             type="button"
             onClick={onDelete}
             disabled={isReadOnly}
-            className="px-2 py-1 text-xs rounded bg-rose-900/50 hover:bg-rose-900 text-rose-200 disabled:opacity-50"
+            className="px-2.5 py-1.5 text-xs rounded-lg bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-medium border border-rose-200 dark:border-rose-800/50 disabled:opacity-50 transition-colors"
           >
-            🗑️
+            Eliminar
           </button>
 
           {/* Icono expandir/colapsar */}
-          <button onClick={onToggle} className="text-zinc-400 ml-2">
+          <button onClick={onToggle} className="text-zinc-500 dark:text-zinc-400 ml-2 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors">
             {isExpanded ? "▼" : "▶"}
           </button>
         </div>
@@ -254,7 +256,7 @@ function SortableDish({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-zinc-900/30 border border-zinc-800/50 rounded-lg p-2.5 hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-colors"
+      className="bg-white dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/50 rounded-lg p-3 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 hover:border-zinc-300 dark:hover:border-zinc-700/60 transition-colors shadow-sm"
     >
       <div className="flex items-start gap-2">
         {/* Drag handle */}
@@ -262,7 +264,7 @@ function SortableDish({
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 mt-1.5"
+            className="cursor-grab active:cursor-grabbing text-zinc-400 dark:text-zinc-600 hover:text-zinc-600 dark:hover:text-zinc-400 mt-1.5"
             aria-label="Arrastrar plato"
           >
             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -274,26 +276,26 @@ function SortableDish({
         <div className="flex-1 space-y-1.5">
           {/* Nombre, Precio y Media ración en la misma línea */}
           <div className="flex items-center gap-2">
-            <span className="flex-1 text-sm font-medium text-zinc-100">{dish.name}</span>
-            <div className="flex items-center gap-2 text-sm">
+            <span className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{dish.name}</span>
+            <div className="flex items-center gap-3 text-sm">
               {dish.price !== undefined && (
-                <span className="text-emerald-400 font-medium">{dish.price.toFixed(2)}€</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{dish.price.toFixed(2)}€</span>
               )}
               {dish.hasHalfPortion && dish.halfPortionPrice !== undefined && (
-                <span className="text-xs text-zinc-400">(1/2: {dish.halfPortionPrice.toFixed(2)}€)</span>
+                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded">(½ {dish.halfPortionPrice.toFixed(2)}€)</span>
               )}
             </div>
           </div>
 
           {/* Descripción */}
           {dish.description && (
-            <p className="text-xs text-zinc-400">{dish.description}</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">{dish.description}</p>
           )}
 
           {/* Notas */}
           {dish.notes && (
-            <p className="text-xs text-cyan-400/80 italic">
-              📝 {dish.notes}
+            <p className="text-xs text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/20 px-2 py-1 rounded-md inline-flex items-center gap-1">
+              <span>📝</span> <span className="italic">{dish.notes}</span>
             </p>
           )}
 
@@ -302,7 +304,7 @@ function SortableDish({
             <div className="flex flex-wrap gap-1 items-center">
               {/* Badge media ración */}
               {dish.hasHalfPortion && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-indigo-900/25 text-indigo-300 border border-indigo-800/40">
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 dark:bg-indigo-900/25 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/40 font-medium">
                   ½ Media ración
                 </span>
               )}
@@ -311,7 +313,7 @@ function SortableDish({
                 dish.allergens.map((allergen) => (
                   <span
                     key={allergen}
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-amber-900/25 text-amber-300 border border-amber-800/40"
+                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] bg-amber-100 dark:bg-amber-900/25 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800/40 font-medium"
                   >
                     ⚠️ {allergen}
                   </span>
@@ -320,33 +322,33 @@ function SortableDish({
             </div>
 
             {/* Botones de acción */}
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-1.5 ml-auto">
               <button
                 type="button"
                 onClick={onEdit}
                 disabled={isReadOnly}
-                className="text-[10px] text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-medium disabled:opacity-50 transition-colors"
                 title="Editar plato"
               >
-                ✏️
+                Editar
               </button>
               <button
                 type="button"
                 onClick={onDuplicate}
                 disabled={isReadOnly}
-                className="text-[10px] text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 font-medium disabled:opacity-50 transition-colors"
                 title="Duplicar plato"
               >
-                📋
+                Duplicar
               </button>
               <button
                 type="button"
                 onClick={onDelete}
                 disabled={isReadOnly}
-                className="text-[10px] text-rose-500 hover:text-rose-300 disabled:opacity-50"
+                className="px-2 py-1 text-xs rounded-md bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 font-medium disabled:opacity-50 transition-colors"
                 title="Eliminar plato"
               >
-                🗑️
+                Eliminar
               </button>
             </div>
           </div>
@@ -777,7 +779,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Header con toggle de vista y indicador de guardado */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h3 className="text-base font-semibold text-zinc-100">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Menú del restaurante
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
@@ -790,14 +792,14 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
         <div className="flex items-center gap-3">
           {/* Toggle vista edición/preview */}
-          <div className="flex items-center gap-2 bg-zinc-900/60 border border-zinc-800 rounded-lg p-1">
+          <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1">
             <button
               type="button"
               onClick={() => setViewMode("edit")}
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "edit"
                   ? "bg-indigo-600 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-200"
               }`}
             >
               ✏️ Editar
@@ -808,7 +810,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                 viewMode === "preview"
                   ? "bg-indigo-600 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-zinc-400 hover:text-zinc-900 dark:text-zinc-200"
               }`}
             >
               👁️ Preview
@@ -855,13 +857,13 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="🔍 Buscar platos o categorías..."
-                  className="w-full text-sm rounded-lg bg-zinc-900/60 border border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 pl-10 pr-4 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
                   >
                     ✕
                   </button>
@@ -874,7 +876,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                     type="button"
                     onClick={() => setExpandedCategories(new Set(categories.map(c => c.id)))}
                     disabled={expandedCategories.size === categories.length}
-                    className="p-2 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     title="Expandir todas"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -885,7 +887,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                     type="button"
                     onClick={() => setExpandedCategories(new Set())}
                     disabled={expandedCategories.size === 0}
-                    className="p-2 rounded-lg text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg text-xs bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 hover:text-zinc-900 dark:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     title="Colapsar todas"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -898,48 +900,54 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
             {/* Filtros de alérgenos */}
             <div className="flex flex-wrap gap-2">
-              <span className="text-xs text-zinc-400">Filtrar por alérgeno:</span>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Filtrar por alérgeno:</span>
               <button
                 type="button"
                 onClick={() => setSelectedAllergenFilter(null)}
                 className={`px-2 py-1 rounded-full text-xs transition-colors ${
                   !selectedAllergenFilter
                     ? "bg-indigo-600 text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 }`}
               >
                 Todos
               </button>
-              {COMMON_ALLERGENS.slice(0, 6).map((allergen) => (
-                <button
-                  key={allergen}
-                  type="button"
-                  onClick={() => setSelectedAllergenFilter(allergen)}
-                  className={`px-2 py-1 rounded-full text-xs transition-colors ${
-                    selectedAllergenFilter === allergen
-                      ? "bg-amber-600 text-white"
-                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
-                  }`}
-                >
-                  {allergen}
-                </button>
-              ))}
+              {COMMON_ALLERGENS.slice(0, 6).map((allergen) => {
+                const config = ALLERGEN_CONFIG[allergen];
+                const isSelected = selectedAllergenFilter === allergen;
+                return (
+                  <button
+                    key={allergen}
+                    type="button"
+                    onClick={() => setSelectedAllergenFilter(allergen)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? "text-white shadow-sm"
+                        : `${config.lightBg} dark:${config.darkBg} hover:opacity-80`
+                    }`}
+                    style={isSelected ? { backgroundColor: config.color } : undefined}
+                  >
+                    <span>{config.emoji}</span>
+                    <span style={!isSelected ? { color: config.color } : undefined}>{allergen}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Resumen de estadísticas */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-zinc-100">{categories.length}</div>
+            <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
+              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{categories.length}</div>
               <div className="text-xs text-zinc-400 mt-1">Categorías</div>
             </div>
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4">
-              <div className="text-2xl font-bold text-zinc-100">
+            <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
+              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                 {categories.reduce((acc, cat) => acc + cat.dishes.length, 0)}
               </div>
               <div className="text-xs text-zinc-400 mt-1">Platos totales</div>
             </div>
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4">
+            <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4">
               <div className="text-xs text-zinc-400 mb-1">Acciones rápidas</div>
               <button
                 type="button"
@@ -964,7 +972,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               <div className="space-y-3">
                 {filteredCategories.length === 0 && searchQuery === "" ? (
                   showImporter ? (
-                    <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-6">
+                    <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-6">
                       <MenuImporter
                         onImport={(importedCategories) => {
                           setCategories(importedCategories);
@@ -976,7 +984,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                       />
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                    <div className="text-center py-12 bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                       <div className="text-4xl mb-3">🍽️</div>
                       <p className="text-sm text-zinc-400 mb-4">
                         Aun no hay categorias en tu menu
@@ -997,7 +1005,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                           type="button"
                           onClick={() => setShowAddCategoryDialog(true)}
                           disabled={isReadOnly}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors disabled:opacity-50"
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors disabled:opacity-50"
                         >
                           + Crear manualmente
                         </button>
@@ -1005,7 +1013,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                     </div>
                   )
                 ) : filteredCategories.length === 0 ? (
-                  <div className="text-center py-12 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                  <div className="text-center py-12 bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg">
                     <div className="text-4xl mb-3">🔍</div>
                     <p className="text-sm text-zinc-400">
                       No se encontraron resultados para "{searchQuery}"
@@ -1037,9 +1045,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                         isReadOnly={isReadOnly}
                       >
                         {/* Lista de platos con drag & drop */}
-                        <div className="border-t border-zinc-800 p-4">
+                        <div className="border-t border-zinc-200 dark:border-zinc-800 p-4">
                           {category.dishes.length === 0 ? (
-                            <div className="text-center py-6 bg-zinc-900/60 rounded-lg border border-dashed border-zinc-700">
+                            <div className="text-center py-6 bg-white dark:bg-zinc-900/60 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700">
                               <p className="text-xs text-zinc-500 mb-3">
                                 No hay platos en esta categoría
                               </p>
@@ -1047,7 +1055,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                                 type="button"
                                 onClick={() => openAddDishDialog(category.id)}
                                 disabled={isReadOnly}
-                                className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 disabled:opacity-50 transition-colors"
                               >
                                 + Añadir plato
                               </button>
@@ -1094,7 +1102,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                               type="button"
                               onClick={() => openAddDishDialog(category.id)}
                               disabled={isReadOnly}
-                              className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-dashed border-zinc-700 disabled:opacity-50"
+                              className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-dashed border-emerald-300 dark:border-emerald-800/50 disabled:opacity-50 transition-colors"
                             >
                               + Añadir plato
                             </button>
@@ -1123,7 +1131,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                 type="button"
                 onClick={() => setShowImporter(true)}
                 disabled={isReadOnly}
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -1134,7 +1142,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                 type="button"
                 onClick={() => setShowClearConfirm(true)}
                 disabled={isReadOnly || categories.length === 0}
-                className="px-4 py-3 rounded-lg text-sm font-medium bg-rose-950/50 hover:bg-rose-900/70 text-rose-300 border border-rose-800/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="px-4 py-3 rounded-lg text-sm font-medium bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 dark:bg-rose-950/50 dark:hover:bg-rose-900/70 dark:text-rose-300 dark:border-rose-800/50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1158,9 +1166,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Diálogo: Añadir categoría */}
       {showAddCategoryDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 ✨ Nueva categoría
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1170,7 +1178,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre de la categoría *
                 </label>
                 <input
@@ -1178,13 +1186,13 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   value={newCategory.name}
                   onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                   placeholder="Ej: Entrantes, Principales, Postres..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Emoji
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1196,7 +1204,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                       className={`w-10 h-10 rounded-lg border text-xl transition-all ${
                         newCategory.emoji === emoji
                           ? "bg-indigo-600 border-indigo-500 scale-110"
-                          : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                          : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {emoji}
@@ -1206,7 +1214,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Color
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1226,7 +1234,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                 </div>
               </div>
 
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3">
+              <div className="bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
                 <p className="text-xs text-zinc-400 mb-2">Vista previa:</p>
                 <div className="flex items-center gap-3">
                   <div
@@ -1240,21 +1248,21 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   >
                     {newCategory.emoji}
                   </div>
-                  <div className="font-medium text-zinc-200">
+                  <div className="font-medium text-zinc-900 dark:text-zinc-200">
                     {newCategory.name || "Nombre de la categoría"}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowAddCategoryDialog(false);
                   setNewCategory({ name: "", emoji: "🍽️", color: SUGGESTED_COLORS[0] });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1274,9 +1282,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Diálogo: Añadir plato */}
       {showAddDishDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 🍽️ Nuevo plato
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1286,7 +1294,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del plato *
                 </label>
                 <input
@@ -1294,20 +1302,20 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   value={newDish.name}
                   onChange={(e) => setNewDish({ ...newDish, name: e.target.value })}
                   placeholder="Ej: Ensalada César, Filete de ternera..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                   autoFocus
                 />
               </div>
 
               {/* Precios - Diseño en línea */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-3 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-3 block">
                   Precios
                 </label>
                 <div className="flex flex-wrap items-end gap-4">
                   {/* Precio normal */}
                   <div>
-                    <label className="text-xs text-zinc-400 mb-1 block">Ración completa</label>
+                    <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Ración completa</label>
                     <div className="relative">
                       <input
                         type="number"
@@ -1316,15 +1324,15 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                         value={newDish.price ?? ""}
                         onChange={(e) => setNewDish({ ...newDish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                         placeholder="0.00"
-                        className="w-28 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-28 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 pl-7 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       />
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500">€</span>
                     </div>
                   </div>
 
                   {/* Separador visual */}
                   <div className="hidden sm:flex items-center pb-2">
-                    <div className="w-px h-8 bg-zinc-700"></div>
+                    <div className="w-px h-8 bg-zinc-300 dark:bg-zinc-700"></div>
                   </div>
 
                   {/* Media ración toggle + precio */}
@@ -1338,14 +1346,14 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                           hasHalfPortion: e.target.checked,
                           halfPortionPrice: e.target.checked ? newDish.halfPortionPrice : undefined
                         })}
-                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-zinc-300 whitespace-nowrap">½ ración</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-nowrap">½ ración</span>
                     </label>
 
                     {newDish.hasHalfPortion && (
                       <div className="animate-in fade-in slide-in-from-left-2 duration-200">
-                        <label className="text-xs text-zinc-400 mb-1 block">Precio ½</label>
+                        <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Precio ½</label>
                         <div className="relative">
                           <input
                             type="number"
@@ -1354,9 +1362,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                             value={newDish.halfPortionPrice ?? ""}
                             onChange={(e) => setNewDish({ ...newDish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                             placeholder="0.00"
-                            className="w-24 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-24 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 pl-7 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                           />
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500">€</span>
                         </div>
                       </div>
                     )}
@@ -1365,7 +1373,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Descripción o ingredientes
                 </label>
                 <textarea
@@ -1373,12 +1381,12 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   onChange={(e) => setNewDish({ ...newDish, description: e.target.value })}
                   placeholder="Ej: Lechuga romana, pollo, parmesano, crutones..."
                   rows={3}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Notas
                 </label>
                 <textarea
@@ -1386,7 +1394,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   onChange={(e) => setNewDish({ ...newDish, notes: e.target.value })}
                   placeholder="Ej: 'Se puede preparar sin gluten', 'Picante bajo demanda', 'Mínimo 2 personas'..."
                   rows={2}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none shadow-sm"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
                   Información práctica adicional sobre el plato
@@ -1394,7 +1402,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Alérgenos
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1405,8 +1413,8 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                       onClick={() => toggleAllergenInDialog(allergen)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         newDish.allergens?.includes(allergen)
-                          ? "bg-amber-900/50 text-amber-200 border border-amber-800"
-                          : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700"
+                          ? "bg-amber-500 dark:bg-amber-600 text-white border border-amber-600 dark:border-amber-500 shadow-sm"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
                       }`}
                     >
                       {newDish.allergens?.includes(allergen) ? "✓ " : ""}
@@ -1417,13 +1425,13 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               {newDish.allergens && newDish.allergens.length > 0 && (
-                <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3">
-                  <p className="text-xs text-zinc-400 mb-2">Alérgenos seleccionados:</p>
+                <div className="bg-amber-50 dark:bg-zinc-800/60 border border-amber-200 dark:border-zinc-700 rounded-lg p-3">
+                  <p className="text-xs text-amber-700 dark:text-zinc-400 mb-2 font-medium">Alérgenos seleccionados:</p>
                   <div className="flex flex-wrap gap-1">
                     {newDish.allergens.map((allergen) => (
                       <span
                         key={allergen}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-900/30 text-amber-200 border border-amber-800/50"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800/50 font-medium"
                       >
                         ⚠️ {allergen}
                       </span>
@@ -1433,7 +1441,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               )}
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -1441,7 +1449,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   setCurrentEditingCategory(null);
                   setNewDish({ name: "", description: "", allergens: [], price: undefined, hasHalfPortion: false, halfPortionPrice: undefined, notes: "" });
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1461,9 +1469,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Diálogo: Editar categoría */}
       {editingCategory && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 ✏️ Editar categoría
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1473,19 +1481,19 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre *
                 </label>
                 <input
                   type="text"
                   value={editingCategory.name}
                   onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 shadow-sm px-3 py-2.5 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Emoji
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1497,7 +1505,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                       className={`w-10 h-10 rounded-lg border text-xl transition-all ${
                         editingCategory.emoji === emoji
                           ? "bg-indigo-600 border-indigo-500 scale-110"
-                          : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                          : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {emoji}
@@ -1507,7 +1515,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Color
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1528,11 +1536,11 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingCategory(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1557,9 +1565,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Diálogo: Editar plato */}
       {editingDish && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 ✏️ Editar plato
               </h3>
               <p className="text-sm text-zinc-400">
@@ -1569,7 +1577,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del plato *
                 </label>
                 <input
@@ -1579,19 +1587,19 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                     ...editingDish,
                     dish: { ...editingDish.dish, name: e.target.value }
                   })}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                 />
               </div>
 
               {/* Precios - Diseño en línea */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-3 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-3 block">
                   Precios
                 </label>
                 <div className="flex flex-wrap items-end gap-4">
                   {/* Precio normal */}
                   <div>
-                    <label className="text-xs text-zinc-400 mb-1 block">Ración completa</label>
+                    <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Ración completa</label>
                     <div className="relative">
                       <input
                         type="number"
@@ -1603,15 +1611,15 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                           dish: { ...editingDish.dish, price: e.target.value === "" ? undefined : parseFloat(e.target.value) }
                         })}
                         placeholder="0.00"
-                        className="w-28 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-28 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 pl-7 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       />
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500">€</span>
                     </div>
                   </div>
 
                   {/* Separador visual */}
                   <div className="hidden sm:flex items-center pb-2">
-                    <div className="w-px h-8 bg-zinc-700"></div>
+                    <div className="w-px h-8 bg-zinc-300 dark:bg-zinc-700"></div>
                   </div>
 
                   {/* Media ración toggle + precio */}
@@ -1628,14 +1636,14 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                             halfPortionPrice: e.target.checked ? editingDish.dish.halfPortionPrice : undefined
                           }
                         })}
-                        className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-zinc-300 whitespace-nowrap">½ ración</span>
+                      <span className="text-sm text-zinc-700 dark:text-zinc-300 whitespace-nowrap">½ ración</span>
                     </label>
 
                     {editingDish.dish.hasHalfPortion && (
                       <div className="animate-in fade-in slide-in-from-left-2 duration-200">
-                        <label className="text-xs text-zinc-400 mb-1 block">Precio ½</label>
+                        <label className="text-xs text-zinc-500 dark:text-zinc-400 mb-1 block">Precio ½</label>
                         <div className="relative">
                           <input
                             type="number"
@@ -1647,9 +1655,9 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                               dish: { ...editingDish.dish, halfPortionPrice: e.target.value === "" ? undefined : parseFloat(e.target.value) }
                             })}
                             placeholder="0.00"
-                            className="w-24 text-sm rounded bg-zinc-800 border border-zinc-700 pl-6 pr-2 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-24 text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 pl-7 pr-2 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                           />
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">€</span>
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-zinc-500">€</span>
                         </div>
                       </div>
                     )}
@@ -1658,7 +1666,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Descripción o ingredientes
                 </label>
                 <textarea
@@ -1669,12 +1677,12 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   })}
                   placeholder="Ej: Lechuga romana, pollo, parmesano, crutones..."
                   rows={3}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none shadow-sm"
                 />
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Notas
                 </label>
                 <textarea
@@ -1685,7 +1693,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                   })}
                   placeholder="Ej: 'Se puede preparar sin gluten', 'Picante bajo demanda', 'Mínimo 2 personas'..."
                   rows={2}
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full text-sm rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 px-3 py-2.5 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none shadow-sm"
                 />
                 <p className="text-xs text-zinc-500 mt-1">
                   Información práctica adicional sobre el plato
@@ -1693,7 +1701,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Alérgenos
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1704,8 +1712,8 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                       onClick={() => toggleAllergenInEditDialog(allergen)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         editingDish.dish.allergens?.includes(allergen)
-                          ? "bg-amber-900/50 text-amber-200 border border-amber-800"
-                          : "bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700"
+                          ? "bg-amber-500 dark:bg-amber-600 text-white border border-amber-600 dark:border-amber-500 shadow-sm"
+                          : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
                       }`}
                     >
                       {editingDish.dish.allergens?.includes(allergen) ? "✓ " : ""}
@@ -1716,13 +1724,13 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               </div>
 
               {editingDish.dish.allergens && editingDish.dish.allergens.length > 0 && (
-                <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3">
-                  <p className="text-xs text-zinc-400 mb-2">Alérgenos seleccionados:</p>
+                <div className="bg-amber-50 dark:bg-zinc-800/60 border border-amber-200 dark:border-zinc-700 rounded-lg p-3">
+                  <p className="text-xs text-amber-700 dark:text-zinc-400 mb-2 font-medium">Alérgenos seleccionados:</p>
                   <div className="flex flex-wrap gap-1">
                     {editingDish.dish.allergens.map((allergen) => (
                       <span
                         key={allergen}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-900/30 text-amber-200 border border-amber-800/50"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800/50 font-medium"
                       >
                         ⚠️ {allergen}
                       </span>
@@ -1732,11 +1740,11 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               )}
             </div>
 
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setEditingDish(null)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
               >
                 Cancelar
               </button>
@@ -1756,10 +1764,10 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Modal: Importar carta (cuando ya hay categorías) */}
       {showImporter && categories.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-zinc-100">
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
                   Importar carta
                 </h3>
                 <p className="text-xs text-zinc-400 mt-1">
@@ -1769,7 +1777,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
               <button
                 type="button"
                 onClick={() => setShowImporter(false)}
-                className="text-zinc-500 hover:text-zinc-300"
+                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-300"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1794,14 +1802,14 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
       {/* Modal: Confirmar vaciar carta */}
       {showClearConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-md w-full mx-4">
             <div className="p-6 text-center">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-rose-950/50 border border-rose-800/50 flex items-center justify-center">
                 <svg className="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 Vaciar carta
               </h3>
               <p className="text-sm text-zinc-400 mb-6">
@@ -1812,7 +1820,7 @@ export function MenuEditor({ restaurantId, initialMenu, isReadOnly, restaurantNa
                 <button
                   type="button"
                   onClick={() => setShowClearConfirm(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
                 >
                   Cancelar
                 </button>

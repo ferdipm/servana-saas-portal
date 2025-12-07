@@ -37,7 +37,7 @@ function InfoTooltip({
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="ml-1 w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center justify-center text-[10px] font-bold"
+        className="ml-1 w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-500/30 transition-colors flex items-center justify-center text-[10px] font-bold"
         title="Más información"
       >
         ?
@@ -53,32 +53,32 @@ function InfoTooltip({
 
           {/* Popup - posición fija para que no se corte */}
           <div
-            className="fixed z-[9999] w-96 max-h-[80vh] overflow-y-auto bg-zinc-800 border border-indigo-500/30 rounded-lg shadow-2xl p-4"
+            className="fixed z-[9999] w-96 max-h-[80vh] overflow-y-auto bg-white dark:bg-zinc-800 border border-indigo-200 dark:border-indigo-500/30 rounded-lg shadow-2xl p-4"
             style={{
               top: `${popupPosition.top}px`,
               left: `${popupPosition.left}px`,
             }}
           >
             <div className="flex items-start justify-between mb-2">
-              <h4 className="text-sm font-semibold text-indigo-200">{title}</h4>
+              <h4 className="text-sm font-semibold text-indigo-700 dark:text-indigo-200">{title}</h4>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-zinc-200 text-lg leading-none flex-shrink-0"
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 text-lg leading-none flex-shrink-0"
               >
                 ×
               </button>
             </div>
 
-            <p className="text-xs text-zinc-300 leading-relaxed mb-3">
+            <p className="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed mb-3">
               {description}
             </p>
 
             {examples && examples.length > 0 && (
-              <div className="bg-zinc-900/50 rounded p-2 space-y-1">
-                <p className="text-[10px] font-semibold text-indigo-300 mb-1">Ejemplos:</p>
+              <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded p-2 space-y-1">
+                <p className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-300 mb-1">Ejemplos:</p>
                 {examples.map((example, idx) => (
-                  <p key={idx} className="text-[10px] text-zinc-400 leading-relaxed">
+                  <p key={idx} className="text-[10px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                     • {example}
                   </p>
                 ))}
@@ -276,6 +276,9 @@ export function OpeningHoursEditor({
     color: "#f59e0b",
     isCustom: true,
   });
+
+  // Estado para sección colapsable de días especiales
+  const [isSpecialDaysExpanded, setIsSpecialDaysExpanded] = useState(false);
 
   // Estados para gestor de turnos personalizados
   const [showShiftManagerDialog, setShowShiftManagerDialog] = useState(false);
@@ -684,18 +687,18 @@ export function OpeningHoursEditor({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Sección: Horario general del establecimiento */}
-      <div className="space-y-4 pt-4 border-t border-cyan-500/20">
+      <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
-            <span className="text-lg">🏪</span>
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <span className="text-base">🏪</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-cyan-100 mb-1">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Horario del establecimiento
             </h3>
-            <p className="text-xs text-cyan-200/60 leading-relaxed">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Horario general de apertura y cierre del local.
             </p>
           </div>
@@ -711,8 +714,8 @@ export function OpeningHoursEditor({
                 key={`venue-${day}`}
                 className={`rounded-lg border p-3 transition-all ${
                   isEnabled
-                    ? "bg-zinc-900/40 border-zinc-700"
-                    : "bg-zinc-900/20 border-zinc-800"
+                    ? "bg-white dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-700"
+                    : "bg-zinc-50 dark:bg-zinc-900/20 border-zinc-200 dark:border-zinc-800"
                 }`}
               >
                 <label className="flex items-center gap-2 mb-2 cursor-pointer">
@@ -730,9 +733,9 @@ export function OpeningHoursEditor({
                       }));
                     }}
                     disabled={isReadOnly || isPending}
-                    className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-zinc-900 disabled:opacity-50"
+                    className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-zinc-900 disabled:opacity-50"
                   />
-                  <span className={`text-xs font-medium ${isEnabled ? "text-zinc-300" : "text-zinc-500"}`}>{day}</span>
+                  <span className={`text-xs font-medium ${isEnabled ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"}`}>{day}</span>
                 </label>
                 {isEnabled ? (
                   <div className="flex items-center gap-2">
@@ -749,9 +752,9 @@ export function OpeningHoursEditor({
                         }));
                       }}
                       disabled={isReadOnly || isPending}
-                      className="flex-1 text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-zinc-200 disabled:opacity-50"
+                      className="flex-1 text-xs rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-900 dark:text-zinc-200 disabled:opacity-50"
                     />
-                    <span className="text-zinc-500 text-xs">→</span>
+                    <span className="text-zinc-400 dark:text-zinc-500 text-xs">→</span>
                     <input
                       type="time"
                       value={daySchedule.closeTime || "00:00"}
@@ -765,11 +768,11 @@ export function OpeningHoursEditor({
                         }));
                       }}
                       disabled={isReadOnly || isPending}
-                      className="flex-1 text-xs rounded bg-zinc-800 border border-zinc-700 px-2 py-1.5 text-zinc-200 disabled:opacity-50"
+                      className="flex-1 text-xs rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-zinc-900 dark:text-zinc-200 disabled:opacity-50"
                     />
                   </div>
                 ) : (
-                  <div className="text-xs text-rose-400/70 italic pl-6">Cerrado</div>
+                  <div className="text-xs text-rose-500 dark:text-rose-400/70 italic pl-6">Cerrado</div>
                 )}
               </div>
             );
@@ -804,29 +807,35 @@ export function OpeningHoursEditor({
               });
             }}
             disabled={isReadOnly || isPending}
-            className="text-xs px-3 py-1.5 rounded bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 border border-cyan-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="text-xs px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Aplicar mismo horario a todos los días abiertos
           </button>
         </div>
       </div>
 
-      {/* Timeline visual */}
-      <div className="pb-2">
+      {/* Timeline visual - en su propia card */}
+      <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base">📊</span>
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            Vista semanal
+          </h3>
+        </div>
         <WeekTimeline schedule={schedule} specialDays={specialDays} />
       </div>
 
       {/* Indicador de auto-guardado - sticky debajo del timeline */}
       {(saveStatus === "saving" || saveStatus === "saved") && (
-        <div className="sticky top-16 z-30 bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-800/50 -mx-4 px-4 py-2 mb-4">
+        <div className="sticky top-16 z-30 bg-white/95 dark:bg-[#0b0b0d]/95 backdrop-blur-sm border-b border-zinc-200/50 dark:border-zinc-800/50 -mx-4 px-4 py-2 mb-4">
           {saveStatus === "saving" && (
-            <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
               <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin"></div>
               <span>Guardando cambios…</span>
             </div>
           )}
           {saveStatus === "saved" && (
-            <div className="flex items-center gap-2 text-sm text-emerald-400 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 animate-in fade-in duration-200">
               <span className="text-base">✓</span>
               <span>Cambios guardados</span>
             </div>
@@ -834,80 +843,87 @@ export function OpeningHoursEditor({
         </div>
       )}
 
-      {/* Sección: Días especiales y excepciones */}
-      <div className="space-y-4 pt-8 border-t-2 border-amber-500/20">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-            <span className="text-lg">⚠️</span>
+      {/* Sección: Días especiales y excepciones - Card colapsable */}
+      <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+        {/* Header clickeable para colapsar/expandir */}
+        <button
+          type="button"
+          onClick={() => setIsSpecialDaysExpanded(!isSpecialDaysExpanded)}
+          className="w-full p-4 flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
+        >
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <span className="text-base">📅</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-amber-100 mb-1">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               Días especiales y excepciones
             </h3>
-            <p className="text-xs text-amber-200/60 leading-relaxed">
-              Configura cierres, horarios especiales o eventos privados para fechas específicas.
-              Estas excepciones tienen prioridad sobre el horario semanal regular.
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Cierres, horarios especiales o eventos privados
+              {specialDays.length > 0 && (
+                <span className="ml-1 text-indigo-600 dark:text-indigo-400">
+                  ({specialDays.length} configurados)
+                </span>
+              )}
             </p>
           </div>
-        </div>
+          <span className="text-zinc-400 dark:text-zinc-500">
+            {isSpecialDaysExpanded ? "▼" : "▶"}
+          </span>
+        </button>
 
-        <SpecialDaysManager
-          specialDays={specialDays}
-          onUpdate={setSpecialDays}
-          isReadOnly={isReadOnly}
-        />
+        {/* Contenido colapsable */}
+        {isSpecialDaysExpanded && (
+          <div className="p-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <SpecialDaysManager
+              specialDays={specialDays}
+              onUpdate={setSpecialDays}
+              isReadOnly={isReadOnly}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mensajes de error (solo para casos críticos con validación manual) */}
       {(errorMessage || warningMessage) && (
         <div className="space-y-3">
           {errorMessage && (
-            <div className="text-xs text-rose-300 bg-rose-950/50 border border-rose-500/40 rounded-md px-3 py-2">
+            <div className="text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/40 rounded-md px-3 py-2">
               {errorMessage}
             </div>
           )}
           {warningMessage && (
-            <div className="text-xs text-amber-300 bg-amber-950/50 border border-amber-500/40 rounded-md px-3 py-2">
+            <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-500/40 rounded-md px-3 py-2">
               ⚠️ {warningMessage}
             </div>
           )}
         </div>
       )}
 
-      {/* Sección: Turnos de cocina/servicio */}
-      <div className="space-y-4 pt-8 border-t-2 border-indigo-500/20">
+      {/* Sección: Turnos de cocina/servicio - Card con colores neutrales */}
+      <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-4">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
-            <span className="text-lg">🍽️</span>
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+            <span className="text-base">🍽️</span>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-indigo-100 mb-1">
-              Turnos de cocina / servicio
-            </h3>
-            <p className="text-xs text-indigo-200/60 leading-relaxed mb-3">
-              Horarios en los que se sirve cocina. Responde a "¿A qué hora puedo comer/cenar?".
-              Los turnos definen cuándo el cliente puede reservar mesa.
-            </p>
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 space-y-2">
-              <p className="text-[11px] font-semibold text-indigo-200">Control de capacidad por turno:</p>
-              <div className="space-y-1.5 text-[10px] text-indigo-200/80">
-                <div className="flex items-start gap-2">
-                  <span className="flex-shrink-0">👥</span>
-                  <span><strong>Máx. personas por reserva:</strong> Límite para una reserva individual. Grupos más grandes se redirigen al teléfono.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="flex-shrink-0">🪑</span>
-                  <span><strong>Máx. comensales por turno:</strong> Capacidad total que la IA de Servana puede reservar. Cuenta todas las reservas registradas en tiempo real.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="flex-shrink-0">⏱️</span>
-                  <span><strong>Margen última reserva:</strong> Minutos antes del cierre del turno en que se deja de aceptar reservas online.</span>
-                </div>
-              </div>
-              <p className="text-[10px] text-indigo-300/60 italic pt-1">
-                💡 Haz clic en los iconos <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-indigo-500/30 text-[8px]">?</span> junto a cada campo para ver ejemplos detallados
-              </p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                Turnos de cocina / servicio
+              </h3>
+              <InfoTooltip
+                title="Control de capacidad por turno"
+                description="Cada turno tiene ajustes de capacidad: máx. personas por reserva (grupos más grandes llaman), máx. comensales totales (cuenta todas las reservas en tiempo real), y margen última reserva (minutos antes del cierre)."
+                examples={[
+                  "👥 Máx. 8 personas: grupos de 10 deben llamar",
+                  "🪑 Máx. 50 comensales: cuando se llega al límite, la IA sugiere llamar",
+                  "⏱️ Margen 60 min: última reserva 1h antes del cierre"
+                ]}
+              />
             </div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Horarios en los que se sirve cocina. Definen cuándo el cliente puede reservar.
+            </p>
           </div>
         </div>
 
@@ -919,10 +935,10 @@ export function OpeningHoursEditor({
           return (
             <div
               key={day}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/40 overflow-hidden"
+              className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 overflow-hidden"
             >
               {/* Header del día */}
-              <div className="flex items-center gap-3 p-3 bg-zinc-900/60">
+              <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900/60">
                 {/* Checkbox abierto/cerrado */}
                 <label className="flex items-center gap-2 min-w-[100px] cursor-pointer">
                   <input
@@ -930,13 +946,13 @@ export function OpeningHoursEditor({
                     checked={daySchedule.enabled}
                     onChange={() => toggleDay(day)}
                     disabled={isReadOnly || isPending}
-                    className="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  <span className="text-sm font-medium text-zinc-200">{day}</span>
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{day}</span>
                 </label>
 
                 {/* Resumen de horarios */}
-                <div className="flex-1 text-sm text-zinc-400">
+                <div className="flex-1 text-sm text-zinc-500 dark:text-zinc-400">
                   {daySchedule.enabled && daySchedule.shifts.length > 0 ? (
                     daySchedule.shifts.map((shift, i) => (
                       <span key={shift.id}>
@@ -955,7 +971,7 @@ export function OpeningHoursEditor({
                     type="button"
                     onClick={() => applyToAllDays(day)}
                     disabled={isReadOnly || isPending}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Aplicar a todos
                   </button>
@@ -965,7 +981,7 @@ export function OpeningHoursEditor({
                 <button
                   type="button"
                   onClick={() => toggleExpanded(day)}
-                  className="text-zinc-500 hover:text-zinc-300"
+                  className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 >
                   {isExpanded ? "▼" : "▶"}
                 </button>
@@ -973,22 +989,21 @@ export function OpeningHoursEditor({
 
               {/* Detalles expandidos */}
               {isExpanded && daySchedule.enabled && (
-                <div className="p-3 space-y-3 border-t border-zinc-800">
+                <div className="p-3 space-y-3 border-t border-zinc-200 dark:border-zinc-800">
                   {/* Lista de turnos */}
                   {daySchedule.shifts.map((shift) => (
                     <div
                       key={shift.id}
-                      className="flex items-center gap-2 p-2 rounded bg-zinc-900/60"
+                      className="flex items-center gap-2 p-2 rounded bg-zinc-50 dark:bg-zinc-900/60"
                     >
                       {/* Mostrar nombre del turno */}
                       {shift.isCustom ? (
                         // Si es turno personalizado, mostrar badge no editable
                         <div
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium text-zinc-700 dark:text-zinc-200"
                           style={{
                             backgroundColor: shift.color ? `${shift.color}20` : "#6366f120",
                             borderColor: shift.color || "#6366f1",
-                            color: "#e4e4e7"
                           }}
                         >
                           <span>{shift.emoji}</span>
@@ -1007,7 +1022,7 @@ export function OpeningHoursEditor({
                             }
                           }}
                           disabled={isReadOnly || isPending}
-                          className="text-sm rounded bg-zinc-800 border border-zinc-700 px-2 py-1 text-zinc-200 disabled:opacity-50"
+                          className="text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50"
                         >
                           {SHIFT_TEMPLATES.map((template) => (
                             <option key={template.name} value={template.name}>
@@ -1023,10 +1038,10 @@ export function OpeningHoursEditor({
                         value={shift.startTime}
                         onChange={(e) => updateShift(day, shift.id, "startTime", e.target.value)}
                         disabled={isReadOnly || isPending}
-                        className="text-sm rounded bg-zinc-800 border border-zinc-700 px-2 py-1 text-zinc-200 disabled:opacity-50"
+                        className="text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50"
                       />
 
-                      <span className="text-zinc-500">→</span>
+                      <span className="text-zinc-400 dark:text-zinc-500">→</span>
 
                       {/* Hora fin */}
                       <input
@@ -1034,15 +1049,15 @@ export function OpeningHoursEditor({
                         value={shift.endTime}
                         onChange={(e) => updateShift(day, shift.id, "endTime", e.target.value)}
                         disabled={isReadOnly || isPending}
-                        className="text-sm rounded bg-zinc-800 border border-zinc-700 px-2 py-1 text-zinc-200 disabled:opacity-50"
+                        className="text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50"
                       />
 
                       {/* Separador */}
-                      <div className="w-px h-5 bg-zinc-700 mx-1"></div>
+                      <div className="w-px h-5 bg-zinc-200 dark:bg-zinc-700 mx-1"></div>
 
                       {/* Max personas por reserva */}
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-500 text-xs">👥</span>
+                        <span className="text-zinc-400 dark:text-zinc-500 text-xs">👥</span>
                         <input
                           type="number"
                           min="1"
@@ -1050,7 +1065,7 @@ export function OpeningHoursEditor({
                           value={shift.maxPartySize ?? 8}
                           onChange={(e) => updateShift(day, shift.id, "maxPartySize", e.target.value)}
                           disabled={isReadOnly || isPending}
-                          className="w-12 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                          className="w-12 text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50 text-center"
                         />
                         <InfoTooltip
                           title="👥 Máx. personas por reserva"
@@ -1065,7 +1080,7 @@ export function OpeningHoursEditor({
 
                       {/* Max covers por turno */}
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-500 text-xs">🪑</span>
+                        <span className="text-zinc-400 dark:text-zinc-500 text-xs">🪑</span>
                         <input
                           type="number"
                           min="1"
@@ -1073,7 +1088,7 @@ export function OpeningHoursEditor({
                           value={shift.maxCovers ?? 50}
                           onChange={(e) => updateShift(day, shift.id, "maxCovers", e.target.value)}
                           disabled={isReadOnly || isPending}
-                          className="w-14 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                          className="w-14 text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50 text-center"
                         />
                         <InfoTooltip
                           title="🪑 Máx. comensales por turno"
@@ -1089,7 +1104,7 @@ export function OpeningHoursEditor({
 
                       {/* Margen última reserva */}
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-500 text-xs">⏱️</span>
+                        <span className="text-zinc-400 dark:text-zinc-500 text-xs">⏱️</span>
                         <input
                           type="number"
                           min="0"
@@ -1098,9 +1113,9 @@ export function OpeningHoursEditor({
                           value={shift.lastReservationMargin ?? 60}
                           onChange={(e) => updateShift(day, shift.id, "lastReservationMargin", e.target.value)}
                           disabled={isReadOnly || isPending}
-                          className="w-14 text-sm rounded bg-zinc-800 border border-zinc-700 px-1.5 py-1 text-zinc-200 disabled:opacity-50 text-center"
+                          className="w-14 text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50 text-center"
                         />
-                        <span className="text-zinc-500 text-[10px]">min</span>
+                        <span className="text-zinc-400 dark:text-zinc-500 text-[10px]">min</span>
                         <InfoTooltip
                           title="⏱️ Margen última reserva"
                           description="Minutos antes del cierre del turno en que se deja de ofrecer reservas online. Por ejemplo, si el turno cierra a las 00:00 y pones 60 minutos, la última reserva sugerida será a las 23:00."
@@ -1118,7 +1133,7 @@ export function OpeningHoursEditor({
                         type="button"
                         onClick={() => removeShift(day, shift.id)}
                         disabled={isReadOnly || isPending}
-                        className="ml-auto text-rose-400 hover:text-rose-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="ml-auto text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         ✕
                       </button>
@@ -1134,7 +1149,7 @@ export function OpeningHoursEditor({
                         type="button"
                         onClick={() => addShift(day, template.name)}
                         disabled={isReadOnly || isPending}
-                        className="text-xs px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-xs px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         + {template.emoji} {template.name}
                       </button>
@@ -1147,11 +1162,10 @@ export function OpeningHoursEditor({
                         type="button"
                         onClick={() => addShift(day, customShift.name, customShift)}
                         disabled={isReadOnly || isPending}
-                        className="text-xs px-2 py-1 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-80 transition-opacity"
+                        className="text-xs px-2 py-1 rounded border disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-80 transition-opacity text-zinc-700 dark:text-zinc-200"
                         style={{
                           backgroundColor: customShift.color ? `${customShift.color}30` : "#6366f130",
                           borderColor: customShift.color || "#6366f1",
-                          color: "#e4e4e7"
                         }}
                       >
                         + {customShift.emoji} {customShift.name}
@@ -1163,7 +1177,7 @@ export function OpeningHoursEditor({
                       type="button"
                       onClick={() => openCustomShiftDialog(day)}
                       disabled={isReadOnly || isPending}
-                      className="text-xs px-2 py-1 rounded bg-indigo-800 hover:bg-indigo-700 text-indigo-200 border border-indigo-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs px-2 py-1 rounded bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       + ✨ Turno personalizado
                     </button>
@@ -1174,22 +1188,22 @@ export function OpeningHoursEditor({
           );
         })}
         </div>
-      </div>
 
-      {/* Botón para gestionar plantillas de turnos (fuera del loop) */}
-      {getUniqueCustomShifts().length > 0 && (
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setShowShiftManagerDialog(true)}
-            disabled={isReadOnly || isPending}
-            className="text-sm px-4 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <span>⚙️</span>
-            <span>Gestionar turnos personalizados ({getUniqueCustomShifts().length})</span>
-          </button>
-        </div>
-      )}
+        {/* Botón para gestionar plantillas de turnos */}
+        {getUniqueCustomShifts().length > 0 && (
+          <div className="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+            <button
+              type="button"
+              onClick={() => setShowShiftManagerDialog(true)}
+              disabled={isReadOnly || isPending}
+              className="text-xs px-3 py-1.5 rounded bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <span>⚙️</span>
+              <span>Gestionar turnos personalizados ({getUniqueCustomShifts().length})</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Botón manual oculto - solo para validación con conflictos si es necesario */}
       <button
@@ -1232,14 +1246,14 @@ export function OpeningHoursEditor({
 
       {/* Diálogo: Turno personalizado */}
       {showCustomShiftDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl max-w-lg w-full mx-4">
             {/* Header */}
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 ✨ Crear turno personalizado
               </h3>
-              <p className="text-sm text-zinc-400 leading-relaxed">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
                 Define un turno único para tu restaurante con nombre, horario y emoji personalizados.
               </p>
             </div>
@@ -1248,7 +1262,7 @@ export function OpeningHoursEditor({
             <div className="p-6 space-y-4">
               {/* Nombre del turno */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del turno *
                 </label>
                 <input
@@ -1256,13 +1270,13 @@ export function OpeningHoursEditor({
                   value={customShift.name}
                   onChange={(e) => setCustomShift({ ...customShift, name: e.target.value })}
                   placeholder="Ej: Brunch, Happy Hour, Merienda..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               {/* Emoji selector */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Emoji
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1274,7 +1288,7 @@ export function OpeningHoursEditor({
                       className={`w-10 h-10 rounded-lg border text-xl transition-all ${
                         customShift.emoji === emoji
                           ? "bg-indigo-600 border-indigo-500 scale-110"
-                          : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                          : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {emoji}
@@ -1286,7 +1300,7 @@ export function OpeningHoursEditor({
                     onChange={(e) => setCustomShift({ ...customShift, emoji: e.target.value })}
                     placeholder="O escribe..."
                     maxLength={2}
-                    className="w-20 h-10 rounded-lg bg-zinc-800 border border-zinc-700 px-2 text-center text-xl"
+                    className="w-20 h-10 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 text-center text-xl"
                   />
                 </div>
               </div>
@@ -1294,32 +1308,32 @@ export function OpeningHoursEditor({
               {/* Horarios */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Hora inicio *
                   </label>
                   <input
                     type="time"
                     value={customShift.startTime}
                     onChange={(e) => setCustomShift({ ...customShift, startTime: e.target.value })}
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200"
+                    className="w-full text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200"
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                  <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                     Hora fin *
                   </label>
                   <input
                     type="time"
                     value={customShift.endTime}
                     onChange={(e) => setCustomShift({ ...customShift, endTime: e.target.value })}
-                    className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200"
+                    className="w-full text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200"
                   />
                 </div>
               </div>
 
               {/* Color selector */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Color (opcional)
                 </label>
                 <div className="flex gap-2 flex-wrap items-center">
@@ -1330,7 +1344,7 @@ export function OpeningHoursEditor({
                       onClick={() => setCustomShift({ ...customShift, color })}
                       className={`w-8 h-8 rounded-lg transition-all ${
                         customShift.color === color
-                          ? "ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-110"
+                          ? "ring-2 ring-indigo-500 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 scale-110"
                           : "hover:scale-105"
                       }`}
                       style={{ backgroundColor: color }}
@@ -1347,8 +1361,8 @@ export function OpeningHoursEditor({
               </div>
 
               {/* Preview */}
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-lg p-3">
-                <p className="text-xs text-zinc-400 mb-2">Vista previa:</p>
+              <div className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Vista previa:</p>
                 <div
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded border"
                   style={{
@@ -1357,10 +1371,10 @@ export function OpeningHoursEditor({
                   }}
                 >
                   <span className="text-base">{customShift.emoji}</span>
-                  <span className="text-sm font-medium text-zinc-200">
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                     {customShift.name || "Nombre del turno"}
                   </span>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     {customShift.startTime} - {customShift.endTime}
                   </span>
                 </div>
@@ -1368,14 +1382,14 @@ export function OpeningHoursEditor({
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowCustomShiftDialog(false);
                   setCurrentEditingDay(null);
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
               >
                 Cancelar
               </button>
@@ -1394,14 +1408,14 @@ export function OpeningHoursEditor({
 
       {/* Diálogo: Gestor de turnos personalizados */}
       {showShiftManagerDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-xl font-semibold text-zinc-100">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                 ⚙️ Gestor de turnos personalizados
               </h3>
-              <p className="text-sm text-zinc-400 mt-1">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                 Edita o elimina tus turnos personalizados. Los cambios se aplicarán a todos los días que usen estos turnos.
               </p>
             </div>
@@ -1409,14 +1423,14 @@ export function OpeningHoursEditor({
             {/* Body */}
             <div className="p-6 space-y-3 overflow-y-auto flex-1">
               {getUniqueCustomShifts().length === 0 ? (
-                <div className="text-center py-8 text-zinc-500">
+                <div className="text-center py-8 text-zinc-400 dark:text-zinc-500">
                   No hay turnos personalizados creados
                 </div>
               ) : (
                 getUniqueCustomShifts().map((shift) => (
                   <div
                     key={shift.name}
-                    className="flex items-center justify-between p-4 rounded-lg border bg-zinc-900/40"
+                    className="flex items-center justify-between p-4 rounded-lg border bg-zinc-50 dark:bg-zinc-900/40"
                     style={{
                       borderColor: shift.color || "#6366f1",
                     }}
@@ -1432,7 +1446,7 @@ export function OpeningHoursEditor({
                         {shift.emoji}
                       </div>
                       <div>
-                        <div className="font-medium text-zinc-200">{shift.name}</div>
+                        <div className="font-medium text-zinc-700 dark:text-zinc-200">{shift.name}</div>
                         <div className="text-xs text-zinc-500">
                           {shift.startTime} - {shift.endTime}
                         </div>
@@ -1447,7 +1461,7 @@ export function OpeningHoursEditor({
                           setEditingShiftTemplate(shift);
                           setShowShiftManagerDialog(false);
                         }}
-                        className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                        className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
                       >
                         ✏️ Editar
                       </button>
@@ -1458,7 +1472,7 @@ export function OpeningHoursEditor({
                           setShowDeleteShiftConfirm(true);
                           setShowShiftManagerDialog(false);
                         }}
-                        className="px-3 py-1.5 rounded text-xs font-medium bg-rose-900/50 hover:bg-rose-900 text-rose-200 border border-rose-800 transition-colors"
+                        className="px-3 py-1.5 rounded text-xs font-medium bg-rose-100 dark:bg-rose-900/50 hover:bg-rose-200 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-200 border border-rose-300 dark:border-rose-800 transition-colors"
                       >
                         🗑️ Eliminar
                       </button>
@@ -1469,11 +1483,11 @@ export function OpeningHoursEditor({
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => setShowShiftManagerDialog(false)}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
               >
                 Cerrar
               </button>
@@ -1484,14 +1498,14 @@ export function OpeningHoursEditor({
 
       {/* Diálogo: Editar turno personalizado */}
       {editingShiftTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-xl font-semibold text-zinc-100">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
                 ✏️ Editar turno personalizado
               </h3>
-              <p className="text-sm text-zinc-400 mt-1">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                 Los cambios se aplicarán a todos los días que usen este turno
               </p>
             </div>
@@ -1500,7 +1514,7 @@ export function OpeningHoursEditor({
             <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Nombre */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Nombre del turno *
                 </label>
                 <input
@@ -1508,13 +1522,13 @@ export function OpeningHoursEditor({
                   value={editingShiftTemplate.name}
                   onChange={(e) => setEditingShiftTemplate({ ...editingShiftTemplate, name: e.target.value })}
                   placeholder="Ej: Brunch, Happy Hour, Merienda..."
-                  className="w-full text-sm rounded bg-zinc-800 border border-zinc-700 px-3 py-2 text-zinc-200 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               {/* Emoji selector */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Emoji
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -1526,7 +1540,7 @@ export function OpeningHoursEditor({
                       className={`w-10 h-10 rounded-lg border text-xl transition-all ${
                         editingShiftTemplate.emoji === emoji
                           ? "bg-indigo-600 border-indigo-500 scale-110"
-                          : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                          : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                       }`}
                     >
                       {emoji}
@@ -1538,14 +1552,14 @@ export function OpeningHoursEditor({
                     onChange={(e) => setEditingShiftTemplate({ ...editingShiftTemplate, emoji: e.target.value })}
                     placeholder="O escribe..."
                     maxLength={2}
-                    className="w-20 h-10 rounded-lg bg-zinc-800 border border-zinc-700 px-2 text-center text-xl"
+                    className="w-20 h-10 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 text-center text-xl"
                   />
                 </div>
               </div>
 
               {/* Color selector */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Color
                 </label>
                 <div className="flex gap-2 flex-wrap items-center">
@@ -1556,7 +1570,7 @@ export function OpeningHoursEditor({
                       onClick={() => setEditingShiftTemplate({ ...editingShiftTemplate, color })}
                       className={`w-8 h-8 rounded-lg transition-all ${
                         editingShiftTemplate.color === color
-                          ? "ring-2 ring-white ring-offset-2 ring-offset-zinc-900 scale-110"
+                          ? "ring-2 ring-indigo-500 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 scale-110"
                           : "hover:scale-105"
                       }`}
                       style={{ backgroundColor: color }}
@@ -1574,7 +1588,7 @@ export function OpeningHoursEditor({
 
               {/* Preview */}
               <div>
-                <label className="text-sm text-zinc-300 font-medium mb-2 block">
+                <label className="text-sm text-zinc-700 dark:text-zinc-300 font-medium mb-2 block">
                   Vista previa
                 </label>
                 <div
@@ -1585,29 +1599,29 @@ export function OpeningHoursEditor({
                   }}
                 >
                   <span className="text-base">{editingShiftTemplate.emoji}</span>
-                  <span className="text-sm font-medium text-zinc-200">
+                  <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                     {editingShiftTemplate.name || "Nombre del turno"}
                   </span>
                 </div>
               </div>
 
               {/* Advertencia */}
-              <div className="bg-amber-900/20 border border-amber-800/50 rounded-lg p-3">
-                <p className="text-xs text-amber-200">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg p-3">
+                <p className="text-xs text-amber-700 dark:text-amber-200">
                   ⚠️ Este cambio actualizará el nombre, emoji y color en todos los días que usen este turno. Los horarios de cada día se mantendrán sin cambios.
                 </p>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setEditingShiftTemplate(null);
                   setShowShiftManagerDialog(true);
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
               >
                 Cancelar
               </button>
@@ -1632,19 +1646,19 @@ export function OpeningHoursEditor({
 
       {/* Diálogo: Confirmar eliminación de turno */}
       {showDeleteShiftConfirm && shiftToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl w-full max-w-md">
             {/* Header */}
-            <div className="p-6 border-b border-zinc-800">
-              <h3 className="text-xl font-semibold text-rose-400">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xl font-semibold text-rose-600 dark:text-rose-400">
                 🗑️ Eliminar turno personalizado
               </h3>
             </div>
 
             {/* Body */}
             <div className="p-6 space-y-4">
-              <p className="text-sm text-zinc-300">
-                ¿Estás seguro de que quieres eliminar el turno <strong className="text-zinc-100">{shiftToDelete.name}</strong>?
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                ¿Estás seguro de que quieres eliminar el turno <strong className="text-zinc-900 dark:text-zinc-100">{shiftToDelete.name}</strong>?
               </p>
 
               {/* Preview del turno a eliminar */}
@@ -1657,22 +1671,22 @@ export function OpeningHoursEditor({
               >
                 <span className="text-2xl">{shiftToDelete.emoji}</span>
                 <div>
-                  <div className="font-medium text-zinc-200">{shiftToDelete.name}</div>
+                  <div className="font-medium text-zinc-700 dark:text-zinc-200">{shiftToDelete.name}</div>
                   <div className="text-xs text-zinc-500">
                     {shiftToDelete.startTime} - {shiftToDelete.endTime}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-rose-900/20 border border-rose-800/50 rounded-lg p-3">
-                <p className="text-xs text-rose-200">
+              <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/50 rounded-lg p-3">
+                <p className="text-xs text-rose-700 dark:text-rose-200">
                   ⚠️ Esta acción no se puede deshacer. Se eliminará este turno de todos los días de la semana.
                 </p>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-zinc-800 flex gap-3 justify-end">
+            <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 flex gap-3 justify-end">
               <button
                 type="button"
                 onClick={() => {
@@ -1680,7 +1694,7 @@ export function OpeningHoursEditor({
                   setShiftToDelete(null);
                   setShowShiftManagerDialog(true);
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 transition-colors"
               >
                 Cancelar
               </button>

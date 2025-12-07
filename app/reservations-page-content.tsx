@@ -29,7 +29,7 @@ export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: P
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
           Reservas
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
           Vista general de todas las reservas confirmadas
         </p>
       </header>

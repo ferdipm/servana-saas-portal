@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { useTheme } from "next-themes";
 
 interface ReservationTrendsChartProps {
   data: {
@@ -22,6 +23,9 @@ interface ReservationTrendsChartProps {
 }
 
 export function ReservationTrendsChart({ data }: ReservationTrendsChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const formattedData = data.map((item) => ({
     ...item,
     formattedDate: format(parseISO(item.date), "dd MMM", { locale: es }),
@@ -31,25 +35,25 @@ export function ReservationTrendsChart({ data }: ReservationTrendsChartProps) {
     <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={formattedData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#27272a" : "#e4e4e7"} />
           <XAxis
             dataKey="formattedDate"
-            stroke="#71717a"
+            stroke={isDark ? "#71717a" : "#a1a1aa"}
             style={{ fontSize: "12px" }}
           />
-          <YAxis stroke="#71717a" style={{ fontSize: "12px" }} />
+          <YAxis stroke={isDark ? "#71717a" : "#a1a1aa"} style={{ fontSize: "12px" }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#18181b",
-              border: "1px solid #27272a",
+              backgroundColor: isDark ? "#18181b" : "#ffffff",
+              border: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`,
               borderRadius: "8px",
-              color: "#f4f4f5",
+              color: isDark ? "#f4f4f5" : "#18181b",
             }}
-            labelStyle={{ color: "#a1a1aa" }}
-            cursor={{ stroke: "rgba(255, 255, 255, 0.1)", strokeWidth: 1 }}
+            labelStyle={{ color: isDark ? "#a1a1aa" : "#71717a" }}
+            cursor={{ stroke: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)", strokeWidth: 1 }}
           />
           <Legend
-            wrapperStyle={{ fontSize: "12px", color: "#a1a1aa" }}
+            wrapperStyle={{ fontSize: "12px", color: isDark ? "#a1a1aa" : "#71717a" }}
             iconType="line"
           />
           <Line

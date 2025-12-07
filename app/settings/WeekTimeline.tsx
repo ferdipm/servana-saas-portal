@@ -122,8 +122,8 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
   };
 
   return (
-    <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-zinc-200">Vista semanal de horarios de apertura y turnos de comida</h3>
+    <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 space-y-3">
+      <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">Vista semanal de horarios de apertura y turnos de comida</h3>
 
       {/* Timeline grid */}
       <div className="relative pt-6">
@@ -165,18 +165,18 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
             return (
               <div key={day} className="flex items-center gap-2">
                 {/* Nombre del día */}
-                <div className="w-12 text-xs text-zinc-400 font-medium">
+                <div className="w-12 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                   {DAYS_SHORT[dayIndex]}
-                  {hasSpecialDay && <div className="text-[8px] text-rose-400">●</div>}
+                  {hasSpecialDay && <div className="text-[8px] text-rose-500 dark:text-rose-400">●</div>}
                 </div>
 
                 {/* Timeline del día */}
-                <div className="flex-1 relative h-6 bg-zinc-900/60 rounded border border-zinc-800">
+                <div className="flex-1 relative h-6 bg-zinc-100 dark:bg-zinc-900/60 rounded border border-zinc-200 dark:border-zinc-800">
                   {/* Grid de fondo (cada 6 horas) */}
                   {[0.25, 0.5, 0.75].map((position) => (
                     <div
                       key={position}
-                      className="absolute top-0 bottom-0 w-px bg-zinc-800/50"
+                      className="absolute top-0 bottom-0 w-px bg-zinc-300/50 dark:bg-zinc-800/50"
                       style={{ left: `${position * 100}%` }}
                     />
                   ))}
@@ -283,7 +283,7 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
                   {/* Indicador de cerrado o día especial */}
                   {!isOpen && !hasSpecialDay && (
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-[10px] text-zinc-600 italic">
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-600 italic">
                         Cerrado
                       </span>
                     </div>
@@ -377,33 +377,33 @@ export function WeekTimeline({ schedule, specialDays = [] }: WeekTimelineProps) 
         <div className="flex gap-4 mt-4 text-[10px] flex-wrap">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-cyan-500/20 border-l border-r border-cyan-500/40 rounded-sm"></div>
-            <span className="text-zinc-400">🏪 Establecimiento abierto</span>
+            <span className="text-zinc-500 dark:text-zinc-400">🏪 Establecimiento abierto</span>
           </div>
-          <div className="h-3 w-px bg-zinc-700"></div>
+          <div className="h-3 w-px bg-zinc-300 dark:bg-zinc-700"></div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-amber-500/80 border border-amber-400 rounded-sm"></div>
-            <span className="text-zinc-400">☕ Desayuno</span>
+            <span className="text-zinc-500 dark:text-zinc-400">☕ Desayuno</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-emerald-500/80 border border-emerald-400 rounded-sm"></div>
-            <span className="text-zinc-400">🍽️ Comida</span>
+            <span className="text-zinc-500 dark:text-zinc-400">🍽️ Comida</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-indigo-500/80 border border-indigo-400 rounded-sm"></div>
-            <span className="text-zinc-400">🌙 Cena</span>
+            <span className="text-zinc-500 dark:text-zinc-400">🌙 Cena</span>
           </div>
-          <div className="h-3 w-px bg-zinc-700"></div>
+          <div className="h-3 w-px bg-zinc-300 dark:bg-zinc-700"></div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-rose-900/60 border border-rose-600/40 rounded-sm"></div>
-            <span className="text-zinc-400">🔴 Cerrado</span>
+            <span className="text-zinc-500 dark:text-zinc-400">🔴 Cerrado</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-amber-900/60 border border-amber-600/40 rounded-sm"></div>
-            <span className="text-zinc-400">⚠️ Horario especial</span>
+            <span className="text-zinc-500 dark:text-zinc-400">⚠️ Horario especial</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-purple-900/60 border border-purple-600/40 rounded-sm"></div>
-            <span className="text-zinc-400">🎉 Evento privado</span>
+            <span className="text-zinc-500 dark:text-zinc-400">🎉 Evento privado</span>
           </div>
         </div>
       </div>

@@ -141,11 +141,11 @@ export function KeyInsights({ data }: KeyInsightsProps) {
   const getTypeStyles = (type: Insight["type"]) => {
     switch (type) {
       case "positive":
-        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20";
       case "warning":
-        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+        return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20";
       case "neutral":
-        return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+        return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20";
     }
   };
 
@@ -154,12 +154,12 @@ export function KeyInsights({ data }: KeyInsightsProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 shadow-sm dark:shadow-none">
       <div className="flex items-center gap-2 mb-4">
         <div className="p-2 bg-indigo-500/10 rounded-lg">
           <Lightbulb className="w-5 h-5 text-indigo-400" />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-100">Insights Clave</h3>
+        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Insights Clave</h3>
       </div>
 
       <div className="space-y-3">

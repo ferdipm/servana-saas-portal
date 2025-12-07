@@ -159,7 +159,14 @@ export function LogoUploader({
       {/* Preview */}
       <div className="flex items-start gap-6">
         {previewUrl ? (
-          <div className="w-32 h-32 rounded-lg bg-zinc-900 border border-zinc-700 flex items-center justify-center overflow-hidden">
+          <div
+            className="w-32 h-32 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center overflow-hidden"
+            style={{
+              backgroundImage: 'linear-gradient(45deg, #e4e4e7 25%, transparent 25%), linear-gradient(-45deg, #e4e4e7 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e4e4e7 75%), linear-gradient(-45deg, transparent 75%, #e4e4e7 75%)',
+              backgroundSize: '16px 16px',
+              backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+              backgroundColor: '#fafafa'
+            }}>
             <img
               src={previewUrl}
               alt="Logo del restaurante"
@@ -167,25 +174,25 @@ export function LogoUploader({
             />
           </div>
         ) : (
-          <div className="w-32 h-32 rounded-lg bg-zinc-900 border border-dashed border-zinc-700 flex items-center justify-center">
+          <div className="w-32 h-32 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center">
             <span className="text-xs text-zinc-500">Sin logo</span>
           </div>
         )}
 
         <div className="flex-1 space-y-3">
-          <div className="text-xs text-zinc-400">
+          <div className="text-xs text-zinc-500 dark:text-zinc-400">
             Sube el logo de tu restaurante. Se mostrará en el dashboard y en
             futuras comunicaciones.
           </div>
 
           {/* Mensajes */}
           {uploadError && (
-            <div className="text-xs text-rose-300 bg-rose-950/50 border border-rose-500/40 rounded-md px-3 py-2">
+            <div className="text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/40 rounded-md px-3 py-2">
               {uploadError}
             </div>
           )}
           {successMessage && (
-            <div className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/40 rounded-md px-3 py-2">
+            <div className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/40 rounded-md px-3 py-2">
               {successMessage}
             </div>
           )}
@@ -219,7 +226,7 @@ export function LogoUploader({
                 type="button"
                 onClick={handleRemoveLogo}
                 disabled={isReadOnly || isUploading || isPending}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 Eliminar
               </button>

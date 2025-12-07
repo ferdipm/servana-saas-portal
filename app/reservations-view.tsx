@@ -26,6 +26,23 @@ type Props = {
   onReservationChange?: () => void; // Callback para notificar cambios
 };
 
+// Helper para traducir el origen de la reserva al español
+function translateSource(source: string | null | undefined): string {
+  if (!source) return "—";
+  const translations: Record<string, string> = {
+    phone: "Teléfono",
+    whatsapp: "WhatsApp",
+    manual: "Manual",
+    web: "Web",
+    bot: "Bot IA",
+    walkin: "Sin reserva",
+    "walk-in": "Sin reserva",
+    email: "Email",
+    app: "Aplicación",
+  };
+  return translations[source.toLowerCase()] || source;
+}
+
 export function ReservationsView({
   tenantId,
   restaurantId,
@@ -301,7 +318,7 @@ export function ReservationsView({
                     h-9 px-4 rounded-xl text-sm font-medium
                     border border-emerald-400/60
                     bg-emerald-500/15 hover:bg-emerald-500/25
-                    text-emerald-50
+                    text-emerald-700 dark:text-emerald-50
                     shadow-md backdrop-blur-sm
                     transition-colors
                     inline-flex items-center gap-2
@@ -317,7 +334,7 @@ export function ReservationsView({
 
         {/* Header columnas */}
         <div className="px-3 md:px-4 pt-3 mb-5">
-          <div className="bg-[#1c1e24] ring-1 ring-zinc-900/10 dark:ring-white/10 rounded-md shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#1c1e24] ring-1 ring-zinc-300/50 dark:ring-white/10 rounded-md shadow-sm overflow-hidden">
             <div
               className="
                 grid grid-cols-[1fr_1.2fr_.9fr_1fr_1fr_auto]
@@ -336,7 +353,7 @@ export function ReservationsView({
               ].map((label, i) => (
                 <div
                   key={label}
-                  className="text-left font-medium text-[15px] text-zinc-400 relative"
+                  className="text-left font-medium text-[15px] text-zinc-600 dark:text-zinc-400 relative"
                   style={{
                     left: ["-12px", "-17px", "-24px", "-21px", "-30px", "-20px"][i],
                   }}
@@ -762,14 +779,14 @@ function ReservationDrawer({
         className="
           fixed right-0 top-0 bottom-0 z-50
           w-full max-w-lg
-          bg-[#0b0b0d] text-zinc-100
-          border-l border-zinc-800
+          bg-white dark:bg-[#0b0b0d] text-zinc-900 dark:text-zinc-100
+          border-l border-zinc-200 dark:border-zinc-800
           shadow-2xl
           flex flex-col
         "
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase text-zinc-500">Reserva</div>
             <div className="text-base font-semibold">
@@ -778,7 +795,7 @@ function ReservationDrawer({
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-100 text-sm"
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm"
           >
             Cerrar
           </button>
@@ -797,7 +814,7 @@ function ReservationDrawer({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               placeholder="Nombre del cliente"
             />
           </div>
@@ -810,8 +827,8 @@ function ReservationDrawer({
                 <PopoverTrigger asChild>
                   <button
                     className="
-                      h-9 px-3 rounded-lg border border-zinc-700/60
-                      bg-zinc-900/60 text-sm flex items-center gap-2 w-full
+                      h-9 px-3 rounded-lg border border-zinc-300 dark:border-zinc-700/60
+                      bg-white dark:bg-zinc-900/60 text-sm flex items-center gap-2 w-full
                       justify-between
                     "
                   >
@@ -852,7 +869,7 @@ function ReservationDrawer({
                 type="time"
                 value={editTime}
                 onChange={(e) => setEditTime(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               />
             </div>
           </div>
@@ -864,7 +881,7 @@ function ReservationDrawer({
               <input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm"
                 inputMode="numeric"
               />
             </div>
@@ -873,7 +890,7 @@ function ReservationDrawer({
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm"
               />
             </div>
           </div>
@@ -882,13 +899,13 @@ function ReservationDrawer({
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <div className="text-xs text-zinc-500 mb-1">Localizador</div>
-              <div className="font-mono text-[13px] text-zinc-300">
+              <div className="font-mono text-[13px] text-zinc-600 dark:text-zinc-300">
                 #{reservation.locator ?? reservation.id.slice(0, 8)}
               </div>
             </div>
             <div>
               <div className="text-xs text-zinc-500 mb-1">Origen</div>
-              <div className="text-sm">{reservation.source ?? "—"}</div>
+              <div className="text-sm">{translateSource(reservation.source)}</div>
             </div>
           </div>
 
@@ -941,7 +958,7 @@ function ReservationDrawer({
                   className="
                     px-4 py-2 rounded-lg text-sm font-medium
                     border border-sky-400/60
-                    bg-sky-500/10 text-sky-100
+                    bg-sky-500/10 text-sky-700 dark:text-sky-100
                     hover:bg-sky-500/20
                     disabled:opacity-60
                     inline-flex items-center gap-2
@@ -982,7 +999,7 @@ function ReservationDrawer({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1 text-sm resize-none"
+              className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm resize-none"
               placeholder="Notas para el equipo (no se muestran al cliente)…"
             />
           </div>
@@ -994,7 +1011,7 @@ function ReservationDrawer({
               className="
                 px-4 py-2 rounded-lg text-sm font-medium
                 border border-indigo-400/60
-                bg-indigo-500/10 text-indigo-100
+                bg-indigo-500/10 text-indigo-700 dark:text-indigo-100
                 hover:bg-indigo-500/20
                 disabled:opacity-60
               "
@@ -1018,7 +1035,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-emerald-500/40
-                    bg-emerald-500/10 text-emerald-200
+                    bg-emerald-500/10 text-emerald-700 dark:text-emerald-200
                     hover:bg-emerald-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1033,7 +1050,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-rose-400/50
-                    bg-rose-500/10 text-rose-200
+                    bg-rose-500/10 text-rose-700 dark:text-rose-200
                     hover:bg-rose-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1052,7 +1069,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-emerald-500/40
-                    bg-emerald-500/10 text-emerald-200
+                    bg-emerald-500/10 text-emerald-700 dark:text-emerald-200
                     hover:bg-emerald-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1068,7 +1085,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-sky-500/40
-                    bg-sky-500/10 text-sky-200
+                    bg-sky-500/10 text-sky-700 dark:text-sky-200
                     hover:bg-sky-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1084,7 +1101,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-zinc-500/40
-                    bg-zinc-500/10 text-zinc-100
+                    bg-zinc-500/10 text-zinc-700 dark:text-zinc-100
                     hover:bg-zinc-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1100,7 +1117,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-rose-400/50
-                    bg-rose-500/10 text-rose-200
+                    bg-rose-500/10 text-rose-700 dark:text-rose-200
                     hover:bg-rose-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1116,7 +1133,7 @@ function ReservationDrawer({
                   className="
                     flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-amber-400/50
-                    bg-amber-500/10 text-amber-200
+                    bg-amber-500/10 text-amber-700 dark:text-amber-200
                     hover:bg-amber-500/20
                     disabled:opacity-60
                     whitespace-nowrap
@@ -1218,14 +1235,14 @@ function NewReservationDrawer({
         className="
           fixed right-0 top-0 bottom-0 z-50
           w-full max-w-lg
-          bg-[#0b0b0d] text-zinc-100
-          border-l border-zinc-800
+          bg-white dark:bg-[#0b0b0d] text-zinc-900 dark:text-zinc-100
+          border-l border-zinc-200 dark:border-zinc-800
           shadow-2xl
           flex flex-col
         "
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase text-zinc-500">
               Nueva reserva manual
@@ -1234,7 +1251,7 @@ function NewReservationDrawer({
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-100 text-sm"
+            className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 text-sm"
           >
             Cerrar
           </button>
@@ -1257,7 +1274,7 @@ function NewReservationDrawer({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+              className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               placeholder="Nombre del cliente"
             />
           </div>
@@ -1269,7 +1286,7 @@ function NewReservationDrawer({
               <input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
                 placeholder="+34…"
               />
             </div>
@@ -1278,9 +1295,8 @@ function NewReservationDrawer({
               <input
                 value={partySize}
                 onChange={(e) => setPartySize(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
                 inputMode="numeric"
-                placeholder="2"
               />
             </div>
           </div>
@@ -1294,8 +1310,8 @@ function NewReservationDrawer({
                 <PopoverTrigger asChild>
                   <button
                     className="
-                      h-9 px-3 rounded-lg border border-zinc-700/60
-                      bg-zinc-900/60 text-sm flex items-center gap-2 w-full
+                      h-9 px-3 rounded-lg border border-zinc-300 dark:border-zinc-700/60
+                      bg-white dark:bg-zinc-900/60 text-sm flex items-center gap-2 w-full
                       justify-between
                     "
                   >
@@ -1336,7 +1352,7 @@ function NewReservationDrawer({
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm"
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               />
               <div className="text-[11px] text-zinc-500 mt-1">
                 Se usará la zona horaria del restaurante ({defaultTz}).
@@ -1351,7 +1367,7 @@ function NewReservationDrawer({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm resize-none"
+              className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm resize-none"
               placeholder="Alergias, peticiones especiales…"
             />
           </div>
@@ -1359,7 +1375,7 @@ function NewReservationDrawer({
           {/* Info de estado inicial */}
           <div className="text-xs text-zinc-500 pt-2">
             Estado inicial:{" "}
-            <span className="font-medium text-emerald-300">Confirmada</span>{" "}
+            <span className="font-medium text-emerald-600 dark:text-emerald-300">Confirmada</span>{" "}
             (reservas creadas manualmente).
           </div>
 
@@ -1371,7 +1387,7 @@ function NewReservationDrawer({
               className="
                 px-4 py-2 rounded-lg text-sm font-medium
                 border border-emerald-400/60
-                bg-emerald-500/15 text-emerald-50
+                bg-emerald-500/15 text-emerald-700 dark:text-emerald-50
                 hover:bg-emerald-500/25
                 disabled:opacity-60
               "

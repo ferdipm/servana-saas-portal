@@ -12,7 +12,7 @@ export function Calendar(
     <DayPicker
       showOutsideDays
       className={cn(
-        "rdp bg-[#111217] text-zinc-100 rounded-lg p-3",
+        "rdp bg-white dark:bg-[#111217] text-zinc-900 dark:text-zinc-100 rounded-lg p-3",
       )}
       {...props}
     />

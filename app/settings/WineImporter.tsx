@@ -351,10 +351,10 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
           <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border border-purple-700/30 flex items-center justify-center">
             <span className="text-4xl">🍷</span>
           </div>
-          <h3 className="text-lg font-semibold text-zinc-100 mb-2">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
             Importar carta de vinos
           </h3>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto">
             Sube tu carta de vinos en PDF o imagen, o proporciona la URL de tu web
             donde aparece. Nuestra IA extraerá automáticamente los vinos.
           </p>
@@ -365,16 +365,16 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
           <button
             type="button"
             onClick={() => setMethod("file")}
-            className="group p-6 rounded-xl border-2 border-dashed border-zinc-700 hover:border-indigo-500 bg-zinc-900/50 hover:bg-indigo-950/20 transition-all text-left"
+            className="group p-6 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-indigo-500 bg-white dark:bg-zinc-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all text-left shadow-sm"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-indigo-900/30 border border-indigo-700/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               <div>
-                <h4 className="font-medium text-zinc-100 mb-1">Subir archivo</h4>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">Subir archivo</h4>
                 <p className="text-xs text-zinc-500">PDF, JPG o PNG de tu carta de vinos</p>
               </div>
             </div>
@@ -384,16 +384,16 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
           <button
             type="button"
             onClick={() => setMethod("url")}
-            className="group p-6 rounded-xl border-2 border-dashed border-zinc-700 hover:border-indigo-500 bg-zinc-900/50 hover:bg-indigo-950/20 transition-all text-left"
+            className="group p-6 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-indigo-500 bg-white dark:bg-zinc-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 transition-all text-left shadow-sm"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-indigo-900/30 border border-indigo-700/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-12 h-12 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <svg className="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
               </div>
               <div>
-                <h4 className="font-medium text-zinc-100 mb-1">Desde URL</h4>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">Desde URL</h4>
                 <p className="text-xs text-zinc-500">Enlace a tu carta de vinos online</p>
               </div>
             </div>
@@ -411,10 +411,10 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
                 onChange={(e) => setIncludePrices(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-emerald-600 transition-colors"></div>
+              <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-700 rounded-full peer peer-checked:bg-emerald-600 transition-colors"></div>
               <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
             </div>
-            <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">
+            <span className="text-sm text-zinc-600 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
               Importar precios
             </span>
           </label>
@@ -429,10 +429,10 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
                   onChange={(e) => setAppendMode(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-zinc-700 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
+                <div className="w-11 h-6 bg-zinc-300 dark:bg-zinc-700 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
               </div>
-              <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">
+              <span className="text-sm text-zinc-600 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
                 Añadir a carta existente
               </span>
               <span className="text-xs text-zinc-500">
@@ -476,11 +476,11 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
             </svg>
             Volver
           </button>
-          <h3 className="text-sm font-medium text-zinc-300">Subir archivo</h3>
+          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Subir archivo</h3>
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg bg-rose-950/50 border border-rose-500/40 text-sm text-rose-300">
+          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/40 text-sm text-rose-700 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -493,10 +493,10 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
           onDragLeave={handleDragLeave}
           className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
             isDragging
-              ? "border-indigo-500 bg-indigo-950/30"
+              ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30"
               : selectedFiles.length > 0
-              ? "border-emerald-500/50 bg-emerald-950/20"
-              : "border-zinc-700 hover:border-zinc-600 bg-zinc-900/50"
+              ? "border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/20"
+              : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 bg-white dark:bg-zinc-900/50"
           }`}
         >
           <input
@@ -513,14 +513,14 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
           />
 
           <div className="space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-xl bg-zinc-800/50 border border-zinc-700 flex items-center justify-center">
-              <svg className="w-8 h-8 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto rounded-xl bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <svg className="w-8 h-8 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
             <div>
-              <p className="text-sm text-zinc-300">
-                <span className="font-medium text-indigo-400">Haz clic para seleccionar</span> o arrastra aqui
+              <p className="text-sm text-zinc-600 dark:text-zinc-300">
+                <span className="font-medium text-indigo-600 dark:text-indigo-400">Haz clic para seleccionar</span> o arrastra aqui
               </p>
               <p className="text-xs text-zinc-500 mt-1">PDF, JPG o PNG (max. 10MB) - Puedes subir varios archivos</p>
             </div>
@@ -545,7 +545,7 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
                       )}
                     </div>
                     <div>
-                      <p className="text-sm text-zinc-200 truncate max-w-[200px]">{file.name}</p>
+                      <p className="text-sm text-zinc-700 dark:text-zinc-200 truncate max-w-[200px]">{file.name}</p>
                       <p className="text-xs text-zinc-500">{(file.size / 1024).toFixed(1)} KB</p>
                     </div>
                   </div>
@@ -621,17 +621,17 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
             </svg>
             Volver
           </button>
-          <h3 className="text-sm font-medium text-zinc-300">Importar desde URL</h3>
+          <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Importar desde URL</h3>
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg bg-rose-950/50 border border-rose-500/40 text-sm text-rose-300">
+          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/40 text-sm text-rose-700 dark:text-rose-300">
             {error}
           </div>
         )}
 
         <div className="space-y-3">
-          <label className="block text-sm text-zinc-400">
+          <label className="block text-sm text-zinc-600 dark:text-zinc-400">
             URL de tu carta de vinos
           </label>
           <div className="relative">
@@ -645,7 +645,7 @@ export function WineImporter({ onImport, onCancel, existingCategories = [] }: Wi
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://turestaurante.com/carta-vinos"
-              className="w-full pl-11 pr-4 py-3 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full pl-11 pr-4 py-3 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
             />
           </div>
           <p className="text-xs text-zinc-500">

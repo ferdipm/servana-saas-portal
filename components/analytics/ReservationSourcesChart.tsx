@@ -1,6 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { useTheme } from "next-themes";
 
 interface ReservationSourcesChartProps {
   data: {
@@ -22,6 +23,9 @@ const COLORS = {
 export function ReservationSourcesChart({
   data,
 }: ReservationSourcesChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const getColor = (source: string) => {
     return COLORS[source as keyof typeof COLORS] || COLORS.Other;
   };
@@ -46,13 +50,13 @@ export function ReservationSourcesChart({
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: "#18181b",
-              border: "1px solid #27272a",
+              backgroundColor: isDark ? "#18181b" : "#ffffff",
+              border: `1px solid ${isDark ? "#27272a" : "#e4e4e7"}`,
               borderRadius: "8px",
-              color: "#f4f4f5",
+              color: isDark ? "#f4f4f5" : "#18181b",
             }}
-            itemStyle={{ color: "#f4f4f5" }}
-            labelStyle={{ color: "#f4f4f5" }}
+            itemStyle={{ color: isDark ? "#f4f4f5" : "#18181b" }}
+            labelStyle={{ color: isDark ? "#f4f4f5" : "#18181b" }}
             formatter={(value: number, name: string, props: any) => [
               `${value} reservas (${props.payload.percentage.toFixed(1)}%)`,
               props.payload.source,

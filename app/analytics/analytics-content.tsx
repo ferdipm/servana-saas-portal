@@ -125,7 +125,7 @@ export function AnalyticsContent({
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-          <p className="text-sm text-zinc-400">Cargando analytics...</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Cargando analytics...</p>
         </div>
       </div>
     );
@@ -135,10 +135,10 @@ export function AnalyticsContent({
     return (
       <div className="text-center py-12">
         <div className="flex flex-col items-center gap-4">
-          <BarChart3 className="w-12 h-12 text-zinc-600" />
+          <BarChart3 className="w-12 h-12 text-zinc-400 dark:text-zinc-600" />
           <div>
-            <p className="text-zinc-300 font-medium mb-1">No hay datos disponibles</p>
-            <p className="text-sm text-zinc-500">
+            <p className="text-zinc-600 dark:text-zinc-300 font-medium mb-1">No hay datos disponibles</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-500">
               Verifica la consola del navegador para más detalles
             </p>
           </div>
@@ -152,11 +152,11 @@ export function AnalyticsContent({
       {/* Header con filtros */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-100 flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-indigo-500" />
             Analytics y Ocupación
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Análisis detallado de reservas y ocupación en tiempo real
           </p>
         </div>
@@ -164,7 +164,7 @@ export function AnalyticsContent({
           <PeriodSelector value={period} onChange={setPeriod} />
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-zinc-300 dark:border-transparent"
           >
             <Download className="w-4 h-4" />
             Exportar
@@ -210,9 +210,9 @@ export function AnalyticsContent({
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tendencia de Reservas */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-indigo-500" />
               Tendencia de Reservas
             </h3>
@@ -226,9 +226,9 @@ export function AnalyticsContent({
         </div>
 
         {/* Distribución por Horario */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Clock className="w-5 h-5 text-emerald-500" />
               Distribución por Horario
             </h3>
@@ -242,9 +242,9 @@ export function AnalyticsContent({
         </div>
 
         {/* Ocupación por Turno */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-amber-500" />
               Ocupación por Turno
             </h3>
@@ -258,9 +258,9 @@ export function AnalyticsContent({
         </div>
 
         {/* Fuentes de Reservas */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <PieChart className="w-5 h-5 text-sky-500" />
               Fuentes de Reservas
             </h3>
@@ -306,7 +306,7 @@ function KPICard({
   };
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900 to-zinc-900/50 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-all duration-200 group">
+    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 group shadow-sm dark:shadow-none">
       <div className="flex items-center justify-between mb-3">
         <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500 group-hover:scale-110 transition-transform">
           {icon}
@@ -317,8 +317,8 @@ function KPICard({
         </div>
       </div>
       <div className="space-y-1">
-        <p className="text-sm text-zinc-400">{label}</p>
-        <p className="text-3xl font-bold text-zinc-100">{value}</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{label}</p>
+        <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{value}</p>
       </div>
     </div>
   );

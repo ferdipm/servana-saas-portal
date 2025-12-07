@@ -33,9 +33,9 @@ export function RestaurantSwitcher({
   // Caso: solo un restaurante o el usuario no puede cambiar → solo texto
   if (!canSwitch || restaurants.length <= 1) {
     return (
-      <div className="text-sm text-zinc-400">
+      <div className="text-sm text-zinc-500 dark:text-zinc-400">
         Restaurante:{" "}
-        <span className="font-medium text-zinc-100">{current.name}</span>
+        <span className="font-medium text-zinc-800 dark:text-zinc-100">{current.name}</span>
       </div>
     );
   }
@@ -59,9 +59,9 @@ export function RestaurantSwitcher({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-zinc-400">Restaurante:</span>
+      <span className="text-sm text-zinc-500 dark:text-zinc-400">Restaurante:</span>
       <select
-        className="border border-zinc-700/70 rounded-md px-2 py-1 bg-[#1c1e24] text-sm text-zinc-100"
+        className="border border-zinc-300 dark:border-zinc-700/70 rounded-md px-2 py-1 bg-white dark:bg-[#1c1e24] text-sm text-zinc-800 dark:text-zinc-100"
         value={current.id}
         onChange={(e) => handleChange(e.target.value)}
       >

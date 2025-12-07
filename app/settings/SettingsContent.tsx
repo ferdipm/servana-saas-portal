@@ -98,7 +98,7 @@ export function SettingsContent({
     <div className="space-y-6">
       {/* Tabs - Modern UI with icons */}
       <div className="pt-2">
-        <nav className="flex flex-wrap gap-1 p-1.5 bg-zinc-900/60 rounded-xl border border-zinc-800/80">
+        <nav className="flex flex-wrap gap-1 p-1.5 bg-white dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm dark:shadow-none">
           {[
             { key: "general", label: "General", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
             { key: "hours", label: "Horarios", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
@@ -116,7 +116,7 @@ export function SettingsContent({
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 tab === t.key
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/25"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800/50"
               }`}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@ export function SettingsContent({
 
       {/* Aviso de permisos */}
       {isReadOnly && (
-        <div className="text-xs text-amber-300 bg-amber-950/40 border border-amber-500/40 rounded-lg px-3 py-2">
+        <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/40 rounded-lg px-3 py-2">
           Este usuario tiene acceso de solo lectura. No puede modificar la
           configuración del restaurante.
         </div>
@@ -138,23 +138,23 @@ export function SettingsContent({
 
       {/* Mensajes globales */}
       {errorMessage && (
-        <div className="text-xs text-rose-300 bg-rose-950/50 border border-rose-500/40 rounded-md px-3 py-2">
+        <div className="text-xs text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-500/40 rounded-md px-3 py-2">
           {errorMessage}
         </div>
       )}
       {successMessage && (
-        <div className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/40 rounded-md px-3 py-2">
+        <div className="text-xs text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/40 rounded-md px-3 py-2">
           {successMessage}
         </div>
       )}
 
       {/* Contenido por pestaña */}
       {tab === "general" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-100">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             Datos generales
           </h2>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Nombre, datos de contacto y dirección del restaurante.
           </p>
 
@@ -201,15 +201,15 @@ export function SettingsContent({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 pt-6 mt-4">
               <button
                 type="submit"
                 disabled={isReadOnly || isPending}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500 dark:bg-indigo-600 text-white hover:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 {isPending ? "Guardando…" : "Guardar cambios"}
               </button>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
                 Estos datos se aplican solo al restaurante actual.
               </p>
             </div>
@@ -218,7 +218,7 @@ export function SettingsContent({
       )}
 
       {tab === "carta" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <MenuEditor
             restaurantId={restaurantId}
             initialMenu={initialMenu}
@@ -230,7 +230,7 @@ export function SettingsContent({
       )}
 
       {tab === "vinos" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <WineEditor
             restaurantId={restaurantId}
             initialWineMenu={initialWineMenu}
@@ -242,7 +242,7 @@ export function SettingsContent({
       )}
 
       {tab === "menus" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <SetMenusEditor
             restaurantId={restaurantId}
             initialSetMenus={initialSetMenus}
@@ -253,7 +253,7 @@ export function SettingsContent({
       )}
 
       {tab === "faqs" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <FAQEditor
             restaurantId={restaurantId}
             tenantId={tenantId}
@@ -264,7 +264,7 @@ export function SettingsContent({
       )}
 
       {tab === "hours" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <OpeningHoursEditor
             restaurantId={restaurantId}
             initialHours={initialOpeningHours}
@@ -275,9 +275,9 @@ export function SettingsContent({
       )}
 
       {tab === "logo" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-100">Logo</h2>
-          <p className="text-xs text-zinc-400">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Logo</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Logo que se mostrará en el dashboard y en futuras comunicaciones.
           </p>
           <LogoUploader
@@ -290,7 +290,7 @@ export function SettingsContent({
       )}
 
       {tab === "notifications" && (
-        <section className="bg-[#111218] border border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <NotificationsEditor
             restaurantId={restaurantId}
             initialSettings={initialNotificationSettings ?? {
@@ -322,7 +322,7 @@ function Field({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-xs text-zinc-400" htmlFor={name}>
+      <label className="text-xs text-zinc-500 dark:text-zinc-400" htmlFor={name}>
         {label}
       </label>
       <input
@@ -331,7 +331,7 @@ function Field({
         defaultValue={defaultValue}
         disabled={disabled}
         required={required}
-        className="w-full rounded-lg bg-zinc-900/60 border border-zinc-700 px-2 py-1.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
       />
     </div>
   );
