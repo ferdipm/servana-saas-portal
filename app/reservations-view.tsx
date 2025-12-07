@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   getReservations,
   Reservation,
@@ -9,6 +9,7 @@ import {
   createReservation,
 } from "./actions";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 
 import { es } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -79,8 +80,16 @@ export function ReservationsView({
   // offset para los botones rápidos (Hoy, +1 día)
   const [dayOffset, setDayOffset] = useState(0);
 
-  async function load(initial = false) {
-    if (loading) return;
+  // Ref para evitar llamadas duplicadas mientras se carga
+  const loadingRef = useRef(false);
+  // Ref para el cursor actual (para paginación sin causar re-renders del callback)
+  const nextCursorRef = useRef<string | null>(null);
+  nextCursorRef.current = nextCursor;
+
+  // Función para cargar datos - estable para usar en Realtime
+  const loadInitial = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const res = await getReservations({
@@ -91,19 +100,79 @@ export function ReservationsView({
         from,
         to,
         limit: 50,
-        cursorCreatedAt: initial ? null : nextCursor,
+        cursorCreatedAt: null,
       });
-      setRows((prev) => (initial ? res.data : [...prev, ...res.data]));
+      setRows(res.data);
       setNextCursor(res.nextCursor);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  }
-
-  useEffect(() => {
-    load(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, restaurantId, q, status, from, to]);
+
+  // Función para cargar más (paginación)
+  const loadMore = useCallback(async () => {
+    if (loadingRef.current || !nextCursorRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    try {
+      const res = await getReservations({
+        tenantId,
+        restaurantId,
+        q,
+        status,
+        from,
+        to,
+        limit: 50,
+        cursorCreatedAt: nextCursorRef.current,
+      });
+      setRows((prev) => [...prev, ...res.data]);
+      setNextCursor(res.nextCursor);
+    } finally {
+      setLoading(false);
+      loadingRef.current = false;
+    }
+  }, [tenantId, restaurantId, q, status, from, to]);
+
+  // Cargar datos iniciales cuando cambian los filtros
+  useEffect(() => {
+    loadInitial();
+  }, [loadInitial]);
+
+  // Suscripción en tiempo real para nuevas reservas
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+
+    // Construir el filtro para el canal
+    const channelName = restaurantId
+      ? `reservations:tenant=${tenantId}:restaurant=${restaurantId}`
+      : `reservations:tenant=${tenantId}`;
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // INSERT, UPDATE, DELETE
+          schema: "public",
+          table: "reservations",
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        (payload) => {
+          console.log("[Realtime] Reservation change:", payload.eventType);
+          // Recargar la lista cuando hay cambios
+          loadInitial();
+        }
+      )
+      .subscribe((status) => {
+        console.log("[Realtime] Subscription status:", status);
+      });
+
+    // Cleanup: eliminar la suscripción al desmontar
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenantId, restaurantId, loadInitial]);
 
   const visibleRows = useMemo(() => {
     if (isPendingMode) return rows;
@@ -136,13 +205,12 @@ export function ReservationsView({
       const nearBottom =
         el.scrollTop + el.clientHeight >= el.scrollHeight - 300;
 
-      if (nearBottom && nextCursor && !loading) load(false);
+      if (nearBottom && nextCursor && !loading) loadMore();
     }
 
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextCursor, loading]);
+  }, [nextCursor, loading, loadMore]);
 
   function setDayRange(offset: number) {
     setDayOffset(offset);
@@ -416,7 +484,7 @@ export function ReservationsView({
           onClose={() => setSelected(null)}
           onUpdated={() => {
             setSelected(null);
-            load(true);
+            loadInitial();
             onReservationChange?.(); // Notificar cambio
           }}
           isPendingMode={isPendingMode}
@@ -426,13 +494,13 @@ export function ReservationsView({
       {creating && (
         <NewReservationDrawer
           tenantId={tenantId}
-          restaurantId={restaurantId}  // 👈 AQUÍ
+          restaurantId={restaurantId}
           defaultTz={defaultTz}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);
             // refrescamos lista (se verá en el rango actual)
-            load(true);
+            loadInitial();
             onReservationChange?.(); // Notificar cambio
           }}
         />
