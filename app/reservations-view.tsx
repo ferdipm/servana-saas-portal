@@ -162,6 +162,8 @@ export function ReservationsView({
           console.log("[Realtime] Reservation change:", payload.eventType);
           // Recargar la lista cuando hay cambios
           loadInitial();
+          // Notificar al padre para que actualice los contadores (SummaryCards)
+          onReservationChange?.();
         }
       )
       .subscribe((status) => {
@@ -172,7 +174,7 @@ export function ReservationsView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [tenantId, restaurantId, loadInitial]);
+  }, [tenantId, restaurantId, loadInitial, onReservationChange]);
 
   const visibleRows = useMemo(() => {
     if (isPendingMode) return rows;
