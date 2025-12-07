@@ -194,7 +194,8 @@ export function ReservationsView({
   const rowVirtualizer = useVirtualizer({
     count: visibleRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 92,
+    // Altura estimada: 72px en móvil (card compacta), 92px en desktop
+    estimateSize: () => (typeof window !== 'undefined' && window.innerWidth < 768 ? 72 : 92),
     overscan: 8,
   });
 
@@ -278,8 +279,8 @@ export function ReservationsView({
             </div>
 
             {/* Rango + botones rápidos + nueva reserva */}
-            <div className="flex items-center gap-3 flex-wrap md:flex-nowrap md:justify-end">
-              <span className="text-sm text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+            <div className="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap md:justify-end">
+              <span className="hidden md:inline text-sm text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                 Ver reservas de:
               </span>
 
@@ -313,13 +314,14 @@ export function ReservationsView({
                 +1 día
               </button>
 
-              {/* DatePicker Desde */}
+              {/* DatePicker Desde - solo desktop */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     className="
+                      hidden md:flex
                       h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2 whitespace-nowrap
+                      bg-white/80 dark:bg-zinc-900/60 text-sm items-center gap-2 whitespace-nowrap
                     "
                   >
                     Desde{" "}
@@ -346,13 +348,14 @@ export function ReservationsView({
                 </PopoverContent>
               </Popover>
 
-              {/* DatePicker Hasta */}
+              {/* DatePicker Hasta - solo desktop */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button
                     className="
+                      hidden md:flex
                       h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm flex items-center gap-2 whitespace-nowrap
+                      bg-white/80 dark:bg-zinc-900/60 text-sm items-center gap-2 whitespace-nowrap
                     "
                   >
                     Hasta{" "}
@@ -385,7 +388,7 @@ export function ReservationsView({
                   type="button"
                   onClick={() => setCreating(true)}
                   className="
-                    h-9 px-4 rounded-xl text-sm font-medium
+                    h-9 px-3 md:px-4 rounded-xl text-sm font-medium
                     border border-emerald-400/60
                     bg-emerald-500/15 hover:bg-emerald-500/25
                     text-emerald-700 dark:text-emerald-50
@@ -395,15 +398,16 @@ export function ReservationsView({
                     whitespace-nowrap
                   "
                 >
-                  <span>Reserva manual</span>
+                  <span className="hidden md:inline">Reserva manual</span>
+                  <span className="md:hidden">+ Nueva</span>
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Header columnas */}
-        <div className="px-3 md:px-4 pt-3 mb-5">
+        {/* Header columnas - solo visible en desktop */}
+        <div className="hidden md:block px-3 md:px-4 pt-3 mb-5">
           <div className="bg-white dark:bg-[#1c1e24] ring-1 ring-zinc-300/50 dark:ring-white/10 rounded-md shadow-sm overflow-hidden">
             <div
               className="
@@ -655,6 +659,15 @@ function ReservationRow({
     })
     .replace(".", "");
 
+  // Formato corto de día para móvil (ej: "7 dic")
+  const dayShort = dtUtc
+    .toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      timeZone: tz,
+    })
+    .replace(".", "");
+
   const time = dtUtc.toLocaleTimeString("es-ES", {
     hour: "2-digit",
     minute: "2-digit",
@@ -666,14 +679,42 @@ function ReservationRow({
     <div
       onClick={onClick}
       className="
-        px-6 py-3.5
+        px-3 md:px-6 py-3 md:py-3.5
         text-sm transition-colors
         hover:bg-black/[.025] dark:hover:bg-white/[.035]
         border-b border-zinc-200/40 dark:border-zinc-800/40
         cursor-pointer
       "
     >
-      <div className="grid grid-cols-[1fr_1.2fr_.9fr_1fr_1fr_auto] gap-4 items-center">
+      {/* Vista móvil: card compacta */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between gap-2">
+          {/* Izquierda: hora + fecha corta */}
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+              {time}
+            </div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">
+              {dayShort}
+            </div>
+          </div>
+          {/* Derecha: estado */}
+          <StatusChip s={r.status} />
+        </div>
+        <div className="flex items-center justify-between gap-2 mt-1.5">
+          {/* Nombre */}
+          <div className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
+            {r.name}
+          </div>
+          {/* Comensales */}
+          <div className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+            {r.party_size ?? "—"} pax
+          </div>
+        </div>
+      </div>
+
+      {/* Vista desktop: grid de columnas */}
+      <div className="hidden md:grid grid-cols-[1fr_1.2fr_.9fr_1fr_1fr_auto] gap-4 items-center">
         <div className="truncate">
           <div className="font-medium">{day}</div>
           <div className="text-[12px] text-zinc-500">{time}</div>
