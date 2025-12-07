@@ -21,6 +21,10 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   });
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showNewReservation, setShowNewReservation] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Reservation[]>([]);
+  const [searching, setSearching] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef(false);
 
@@ -52,6 +56,49 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       newDate.setDate(newDate.getDate() + 1);
       return newDate;
     });
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setSelectedDate(today);
+  };
+
+  const isToday = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate.getTime() === today.getTime();
+  };
+
+  // Búsqueda de reservas
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await getReservations({
+        tenantId,
+        restaurantId,
+        status: "all",
+        limit: 50,
+        cursorCreatedAt: null,
+      });
+
+      // Filtrar localmente por nombre, teléfono o locator
+      const q = query.toLowerCase();
+      const filtered = res.data.filter(r =>
+        r.name?.toLowerCase().includes(q) ||
+        r.phone?.toLowerCase().includes(q) ||
+        r.locator?.toLowerCase().includes(q)
+      );
+      setSearchResults(filtered);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,57 +231,84 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     <div className="flex flex-col h-full">
       {/* Botón Nueva Reserva + Selector de día (solo en modo today) */}
       {mode === "today" && (
-        <div className="sticky top-0 z-30 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 space-y-3">
-          {/* Botón Nueva Reserva */}
-          <button
-            onClick={() => setShowNewReservation(true)}
-            className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Nueva Reserva
-          </button>
-
-          {/* Selector de día con flechas */}
-          <div className="flex items-center justify-center gap-2">
+        <div className="sticky top-0 z-30 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 space-y-2.5">
+          {/* Fila: Nueva Reserva + Buscar */}
+          <div className="flex gap-2">
             <button
-              onClick={goToPreviousDay}
-              className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-              aria-label="Día anterior"
+              onClick={() => setShowNewReservation(true)}
+              className="flex-1 py-2 rounded-lg text-sm font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors flex items-center justify-center gap-1.5"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
+              Nueva
             </button>
-
-            {/* Fecha clickable que abre calendario */}
             <button
-              onClick={openDatePicker}
-              className="flex-1 max-w-[200px] py-2.5 px-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+              onClick={() => setShowSearch(true)}
+              className="flex-1 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex items-center justify-center gap-1.5"
             >
-              {formatSelectedDate()}
-            </button>
-
-            {/* Input de fecha oculto para el calendario nativo */}
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={formatDateForInput(selectedDate)}
-              onChange={handleDateChange}
-              className="sr-only"
-              aria-hidden="true"
-            />
-
-            <button
-              onClick={goToNextDay}
-              className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-              aria-label="Día siguiente"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
+              Buscar
             </button>
+          </div>
+
+          {/* Selector de día con flechas + botón Hoy */}
+          <div className="flex items-center gap-1.5">
+            {/* Botón Hoy a la izquierda */}
+            <button
+              onClick={goToToday}
+              disabled={isToday()}
+              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                isToday()
+                  ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 cursor-default"
+                  : "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60"
+              }`}
+            >
+              Hoy
+            </button>
+
+            {/* Flechas y selector de fecha */}
+            <div className="flex-1 flex items-center justify-center gap-1">
+              <button
+                onClick={goToPreviousDay}
+                className="p-1.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                aria-label="Día anterior"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Fecha clickable que abre calendario */}
+              <button
+                onClick={openDatePicker}
+                className="px-3 py-1.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-sm font-medium text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors min-w-[100px]"
+              >
+                {formatSelectedDate()}
+              </button>
+
+              {/* Input de fecha oculto para el calendario nativo */}
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={formatDateForInput(selectedDate)}
+                onChange={handleDateChange}
+                className="sr-only"
+                aria-hidden="true"
+              />
+
+              <button
+                onClick={goToNextDay}
+                className="p-1.5 rounded-md bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                aria-label="Día siguiente"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -331,6 +405,28 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           onSuccess={() => {
             setShowNewReservation(false);
             loadData();
+          }}
+        />
+      )}
+
+      {/* Modal de búsqueda */}
+      {showSearch && (
+        <SearchModal
+          searchQuery={searchQuery}
+          searchResults={searchResults}
+          searching={searching}
+          defaultTz={defaultTz}
+          onSearch={handleSearch}
+          onClose={() => {
+            setShowSearch(false);
+            setSearchQuery("");
+            setSearchResults([]);
+          }}
+          onSelectReservation={(r) => {
+            setShowSearch(false);
+            setSearchQuery("");
+            setSearchResults([]);
+            setSelectedReservation(r);
           }}
         />
       )}
@@ -761,6 +857,124 @@ function NewReservationModal({
             </button>
           </div>
         </form>
+      </div>
+    </>
+  );
+}
+
+function SearchModal({
+  searchQuery,
+  searchResults,
+  searching,
+  defaultTz,
+  onSearch,
+  onClose,
+  onSelectReservation,
+}: {
+  searchQuery: string;
+  searchResults: Reservation[];
+  searching: boolean;
+  defaultTz: string;
+  onSearch: (query: string) => void;
+  onClose: () => void;
+  onSelectReservation: (r: Reservation) => void;
+}) {
+  const formatDateTime = (dateStr: string, tz: string) => {
+    const dt = new Date(dateStr);
+    return dt.toLocaleDateString("es-ES", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+    });
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-50"
+        onClick={onClose}
+      />
+
+      {/* Modal desde abajo */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[90vh] overflow-hidden safe-area-bottom animate-slide-up flex flex-col">
+        {/* Handle */}
+        <div className="bg-white dark:bg-zinc-900 pt-3 pb-2">
+          <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
+        </div>
+
+        {/* Header con búsqueda */}
+        <div className="px-4 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3">
+            Buscar Reservas
+          </h2>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder="Nombre, teléfono o localizador..."
+              autoFocus
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Resultados */}
+        <div className="flex-1 overflow-auto px-4 py-3">
+          {searching ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : searchQuery.length < 2 ? (
+            <p className="text-center text-zinc-500 text-sm py-8">
+              Escribe al menos 2 caracteres para buscar
+            </p>
+          ) : searchResults.length === 0 ? (
+            <p className="text-center text-zinc-500 text-sm py-8">
+              No se encontraron reservas
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {searchResults.map((r) => (
+                <li key={r.id}>
+                  <button
+                    onClick={() => onSelectReservation(r)}
+                    className="w-full text-left p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                          {r.name}
+                        </div>
+                        <div className="text-xs text-zinc-500">
+                          {formatDateTime(r.datetime_utc, r.tz || defaultTz)} · {r.party_size} pax
+                        </div>
+                      </div>
+                      <StatusBadge status={r.status} />
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Botón cerrar */}
+        <div className="px-4 pb-4">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
       </div>
     </>
   );
