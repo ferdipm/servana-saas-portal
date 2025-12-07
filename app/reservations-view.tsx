@@ -80,22 +80,41 @@ export function ReservationsView({
   // offset para los botones rápidos (Hoy, +1 día)
   const [dayOffset, setDayOffset] = useState(0);
 
-  // Ref para evitar llamadas duplicadas mientras se carga
-  const loadingRef = useRef(false);
   // Ref para el cursor actual (para paginación sin causar re-renders del callback)
   const nextCursorRef = useRef<string | null>(null);
   nextCursorRef.current = nextCursor;
 
+  // Request ID para cancelar peticiones obsoletas
+  const requestIdRef = useRef(0);
+  // Debounce timer ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Estado debounced de q para la búsqueda
+  const [debouncedQ, setDebouncedQ] = useState("");
+
+  // Debounce del query de búsqueda
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedQ(q);
+    }, 300);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [q]);
+
   // Función para cargar datos - estable para usar en Realtime
   const loadInitial = useCallback(async () => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
+    const currentRequestId = ++requestIdRef.current;
     setLoading(true);
     try {
       // Si hay búsqueda activa, buscar desde hoy hacia el futuro (sin límite de fecha final)
       let searchFrom = from;
       let searchTo = to;
-      if (q.trim()) {
+      if (debouncedQ.trim()) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         searchFrom = today.toISOString();
@@ -108,31 +127,39 @@ export function ReservationsView({
       const res = await getReservations({
         tenantId,
         restaurantId,
-        q,
+        q: debouncedQ,
         status,
         from: searchFrom,
         to: searchTo,
         limit: 50,
         cursorCreatedAt: null,
       });
-      setRows(res.data);
-      setNextCursor(res.nextCursor);
+
+      // Solo actualizar si esta es la petición más reciente
+      if (currentRequestId === requestIdRef.current) {
+        setRows(res.data);
+        setNextCursor(res.nextCursor);
+      }
     } finally {
-      setLoading(false);
-      loadingRef.current = false;
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-  }, [tenantId, restaurantId, q, status, from, to]);
+  }, [tenantId, restaurantId, debouncedQ, status, from, to]);
+
+  // Ref para evitar cargar más mientras se está cargando
+  const loadingMoreRef = useRef(false);
 
   // Función para cargar más (paginación)
   const loadMore = useCallback(async () => {
-    if (loadingRef.current || !nextCursorRef.current) return;
-    loadingRef.current = true;
+    if (loadingMoreRef.current || !nextCursorRef.current) return;
+    loadingMoreRef.current = true;
     setLoading(true);
     try {
       // Si hay búsqueda activa, buscar desde hoy hacia el futuro
       let searchFrom = from;
       let searchTo = to;
-      if (q.trim()) {
+      if (debouncedQ.trim()) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         searchFrom = today.toISOString();
@@ -144,7 +171,7 @@ export function ReservationsView({
       const res = await getReservations({
         tenantId,
         restaurantId,
-        q,
+        q: debouncedQ,
         status,
         from: searchFrom,
         to: searchTo,
@@ -155,9 +182,9 @@ export function ReservationsView({
       setNextCursor(res.nextCursor);
     } finally {
       setLoading(false);
-      loadingRef.current = false;
+      loadingMoreRef.current = false;
     }
-  }, [tenantId, restaurantId, q, status, from, to]);
+  }, [tenantId, restaurantId, debouncedQ, status, from, to]);
 
   // Cargar datos iniciales cuando cambian los filtros
   useEffect(() => {

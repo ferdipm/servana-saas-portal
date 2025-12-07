@@ -68,34 +68,69 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     return selectedDate.getTime() === today.getTime();
   };
 
-  // Filtrar reservas en la lista según búsqueda
-  const getFilteredRows = useCallback(() => {
-    if (!searchQuery.trim()) return rows;
+  // Estado para resultados de búsqueda (separado de rows del día actual)
+  const [searchResults, setSearchResults] = useState<Reservation[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    const q = searchQuery.toLowerCase();
-    return rows.filter(r =>
-      r.name?.toLowerCase().includes(q) ||
-      r.phone?.toLowerCase().includes(q) ||
-      r.locator?.toLowerCase().includes(q)
-    );
-  }, [rows, searchQuery]);
+  // Búsqueda en servidor (hoy + futuro)
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const farFuture = new Date();
+        farFuture.setFullYear(farFuture.getFullYear() + 1);
+
+        const res = await getReservations({
+          tenantId,
+          restaurantId,
+          q: searchQuery,
+          status: "all",
+          from: today.toISOString(),
+          to: farFuture.toISOString(),
+          limit: 50,
+          cursorCreatedAt: null,
+        });
+        setSearchResults(res.data);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [searchQuery, tenantId, restaurantId]);
 
   const clearSearch = () => {
     setSearchQuery("");
+    setSearchResults([]);
     searchInputRef.current?.focus();
   };
 
-  const displayRows = getFilteredRows();
+  // Mostrar resultados de búsqueda o reservas del día
+  const displayRows = searchQuery.trim() ? searchResults : rows;
+  const isSearchMode = searchQuery.trim().length > 0;
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value + "T00:00:00");
     if (!isNaN(newDate.getTime())) {
       setSelectedDate(newDate);
     }
-  };
-
-  const openDatePicker = () => {
-    dateInputRef.current?.showPicker();
   };
 
   const formatSelectedDate = () => {
@@ -237,11 +272,15 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar..."
-                className="w-full pl-9 pr-8 py-2 rounded-lg text-sm border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-9 pr-8 py-2 rounded-lg text-base border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              {searching ? (
+                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
               {searchQuery && (
                 <button
                   onClick={clearSearch}
@@ -286,26 +325,24 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 </svg>
               </button>
 
-              {/* Fecha clickable que abre calendario */}
-              <button
-                onClick={openDatePicker}
-                className="flex-1 py-2 px-3 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-              >
-                {formatSelectedDate()}
-                <svg className="w-4 h-4 inline-block ml-1.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </button>
-
-              {/* Input de fecha oculto para el calendario nativo */}
-              <input
-                ref={dateInputRef}
-                type="date"
-                value={formatDateForInput(selectedDate)}
-                onChange={handleDateChange}
-                className="sr-only"
-                aria-hidden="true"
-              />
+              {/* Fecha clickable que abre calendario - con input superpuesto */}
+              <div className="flex-1 relative">
+                <div className="py-2 px-3 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100 rounded-lg flex items-center justify-center gap-1.5">
+                  {formatSelectedDate()}
+                  <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                {/* Input de fecha transparente superpuesto - clickable en toda el área */}
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={formatDateForInput(selectedDate)}
+                  onChange={handleDateChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  aria-label="Seleccionar fecha"
+                />
+              </div>
 
               <button
                 onClick={goToNextDay}
@@ -354,41 +391,79 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           </div>
         ) : (
           <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {displayRows.map((r) => (
-              <li key={r.id}>
-                <button
-                  onClick={() => setSelectedReservation(r)}
-                  className="w-full text-left px-4 py-4 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 active:bg-zinc-200 dark:active:bg-zinc-800 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    {/* Hora y fecha */}
-                    <div className="flex items-center gap-3">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                          {formatTime(r.datetime_utc, r.tz || defaultTz)}
-                        </div>
-                        <div className="text-xs text-zinc-500">
-                          {formatDay(r.datetime_utc, r.tz || defaultTz)}
-                        </div>
-                      </div>
+            {displayRows.map((r, index) => {
+              // En modo búsqueda, mostrar separador de día si cambia
+              const showDayHeader = isSearchMode && (() => {
+                const currentDate = new Date(r.datetime_utc).toDateString();
+                const prevDate = index > 0 ? new Date(displayRows[index - 1].datetime_utc).toDateString() : null;
+                return index === 0 || currentDate !== prevDate;
+              })();
 
-                      {/* Nombre y comensales */}
-                      <div className="min-w-0">
-                        <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                          {r.name}
-                        </div>
-                        <div className="text-sm text-zinc-500">
-                          {r.party_size} {r.party_size === 1 ? "persona" : "personas"}
-                        </div>
-                      </div>
+              const getDayLabel = (dateStr: string, tz: string) => {
+                const dt = new Date(dateStr);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const dtDate = new Date(dt.toLocaleDateString("en-US", { timeZone: tz }));
+                dtDate.setHours(0, 0, 0, 0);
+
+                if (dtDate.getTime() === today.getTime()) return "Hoy";
+                if (dtDate.getTime() === tomorrow.getTime()) return "Mañana";
+                return dt.toLocaleDateString("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  timeZone: tz,
+                });
+              };
+
+              return (
+                <li key={r.id}>
+                  {/* Separador de día en búsqueda */}
+                  {showDayHeader && (
+                    <div className="sticky top-0 z-10 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 border-b border-indigo-200 dark:border-indigo-900/50">
+                      <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 capitalize">
+                        {getDayLabel(r.datetime_utc, r.tz || defaultTz)}
+                      </span>
                     </div>
+                  )}
+                  <button
+                    onClick={() => setSelectedReservation(r)}
+                    className="w-full text-left px-4 py-4 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 active:bg-zinc-200 dark:active:bg-zinc-800 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Hora y fecha */}
+                      <div className="flex items-center gap-3">
+                        <div className="text-center min-w-[50px]">
+                          <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
+                            {formatTime(r.datetime_utc, r.tz || defaultTz)}
+                          </div>
+                          {!isSearchMode && (
+                            <div className="text-xs text-zinc-500">
+                              {formatDay(r.datetime_utc, r.tz || defaultTz)}
+                            </div>
+                          )}
+                        </div>
 
-                    {/* Estado */}
-                    <StatusBadge status={r.status} />
-                  </div>
-                </button>
-              </li>
-            ))}
+                        {/* Nombre y comensales */}
+                        <div className="min-w-0">
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                            {r.name}
+                          </div>
+                          <div className="text-sm text-zinc-500">
+                            {r.party_size} {r.party_size === 1 ? "persona" : "personas"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Estado */}
+                      <StatusBadge status={r.status} />
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
