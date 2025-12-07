@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
-import { MobileReservationsList } from "../reservations-list";
+import { MobileReservationsList } from "../../reservations-list";
 
 export default async function MobilePendingPage() {
   const { tenantId, currentRestaurantId } = await getTenantAndRestaurants();

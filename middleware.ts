@@ -48,7 +48,7 @@ export function middleware(request: NextRequest) {
     }
 
     if (pathname === "/pending") {
-      mobileUrl.pathname = "/m/pending";
+      mobileUrl.pathname = "/m/reservas/pending";
       return NextResponse.redirect(mobileUrl);
     }
   }

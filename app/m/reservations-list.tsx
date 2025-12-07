@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { getReservations, Reservation, updateReservationStatus } from "../actions";
+import { getReservations, Reservation, updateReservationStatus, createReservation } from "../actions";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 
 type Props = {
@@ -14,18 +14,21 @@ type Props = {
 export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode }: Props) {
   const [rows, setRows] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dayOffset, setDayOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [showNewReservation, setShowNewReservation] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef(false);
 
-  // Calcular rango de fechas según el offset
-  const getDateRange = useCallback((offset: number) => {
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    base.setDate(base.getDate() + offset);
-
-    const fromDate = new Date(base);
-    const toDate = new Date(base);
+  // Calcular rango de fechas basado en selectedDate
+  const getDateRange = useCallback((date: Date) => {
+    const fromDate = new Date(date);
+    fromDate.setHours(0, 0, 0, 0);
+    const toDate = new Date(fromDate);
     toDate.setDate(toDate.getDate() + 1);
 
     return {
@@ -34,13 +37,61 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     };
   }, []);
 
+  // Navegación de días
+  const goToPreviousDay = () => {
+    setSelectedDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() - 1);
+      return newDate;
+    });
+  };
+
+  const goToNextDay = () => {
+    setSelectedDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(newDate.getDate() + 1);
+      return newDate;
+    });
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = new Date(e.target.value + "T00:00:00");
+    if (!isNaN(newDate.getTime())) {
+      setSelectedDate(newDate);
+    }
+  };
+
+  const openDatePicker = () => {
+    dateInputRef.current?.showPicker();
+  };
+
+  const formatSelectedDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (selectedDate.getTime() === today.getTime()) return "Hoy";
+    if (selectedDate.getTime() === tomorrow.getTime()) return "Mañana";
+
+    return selectedDate.toLocaleDateString("es-ES", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    });
+  };
+
+  const formatDateForInput = (date: Date) => {
+    return date.toISOString().split("T")[0];
+  };
+
   const loadData = useCallback(async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
 
     try {
-      const { from, to } = getDateRange(dayOffset);
+      const { from, to } = getDateRange(selectedDate);
       const res = await getReservations({
         tenantId,
         restaurantId,
@@ -63,7 +114,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [tenantId, restaurantId, mode, dayOffset, getDateRange]);
+  }, [tenantId, restaurantId, mode, selectedDate, getDateRange]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -129,35 +180,61 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       .replace(".", "");
   };
 
-  const getDayLabel = (offset: number) => {
-    if (offset === 0) return "Hoy";
-    if (offset === 1) return "Mañana";
-    const date = new Date();
-    date.setDate(date.getDate() + offset);
-    return date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric" });
-  };
-
   return (
     <div className="flex flex-col h-full">
-      {/* Selector de día (solo en modo today) */}
+      {/* Botón Nueva Reserva + Selector de día (solo en modo today) */}
       {mode === "today" && (
-        <div className="sticky top-0 z-30 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {[0, 1, 2, 3, 4].map((offset) => (
-              <button
-                key={offset}
-                onClick={() => setDayOffset(offset)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                  ${dayOffset === offset
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700"
-                  }
-                `}
-              >
-                {getDayLabel(offset)}
-              </button>
-            ))}
+        <div className="sticky top-0 z-30 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 space-y-3">
+          {/* Botón Nueva Reserva */}
+          <button
+            onClick={() => setShowNewReservation(true)}
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nueva Reserva
+          </button>
+
+          {/* Selector de día con flechas */}
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={goToPreviousDay}
+              className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+              aria-label="Día anterior"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Fecha clickable que abre calendario */}
+            <button
+              onClick={openDatePicker}
+              className="flex-1 max-w-[200px] py-2.5 px-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 font-medium text-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+            >
+              {formatSelectedDate()}
+            </button>
+
+            {/* Input de fecha oculto para el calendario nativo */}
+            <input
+              ref={dateInputRef}
+              type="date"
+              value={formatDateForInput(selectedDate)}
+              onChange={handleDateChange}
+              className="sr-only"
+              aria-hidden="true"
+            />
+
+            <button
+              onClick={goToNextDay}
+              className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+              aria-label="Día siguiente"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
@@ -188,7 +265,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             <p className="text-zinc-600 dark:text-zinc-400 font-medium">
               {mode === "pending"
                 ? "No hay reservas pendientes"
-                : `No hay reservas para ${getDayLabel(dayOffset).toLowerCase()}`}
+                : `No hay reservas para ${formatSelectedDate().toLowerCase()}`}
             </p>
           </div>
         ) : (
@@ -240,6 +317,21 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           isPending={mode === "pending"}
           onClose={() => setSelectedReservation(null)}
           onQuickAction={handleQuickAction}
+        />
+      )}
+
+      {/* Modal de nueva reserva */}
+      {showNewReservation && (
+        <NewReservationModal
+          tenantId={tenantId}
+          restaurantId={restaurantId}
+          defaultTz={defaultTz}
+          defaultDate={selectedDate}
+          onClose={() => setShowNewReservation(false)}
+          onSuccess={() => {
+            setShowNewReservation(false);
+            loadData();
+          }}
         />
       )}
     </div>
@@ -457,6 +549,218 @@ function ReservationModal({
             Cerrar
           </button>
         </div>
+      </div>
+    </>
+  );
+}
+
+function NewReservationModal({
+  tenantId,
+  restaurantId,
+  defaultTz,
+  defaultDate,
+  onClose,
+  onSuccess,
+}: {
+  tenantId: string;
+  restaurantId: string;
+  defaultTz: string;
+  defaultDate: Date;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [partySize, setPartySize] = useState(2);
+  const [date, setDate] = useState(defaultDate.toISOString().split("T")[0]);
+  const [time, setTime] = useState("13:00");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!name.trim()) {
+      setError("El nombre es obligatorio");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const datetimeLocal = new Date(`${date}T${time}:00`);
+      const datetime_utc = datetimeLocal.toISOString();
+
+      await createReservation({
+        tenantId,
+        restaurantId,
+        name: name.trim(),
+        phone: phone.trim() || null,
+        party_size: partySize,
+        datetime_utc,
+        notes: notes.trim() || null,
+        source: "manual",
+        tz: defaultTz,
+        status: "confirmed",
+      });
+
+      onSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al crear la reserva");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-50"
+        onClick={onClose}
+      />
+
+      {/* Modal desde abajo */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[90vh] overflow-auto safe-area-bottom animate-slide-up">
+        {/* Handle */}
+        <div className="sticky top-0 bg-white dark:bg-zinc-900 pt-3 pb-2">
+          <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="px-5 pb-6">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+            Nueva Reserva
+          </h2>
+
+          {error && (
+            <div className="mb-4 p-3 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Nombre *
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Nombre del cliente"
+              />
+            </div>
+
+            {/* Teléfono */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Teléfono
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="+34 600 000 000"
+              />
+            </div>
+
+            {/* Personas */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Personas
+              </label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPartySize(Math.max(1, partySize - 1))}
+                  className="w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xl"
+                >
+                  -
+                </button>
+                <span className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 w-12 text-center">
+                  {partySize}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPartySize(partySize + 1)}
+                  className="w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xl"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Fecha y Hora */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Hora
+                </label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Notas */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Notas
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                placeholder="Notas adicionales..."
+              />
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="mt-6 space-y-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Crear Reserva"
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-3 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
       </div>
     </>
   );
