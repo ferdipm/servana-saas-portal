@@ -4,8 +4,8 @@ import Link from "next/link";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 
 export default async function MobileMainMenu() {
-  const { restaurants, currentRestaurantId } = await getTenantAndRestaurants();
-  const currentRestaurant = restaurants.find(r => r.id === currentRestaurantId);
+  const { accessibleRestaurants, currentRestaurantId } = await getTenantAndRestaurants();
+  const currentRestaurant = accessibleRestaurants.find(r => r.id === currentRestaurantId);
 
   const menuItems = [
     {
