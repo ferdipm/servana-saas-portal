@@ -852,7 +852,7 @@ function StatusChip({ s, datetimeUtc }: { s?: string; datetimeUtc?: string }) {
       bg: "bg-teal-50/80 dark:bg-teal-900/20",
       brd: "border-teal-200/60 dark:border-teal-800/50",
     },
-    arrived: {
+    checked_in: {
       dot: "bg-blue-400",
       label: "Llegó",
       txt: "text-blue-900 dark:text-blue-200",
@@ -1512,7 +1512,7 @@ function ReservationDrawer({
                     disabled:opacity-60
                     whitespace-nowrap
                   "
-                  onClick={() => handleStatusChange("arrived")}
+                  onClick={() => handleStatusChange("checked_in")}
                 >
                   Llegada
                 </button>

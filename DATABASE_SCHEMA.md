@@ -1,6 +1,6 @@
 # Esquema de Base de Datos - Supabase
 
-> Documentación generada automáticamente el 8/12/2025, 12:39:55
+> Documentación generada automáticamente el 8/12/2025, 23:27:34
 
 ## Información General
 
@@ -18,7 +18,7 @@ Total de tablas: **10**
 - [`chat_history`](#tabla-chat_history) (7 columnas)
 - [`conversations`](#tabla-conversations) (8 columnas)
 - [`knowledge_usage`](#tabla-knowledge_usage) (8 columnas)
-- [`reservations`](#tabla-reservations) (19 columnas)
+- [`reservations`](#tabla-reservations) (20 columnas)
 - [`restaurant_info`](#tabla-restaurant_info) (23 columnas)
 - [`restaurant_knowledge_chunks`](#tabla-restaurant_knowledge_chunks) (12 columnas)
 - [`session_state`](#tabla-session_state) (10 columnas)
@@ -198,6 +198,7 @@ Total de tablas: **10**
 | `confirmation_status` | text | YES | 'not_required'::text |  | - |
 | `confirmation_sent_at` | timestamp with time zone | YES | - |  | - |
 | `confirmation_replied_at` | timestamp with time zone | YES | - |  | - |
+| `checkin_token` | text | YES | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
@@ -221,6 +222,10 @@ Total de tablas: **10**
 - **idx_reservations_business_id**
   ```sql
   CREATE INDEX idx_reservations_business_id ON public.reservations USING btree (business_id)
+  ```
+- **idx_reservations_checkin_token**
+  ```sql
+  CREATE INDEX idx_reservations_checkin_token ON public.reservations USING btree (checkin_token) WHERE (checkin_token IS NOT NULL)
   ```
 - **idx_reservations_confirmation_lookup**
   ```sql
@@ -266,6 +271,10 @@ Total de tablas: **10**
   ```sql
   CREATE INDEX idx_reservations_tenant_date ON public.reservations USING btree (tenant_id, datetime_utc, status)
   ```
+- **reservations_checkin_token_key**
+  ```sql
+  CREATE UNIQUE INDEX reservations_checkin_token_key ON public.reservations USING btree (checkin_token)
+  ```
 - **reservations_locator_key**
   ```sql
   CREATE UNIQUE INDEX reservations_locator_key ON public.reservations USING btree (locator)
@@ -302,17 +311,6 @@ Total de tablas: **10**
   - WITH CHECK: `true`
 - **server can read all** (SELECT) - PERMISSIVE
   - USING: `true`
-
-### Triggers
-
-- **airtable-reservation-sync**
-  - Timing: AFTER
-  - Event: INSERT
-  - Action: `EXECUTE FUNCTION supabase_functions.http_request('https://servana-ia-production.up.railway.app/webhooks/airtable', 'POST', '{"Content-type":"application/json"}', '{}', '5000')`
-- **airtable-reservation-sync**
-  - Timing: AFTER
-  - Event: UPDATE
-  - Action: `EXECUTE FUNCTION supabase_functions.http_request('https://servana-ia-production.up.railway.app/webhooks/airtable', 'POST', '{"Content-type":"application/json"}', '{}', '5000')`
 
 ---
 
