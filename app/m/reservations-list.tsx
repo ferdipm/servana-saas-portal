@@ -20,7 +20,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     return today;
   });
   // Rango de fechas para vista multi-día
-  const [dateRange, setDateRange] = useState<"day" | "week" | "custom">("day");
+  const [dateRange, setDateRange] = useState<"day" | "week" | "month">("day");
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showNewReservation, setShowNewReservation] = useState(false);
@@ -28,37 +28,113 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Navegación de días
-  const goToPreviousDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() - 1);
-      return newDate;
-    });
+  // Helper: obtener inicio de semana (lunes)
+  const getWeekStart = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar para lunes
+    d.setDate(diff);
+    return d;
   };
 
-  const goToNextDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(newDate.getDate() + 1);
-      return newDate;
-    });
+  // Helper: obtener fin de semana (domingo)
+  const getWeekEnd = (date: Date) => {
+    const start = getWeekStart(date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return end;
   };
 
-  const goToToday = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    setSelectedDate(today);
+  // Helper: obtener inicio de mes
+  const getMonthStart = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(1);
+    return d;
   };
 
-  const isToday = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return selectedDate.getTime() === today.getTime();
+  // Helper: obtener fin de mes
+  const getMonthEnd = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0); // Último día del mes anterior (actual)
+    return d;
   };
 
-  // Funciones para cambiar de rango
-  const setTodayOnly = () => {
+  // Navegación: avanzar según el modo
+  const goToNext = () => {
+    if (dateRange === "day") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 1);
+        return newDate;
+      });
+    } else if (dateRange === "week") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 7);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 7);
+        return newDate;
+      });
+    } else if (dateRange === "month") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() + 1);
+        return getMonthStart(newDate);
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() + 1);
+        return getMonthEnd(newDate);
+      });
+    }
+  };
+
+  // Navegación: retroceder según el modo
+  const goToPrevious = () => {
+    if (dateRange === "day") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 1);
+        return newDate;
+      });
+    } else if (dateRange === "week") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 7);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 7);
+        return newDate;
+      });
+    } else if (dateRange === "month") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() - 1);
+        return getMonthStart(newDate);
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() - 1);
+        return getMonthEnd(newDate);
+      });
+    }
+  };
+
+  // Cambiar a vista Hoy
+  const setTodayView = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     setSelectedDate(today);
@@ -66,20 +142,43 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     setDateRange("day");
   };
 
+  // Cambiar a vista Semana (lunes a domingo de la semana actual)
   const setWeekView = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    setSelectedDate(today);
+    const weekStart = getWeekStart(today);
+    const weekEnd = getWeekEnd(today);
+    setSelectedDate(weekStart);
     setEndDate(weekEnd);
     setDateRange("week");
   };
 
-  const setCustomRange = (start: Date, end: Date) => {
-    setSelectedDate(start);
-    setEndDate(end);
-    setDateRange("custom");
+  // Cambiar a vista Mes
+  const setMonthView = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monthStart = getMonthStart(today);
+    const monthEnd = getMonthEnd(today);
+    setSelectedDate(monthStart);
+    setEndDate(monthEnd);
+    setDateRange("month");
+  };
+
+  // Verificar si estamos en la semana/mes actual
+  const isCurrentPeriod = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (dateRange === "day") {
+      return selectedDate.getTime() === today.getTime();
+    } else if (dateRange === "week") {
+      const currentWeekStart = getWeekStart(today);
+      return selectedDate.getTime() === currentWeekStart.getTime();
+    } else if (dateRange === "month") {
+      const currentMonthStart = getMonthStart(today);
+      return selectedDate.getTime() === currentMonthStart.getTime();
+    }
+    return false;
   };
 
   // Calcular el rango de fechas efectivo
@@ -106,14 +205,20 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       return formatSelectedDate();
     }
 
-    if (dateRange === "week") {
-      return "Esta semana";
+    if (dateRange === "week" && endDate) {
+      const startDay = selectedDate.getDate();
+      const endDay = endDate.getDate();
+      const startMonth = selectedDate.toLocaleDateString("es-ES", { month: "short" });
+      const endMonth = endDate.toLocaleDateString("es-ES", { month: "short" });
+
+      if (startMonth === endMonth) {
+        return `${startDay} - ${endDay} ${startMonth}`;
+      }
+      return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
     }
 
-    if (endDate) {
-      const startStr = selectedDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-      const endStr = endDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
-      return `${startStr} - ${endStr}`;
+    if (dateRange === "month") {
+      return selectedDate.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
     }
 
     return formatSelectedDate();
@@ -206,7 +311,10 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   };
 
   const formatDateForInput = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const loadData = useCallback(async () => {
@@ -402,97 +510,71 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             </div>
           </div>
 
-          {/* Selector de rango con presets */}
-          <div className="flex items-stretch gap-1.5 bg-white dark:bg-zinc-800/80 rounded-xl p-1.5 border border-zinc-200 dark:border-zinc-700">
-            {/* Preset: Hoy */}
+          {/* Selector de rango: Hoy | Semana | Mes + botones -/+ */}
+          <div className="flex items-stretch gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border border-zinc-200 dark:border-zinc-700">
+            {/* Botón retroceder */}
             <button
-              onClick={setTodayOnly}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                dateRange === "day" && isToday()
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300 active:scale-95"
-              }`}
+              onClick={goToPrevious}
+              className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+              aria-label="Anterior"
             >
-              Hoy
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
 
-            {/* Preset: Semana */}
-            <button
-              onClick={setWeekView}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                dateRange === "week"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300 active:scale-95"
-              }`}
-            >
-              Semana
-            </button>
-
-            {/* Separador */}
-            <div className="w-px bg-zinc-200 dark:bg-zinc-700" />
-
-            {/* Navegador de fecha para selección custom */}
-            <div className="flex-1 flex items-center justify-between min-w-0">
+            {/* Presets: Hoy, Semana, Mes */}
+            <div className="flex-1 flex items-center justify-center gap-1">
               <button
-                onClick={() => {
-                  if (dateRange !== "day") {
-                    setDateRange("day");
-                    setEndDate(null);
-                  }
-                  goToPreviousDay();
-                }}
-                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95 shrink-0"
-                aria-label="Día anterior"
+                onClick={setTodayView}
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  dateRange === "day"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                Hoy
               </button>
-
-              {/* Fecha/Rango clickable que abre calendario */}
-              <div className="flex-1 relative min-w-0">
-                <div className={`py-2 px-2 text-center text-sm font-medium rounded-lg flex items-center justify-center gap-1 truncate ${
-                  dateRange === "custom" || (dateRange === "day" && !isToday())
-                    ? "text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30"
-                    : "text-zinc-600 dark:text-zinc-400"
-                }`}>
-                  <span className="truncate">{formatDateRangeLabel()}</span>
-                  <svg className="w-4 h-4 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                {/* Input de fecha transparente superpuesto */}
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={formatDateForInput(selectedDate)}
-                  onChange={(e) => {
-                    handleDateChange(e);
-                    setDateRange("day");
-                    setEndDate(null);
-                  }}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  aria-label="Seleccionar fecha"
-                />
-              </div>
-
               <button
-                onClick={() => {
-                  if (dateRange !== "day") {
-                    setDateRange("day");
-                    setEndDate(null);
-                  }
-                  goToNextDay();
-                }}
-                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95 shrink-0"
-                aria-label="Día siguiente"
+                onClick={setWeekView}
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  dateRange === "week"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                Semana
+              </button>
+              <button
+                onClick={setMonthView}
+                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  dateRange === "month"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                }`}
+              >
+                Mes
               </button>
             </div>
+
+            {/* Botón avanzar */}
+            <button
+              onClick={goToNext}
+              className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+              aria-label="Siguiente"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
+
+          {/* Mostrar rango de fechas actual (si no es el periodo actual) */}
+          {!isCurrentPeriod() && (
+            <div className="text-center text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+              {formatDateRangeLabel()}
+            </div>
+          )}
         </div>
       )}
 
@@ -525,7 +607,9 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 : mode === "pending"
                 ? "No hay reservas pendientes"
                 : dateRange === "week"
-                ? "No hay reservas esta semana"
+                ? `No hay reservas del ${formatDateRangeLabel()}`
+                : dateRange === "month"
+                ? `No hay reservas en ${formatDateRangeLabel()}`
                 : `No hay reservas para ${formatSelectedDate().toLowerCase()}`}
             </p>
           </div>
@@ -928,7 +1012,13 @@ function NewReservationModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [partySize, setPartySize] = useState(2);
-  const [date, setDate] = useState(defaultDate.toISOString().split("T")[0]);
+  // Usar formato local para evitar problemas de timezone (toISOString convierte a UTC)
+  const [date, setDate] = useState(() => {
+    const year = defaultDate.getFullYear();
+    const month = String(defaultDate.getMonth() + 1).padStart(2, "0");
+    const day = String(defaultDate.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  });
   const [time, setTime] = useState("13:00");
   const [notes, setNotes] = useState("");
   const [sendWhatsApp, setSendWhatsApp] = useState(false);
