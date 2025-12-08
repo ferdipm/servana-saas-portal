@@ -418,6 +418,9 @@ export async function createReservation(input: CreateReservationInput) {
     }
   }
 
+  // Generar token de check-in automáticamente para reservas confirmadas
+  const checkinToken = status === "confirmed" ? generateCheckinToken() : null;
+
   const { data, error } = await supabase
     .from("reservations")
     .insert({
@@ -432,6 +435,7 @@ export async function createReservation(input: CreateReservationInput) {
       tz,
       status,
       reminder_sent: false,
+      checkin_token: checkinToken,
     })
     .select("*")
     .single();
@@ -441,7 +445,28 @@ export async function createReservation(input: CreateReservationInput) {
     throw new Error("Failed to create reservation");
   }
 
-  return data as Reservation;
+  const reservation = data as Reservation;
+
+  // Si tiene teléfono y está confirmada, enviar confirmación por WhatsApp con QR
+  if (phone && status === "confirmed" && checkinToken) {
+    try {
+      await sendReservationConfirmationWithQR({
+        reservationId: reservation.id,
+        phone,
+        name,
+        partySize: party_size,
+        datetimeUtc: datetime_utc,
+        tz: tz || "Europe/Zurich",
+        checkinToken,
+        restaurantId: finalRestaurantId,
+      });
+    } catch (err) {
+      // No fallar la reserva si falla el envío de WhatsApp
+      console.error("Error sending WhatsApp confirmation:", err);
+    }
+  }
+
+  return reservation;
 }
 
 /**
@@ -671,4 +696,228 @@ export async function getRestaurantShiftsForDate(
   });
 
   return shifts;
+}
+
+/* ------------------------------------------------------------------
+ * QR CHECK-IN FUNCTIONS
+ * ------------------------------------------------------------------*/
+
+import { generateCheckinToken, generateCheckinQRCode } from "@/lib/qr-utils";
+
+/**
+ * Asigna un token de check-in a una reserva existente
+ * Devuelve el QR code como Data URL
+ */
+export async function assignCheckinToken(reservationId: string): Promise<{
+  token: string;
+  qrDataUrl: string;
+}> {
+  const supabase = await supabaseServer();
+
+  // Generar nuevo token
+  const token = generateCheckinToken();
+
+  // Guardar en la BD
+  const { error } = await supabase
+    .from("reservations")
+    .update({ checkin_token: token })
+    .eq("id", reservationId);
+
+  if (error) {
+    console.error("Error assigning checkin token:", error);
+    throw new Error("Failed to assign checkin token");
+  }
+
+  // Generar QR
+  const qrDataUrl = await generateCheckinQRCode(token);
+
+  return { token, qrDataUrl };
+}
+
+/**
+ * Obtiene el QR de check-in para una reserva.
+ * Si no tiene token, genera uno nuevo.
+ */
+export async function getOrCreateCheckinQR(reservationId: string): Promise<{
+  token: string;
+  qrDataUrl: string;
+}> {
+  const supabase = await supabaseServer();
+
+  // Verificar si ya tiene token
+  const { data, error } = await supabase
+    .from("reservations")
+    .select("checkin_token")
+    .eq("id", reservationId)
+    .single();
+
+  if (error) {
+    console.error("Error getting reservation:", error);
+    throw new Error("Reservation not found");
+  }
+
+  // Si ya tiene token, generar QR con ese token
+  if (data.checkin_token) {
+    const qrDataUrl = await generateCheckinQRCode(data.checkin_token);
+    return { token: data.checkin_token, qrDataUrl };
+  }
+
+  // Si no tiene, crear uno nuevo
+  return assignCheckinToken(reservationId);
+}
+
+/**
+ * Valida un token de check-in y marca la reserva como "seated"
+ * Devuelve los datos de la reserva si es válido
+ */
+export async function validateCheckinToken(token: string): Promise<{
+  success: boolean;
+  reservation?: Reservation;
+  error?: string;
+}> {
+  const supabase = await supabaseServer();
+
+  // Buscar reserva con este token
+  const { data, error } = await supabase
+    .from("reservations")
+    .select(`
+      *,
+      restaurant_info:restaurant_id (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq("checkin_token", token)
+    .single();
+
+  if (error || !data) {
+    return { success: false, error: "Token inválido o reserva no encontrada" };
+  }
+
+  const reservation = data as Reservation;
+
+  // Verificar que la reserva está en un estado válido para check-in
+  if (reservation.status === "cancelled") {
+    return { success: false, error: "Esta reserva ha sido cancelada" };
+  }
+
+  if (reservation.status === "seated") {
+    return { success: false, error: "El cliente ya ha hecho check-in", reservation };
+  }
+
+  if (reservation.status === "finished") {
+    return { success: false, error: "Esta reserva ya ha finalizado" };
+  }
+
+  if (reservation.status === "no_show") {
+    return { success: false, error: "Esta reserva está marcada como no-show" };
+  }
+
+  // Verificar que la reserva es para hoy (con margen de 2 horas antes/después)
+  const reservationTime = new Date(reservation.datetime_utc);
+  const now = new Date();
+  const twoHoursMs = 2 * 60 * 60 * 1000;
+
+  if (reservationTime.getTime() > now.getTime() + twoHoursMs) {
+    return {
+      success: false,
+      error: "La reserva es para más tarde. Check-in disponible 2 horas antes.",
+      reservation
+    };
+  }
+
+  // Actualizar estado a "seated"
+  const { error: updateError } = await supabase
+    .from("reservations")
+    .update({ status: "seated" })
+    .eq("id", reservation.id);
+
+  if (updateError) {
+    console.error("Error updating reservation status:", updateError);
+    return { success: false, error: "Error al actualizar el estado" };
+  }
+
+  // Devolver reserva actualizada
+  return {
+    success: true,
+    reservation: { ...reservation, status: "seated" }
+  };
+}
+
+/* ------------------------------------------------------------------
+ * WHATSAPP CONFIRMATION WITH QR
+ * ------------------------------------------------------------------*/
+
+const SERVANA_AI_URL = process.env.SERVANA_AI_URL || "https://servana-ia-production-e083.up.railway.app";
+const SERVANA_AI_SECRET = process.env.SERVANA_AI_SECRET || "";
+
+/**
+ * Envía confirmación de reserva por WhatsApp con QR de check-in
+ */
+export async function sendReservationConfirmationWithQR(params: {
+  reservationId: string;
+  phone: string;
+  name: string;
+  partySize: number;
+  datetimeUtc: string;
+  tz: string;
+  checkinToken: string;
+  restaurantId: string;
+  locator?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const {
+    phone,
+    name,
+    partySize,
+    datetimeUtc,
+    tz,
+    checkinToken,
+    restaurantId,
+    locator,
+  } = params;
+
+  // Obtener nombre del restaurante
+  const supabase = await supabaseServer();
+  const { data: restaurant } = await supabase
+    .from("restaurant_info")
+    .select("name")
+    .eq("id", restaurantId)
+    .single();
+
+  const restaurantName = restaurant?.name || "El Restaurante";
+
+  try {
+    const response = await fetch(`${SERVANA_AI_URL}/api/send-confirmation-with-qr`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SERVANA_AI_SECRET}`,
+      },
+      body: JSON.stringify({
+        phone,
+        name,
+        partySize,
+        datetimeUtc,
+        tz,
+        checkinToken,
+        restaurantName,
+        locator,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("[sendReservationConfirmationWithQR] Error:", response.status, errorData);
+      return { success: false, error: errorData.error || "Failed to send confirmation" };
+    }
+
+    const result = await response.json();
+    console.log("[sendReservationConfirmationWithQR] Success:", result);
+    return { success: true };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("[sendReservationConfirmationWithQR] Exception:", errorMessage);
+    return { success: false, error: errorMessage };
+  }
 }
