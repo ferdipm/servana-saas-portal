@@ -1493,6 +1493,7 @@ function NewReservationDrawer({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState("20:00");
   const [notes, setNotes] = useState("");
+  const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1534,6 +1535,7 @@ function NewReservationDrawer({
         source: "phone",
         tz: defaultTz,
         status: "confirmed", // reservas manuales → confirmadas por defecto
+        sendWhatsAppConfirmation: sendWhatsApp && !!phone, // solo si está activado Y hay teléfono
       });
 
       onCreated();
@@ -1619,6 +1621,27 @@ function NewReservationDrawer({
               />
             </div>
           </div>
+
+          {/* Checkbox enviar confirmación WhatsApp */}
+          {phone && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40">
+              <input
+                type="checkbox"
+                id="sendWhatsApp"
+                checked={sendWhatsApp}
+                onChange={(e) => setSendWhatsApp(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="sendWhatsApp" className="flex-1 cursor-pointer">
+                <div className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                  Enviar confirmación por WhatsApp
+                </div>
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  El cliente recibirá un mensaje con los detalles de la reserva y un QR de check-in.
+                </div>
+              </label>
+            </div>
+          )}
 
           {/* Fecha + hora */}
           <div className="grid grid-cols-2 gap-4">

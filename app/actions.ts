@@ -373,6 +373,7 @@ export type CreateReservationInput = {
   source?: string | null;
   tz?: string | null;
   status?: string;
+  sendWhatsAppConfirmation?: boolean; // Si true, envía confirmación por WhatsApp
 };
 
 export async function createReservation(input: CreateReservationInput) {
@@ -389,6 +390,7 @@ export async function createReservation(input: CreateReservationInput) {
     source = "phone",
     tz = "Europe/Zurich",
     status = "confirmed",
+    sendWhatsAppConfirmation = false,
   } = input;
 
   // Resolver restaurant_id
@@ -447,8 +449,8 @@ export async function createReservation(input: CreateReservationInput) {
 
   const reservation = data as Reservation;
 
-  // Si tiene teléfono y está confirmada, enviar confirmación por WhatsApp con QR
-  if (phone && status === "confirmed" && checkinToken) {
+  // Enviar confirmación por WhatsApp con QR solo si se solicita explícitamente
+  if (sendWhatsAppConfirmation && phone && status === "confirmed" && checkinToken) {
     try {
       await sendReservationConfirmationWithQR({
         reservationId: reservation.id,

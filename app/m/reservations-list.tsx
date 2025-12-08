@@ -825,6 +825,7 @@ function NewReservationModal({
   const [date, setDate] = useState(defaultDate.toISOString().split("T")[0]);
   const [time, setTime] = useState("13:00");
   const [notes, setNotes] = useState("");
+  const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -854,6 +855,7 @@ function NewReservationModal({
         source: "manual",
         tz: defaultTz,
         status: "confirmed",
+        sendWhatsAppConfirmation: sendWhatsApp && !!phone.trim(),
       });
 
       onSuccess();
@@ -918,6 +920,27 @@ function NewReservationModal({
                 placeholder="+34 600 000 000"
               />
             </div>
+
+            {/* Checkbox enviar WhatsApp */}
+            {phone.trim() && (
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
+                <input
+                  type="checkbox"
+                  id="sendWhatsAppMobile"
+                  checked={sendWhatsApp}
+                  onChange={(e) => setSendWhatsApp(e.target.checked)}
+                  className="mt-0.5 h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <label htmlFor="sendWhatsAppMobile" className="flex-1">
+                  <div className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                    Enviar confirmación por WhatsApp
+                  </div>
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    El cliente recibirá un mensaje con detalles y QR de check-in.
+                  </div>
+                </label>
+              </div>
+            )}
 
             {/* Personas */}
             <div>
