@@ -308,19 +308,26 @@ export async function updateReservationStatus(params: {
   reservationId: string;
   status: string;
 }) {
+  console.log("[updateReservationStatus] START - reservationId:", params.reservationId, "newStatus:", params.status);
+
   const supabase = await supabaseServer();
   const { reservationId, status } = params;
+
+  console.log("[updateReservationStatus] Calling Supabase update...");
 
   const { error } = await supabase
     .from("reservations")
     .update({ status })
     .eq("id", reservationId);
 
+  console.log("[updateReservationStatus] Supabase response - error:", error);
+
   if (error) {
     console.error("[updateReservationStatus] Error:", error);
     throw new Error(`Failed to update reservation status: ${error.message}`);
   }
 
+  console.log("[updateReservationStatus] SUCCESS");
   return { ok: true };
 }
 
