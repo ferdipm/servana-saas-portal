@@ -505,7 +505,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="absolute inset-0 flex flex-col overflow-hidden">
       {/* Botón Nueva Reserva + Selector de día (solo en modo today) - Header fijo */}
       {mode === "today" && (
         <div className="flex-shrink-0 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 space-y-2.5">
@@ -618,59 +618,56 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 ? "border-indigo-400 dark:border-indigo-600"
                 : "border-zinc-200 dark:border-zinc-700"
             }`}>
-              {/* Desde: calendario con "1" */}
-              <button
-                type="button"
-                onClick={() => fromDateInputRef.current?.showPicker()}
-                className={`p-2 rounded-lg transition-colors active:scale-95 ${
+              {/* Desde: calendario con "1" - usando label para mejor compatibilidad móvil */}
+              <label
+                htmlFor="fromDateInput"
+                className={`relative p-2 rounded-lg transition-colors active:scale-95 cursor-pointer ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
-                aria-label="Fecha desde"
                 title="Desde"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                   <text x="12" y="17" textAnchor="middle" fontSize="8" fill="currentColor" stroke="none" fontWeight="bold">1</text>
                 </svg>
-              </button>
-              {/* Hasta: calendario con "31" */}
-              <button
-                type="button"
-                onClick={() => toDateInputRef.current?.showPicker()}
-                className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                <input
+                  id="fromDateInput"
+                  ref={fromDateInputRef}
+                  type="date"
+                  className="absolute opacity-0 w-0 h-0"
+                  value={formatDateForInput(selectedDate)}
+                  onChange={handleFromDateChange}
+                  aria-label="Fecha desde"
+                />
+              </label>
+              {/* Hasta: calendario con "31" - usando label para mejor compatibilidad móvil */}
+              <label
+                htmlFor="toDateInput"
+                className={`relative p-2 rounded-lg transition-colors active:scale-95 cursor-pointer ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
-                aria-label="Fecha hasta"
                 title="Hasta"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                   <text x="12" y="17" textAnchor="middle" fontSize="7" fill="currentColor" stroke="none" fontWeight="bold">31</text>
                 </svg>
-              </button>
+                <input
+                  id="toDateInput"
+                  ref={toDateInputRef}
+                  type="date"
+                  className="absolute opacity-0 w-0 h-0"
+                  value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
+                  onChange={handleToDateChange}
+                  min={formatDateForInput(selectedDate)}
+                  aria-label="Fecha hasta"
+                />
+              </label>
             </div>
-            {/* Inputs ocultos para los date pickers */}
-            <input
-              ref={fromDateInputRef}
-              type="date"
-              className="sr-only"
-              value={formatDateForInput(selectedDate)}
-              onChange={handleFromDateChange}
-              aria-label="Fecha desde"
-            />
-            <input
-              ref={toDateInputRef}
-              type="date"
-              className="sr-only"
-              value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
-              onChange={handleToDateChange}
-              min={formatDateForInput(selectedDate)}
-              aria-label="Fecha hasta"
-            />
           </div>
 
           {/* Mostrar rango de fechas actual (si no es el periodo actual o es custom) */}

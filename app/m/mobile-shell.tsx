@@ -87,8 +87,8 @@ export function MobileShell({ tenantId, restaurantId, restaurantName, children }
         </div>
       </header>
 
-      {/* Contenido principal - scrollable */}
-      <main className="flex-1 overflow-auto pb-20">
+      {/* Contenido principal - el scroll se maneja dentro de cada componente hijo */}
+      <main className="flex-1 min-h-0 pb-20 relative">
         {children}
       </main>
 
