@@ -774,9 +774,53 @@ function ConfirmationChip({ status }: { status?: string | null }) {
   );
 }
 
+/* ---------------------- HOOK SINGLETON TICK ---------------------- */
+
+// Hook singleton para tick global cada 5 min (evita múltiples timers)
+let globalTickListeners: Set<() => void> = new Set();
+let globalTickInterval: NodeJS.Timeout | null = null;
+
+function useMinuteTick() {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const listener = () => setTick((t) => t + 1);
+    globalTickListeners.add(listener);
+
+    // Iniciar timer solo si es el primer listener
+    if (globalTickListeners.size === 1 && !globalTickInterval) {
+      globalTickInterval = setInterval(() => {
+        globalTickListeners.forEach((l) => l());
+      }, 300000); // 5 minutos
+    }
+
+    return () => {
+      globalTickListeners.delete(listener);
+      // Limpiar timer si no quedan listeners
+      if (globalTickListeners.size === 0 && globalTickInterval) {
+        clearInterval(globalTickInterval);
+        globalTickInterval = null;
+      }
+    };
+  }, []);
+}
+
 /* -------------------------- STATUS CHIP -------------------------- */
 
-function StatusChip({ s }: { s?: string }) {
+// Helper para calcular si está retrasado (15+ min)
+function isLate(datetimeUtc: string | undefined, status: string | undefined): boolean {
+  if (!datetimeUtc) return false;
+  if (status !== "confirmed" && status !== "reconfirmed") return false;
+  const reservationTime = new Date(datetimeUtc);
+  const now = new Date();
+  const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+  return reservationTime < fifteenMinutesAgo;
+}
+
+function StatusChip({ s, datetimeUtc }: { s?: string; datetimeUtc?: string }) {
+  // Hook para actualización automática del estado "Retrasado"
+  useMinuteTick();
+
   const map: Record<
     string,
     {
@@ -848,6 +892,19 @@ function StatusChip({ s }: { s?: string }) {
   const k = s ? map[s] : null;
   if (!k) return <span className="text-zinc-500">—</span>;
 
+  // Si está retrasado, mostrar chip especial de "Retrasado"
+  const late = isLate(datetimeUtc, s);
+  if (late) {
+    return (
+      <span
+        className="inline-flex items-center justify-center gap-2 h-6 px-3 rounded-full text-xs border min-w-[120px] bg-orange-50/80 dark:bg-orange-900/20 text-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700 ring-2 ring-orange-400/50 animate-pulse"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+        Retrasado
+      </span>
+    );
+  }
+
   return (
     <span
       className={`inline-flex items-center justify-center gap-2 h-6 px-3 rounded-full text-xs border min-w-[120px] ${k.bg} ${k.txt} ${k.brd}`}
@@ -858,36 +915,7 @@ function StatusChip({ s }: { s?: string }) {
   );
 }
 
-/* -------------------------- LATE CHIP -------------------------- */
-
-// Hook singleton para tick global cada minuto (evita múltiples timers)
-let globalTickListeners: Set<() => void> = new Set();
-let globalTickInterval: NodeJS.Timeout | null = null;
-
-function useMinuteTick() {
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const listener = () => setTick((t) => t + 1);
-    globalTickListeners.add(listener);
-
-    // Iniciar timer solo si es el primer listener
-    if (globalTickListeners.size === 1 && !globalTickInterval) {
-      globalTickInterval = setInterval(() => {
-        globalTickListeners.forEach((l) => l());
-      }, 300000); // 5 minutos
-    }
-
-    return () => {
-      globalTickListeners.delete(listener);
-      // Limpiar timer si no quedan listeners
-      if (globalTickListeners.size === 0 && globalTickInterval) {
-        clearInterval(globalTickInterval);
-        globalTickInterval = null;
-      }
-    };
-  }, []);
-}
+/* -------------------------- LATE CHIP (para móvil) -------------------------- */
 
 function LateChip({ datetimeUtc, status }: { datetimeUtc: string; status?: string }) {
   // Usar hook singleton para actualización cada minuto
@@ -1008,9 +1036,8 @@ function ReservationRow({
           #{r.locator ?? r.id.slice(0, 8)}
         </div>
 
-        <div className="truncate flex items-center gap-2">
-          <StatusChip s={r.status} />
-          <LateChip datetimeUtc={r.datetime_utc} status={r.status} />
+        <div className="truncate">
+          <StatusChip s={r.status} datetimeUtc={r.datetime_utc} />
         </div>
       </div>
     </div>
