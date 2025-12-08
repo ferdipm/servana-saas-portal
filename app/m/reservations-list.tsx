@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { getReservations, Reservation, updateReservationStatus, createReservation, getRestaurantShiftsForDate, Shift } from "../actions";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
+import { DatePickerModal } from "./date-picker-modal";
 
 type Props = {
   tenantId: string;
@@ -25,11 +26,9 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showNewReservation, setShowNewReservation] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  // Refs para inputs de fecha desde/hasta
-  const fromDateInputRef = useRef<HTMLInputElement>(null);
-  const toDateInputRef = useRef<HTMLInputElement>(null);
+  // Estado para el date picker modal
+  const [datePickerOpen, setDatePickerOpen] = useState<"from" | "to" | null>(null);
 
   // Helper: obtener inicio de semana (lunes)
   const getWeekStart = (date: Date) => {
@@ -242,24 +241,20 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     return `Del ${startDay} de ${startMonth} al ${endDay} de ${endMonth}`;
   };
 
-  // Handlers para selección de fecha desde/hasta
-  const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value + "T00:00:00");
-    if (!isNaN(newDate.getTime())) {
-      setSelectedDate(newDate);
-      // Si no hay endDate o es anterior a la nueva fecha, poner día siguiente
-      if (!endDate || endDate < newDate) {
-        const nextDay = new Date(newDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        setEndDate(nextDay);
-      }
-      setDateRange("custom");
+  // Handlers para selección de fecha desde/hasta (usados por DatePickerModal)
+  const handleFromDateSelect = (newDate: Date) => {
+    setSelectedDate(newDate);
+    // Si no hay endDate o es anterior a la nueva fecha, poner día siguiente
+    if (!endDate || endDate < newDate) {
+      const nextDay = new Date(newDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setEndDate(nextDay);
     }
+    setDateRange("custom");
   };
 
-  const handleToDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value + "T00:00:00");
-    if (!isNaN(newDate.getTime()) && newDate >= selectedDate) {
+  const handleToDateSelect = (newDate: Date) => {
+    if (newDate >= selectedDate) {
       setEndDate(newDate);
       setDateRange("custom");
     }
@@ -328,13 +323,6 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const displayRows = searchQuery.trim() ? searchResults : rows;
   const isSearchMode = searchQuery.trim().length > 0;
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = new Date(e.target.value + "T00:00:00");
-    if (!isNaN(newDate.getTime())) {
-      setSelectedDate(newDate);
-    }
-  };
-
   const formatSelectedDate = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -349,13 +337,6 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       day: "numeric",
       month: "short"
     });
-  };
-
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
   };
 
   const loadData = useCallback(async () => {
@@ -618,55 +599,40 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 ? "border-indigo-400 dark:border-indigo-600"
                 : "border-zinc-200 dark:border-zinc-700"
             }`}>
-              {/* Desde: calendario con "1" - usando label para mejor compatibilidad móvil */}
-              <label
-                htmlFor="fromDateInput"
-                className={`relative p-2 rounded-lg transition-colors active:scale-95 cursor-pointer ${
+              {/* Desde: calendario con "1" */}
+              <button
+                type="button"
+                onClick={() => setDatePickerOpen("from")}
+                className={`p-2 rounded-lg transition-colors active:scale-95 ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
                 title="Desde"
+                aria-label="Seleccionar fecha desde"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                   <text x="12" y="17" textAnchor="middle" fontSize="8" fill="currentColor" stroke="none" fontWeight="bold">1</text>
                 </svg>
-                <input
-                  id="fromDateInput"
-                  ref={fromDateInputRef}
-                  type="date"
-                  className="absolute opacity-0 w-0 h-0"
-                  value={formatDateForInput(selectedDate)}
-                  onChange={handleFromDateChange}
-                  aria-label="Fecha desde"
-                />
-              </label>
-              {/* Hasta: calendario con "31" - usando label para mejor compatibilidad móvil */}
-              <label
-                htmlFor="toDateInput"
-                className={`relative p-2 rounded-lg transition-colors active:scale-95 cursor-pointer ${
+              </button>
+              {/* Hasta: calendario con "31" */}
+              <button
+                type="button"
+                onClick={() => setDatePickerOpen("to")}
+                className={`p-2 rounded-lg transition-colors active:scale-95 ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
                 title="Hasta"
+                aria-label="Seleccionar fecha hasta"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                   <text x="12" y="17" textAnchor="middle" fontSize="7" fill="currentColor" stroke="none" fontWeight="bold">31</text>
                 </svg>
-                <input
-                  id="toDateInput"
-                  ref={toDateInputRef}
-                  type="date"
-                  className="absolute opacity-0 w-0 h-0"
-                  value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
-                  onChange={handleToDateChange}
-                  min={formatDateForInput(selectedDate)}
-                  aria-label="Fecha hasta"
-                />
-              </label>
+              </button>
             </div>
           </div>
 
@@ -890,6 +856,16 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           }}
         />
       )}
+
+      {/* Modal de selección de fecha */}
+      <DatePickerModal
+        isOpen={datePickerOpen !== null}
+        mode={datePickerOpen || "from"}
+        selectedDate={datePickerOpen === "to" && endDate ? endDate : selectedDate}
+        minDate={datePickerOpen === "to" ? selectedDate : undefined}
+        onSelect={datePickerOpen === "to" ? handleToDateSelect : handleFromDateSelect}
+        onClose={() => setDatePickerOpen(null)}
+      />
     </div>
   );
 }
@@ -1156,18 +1132,32 @@ function NewReservationModal({
       const datetimeLocal = new Date(`${date}T${time}:00`);
       const datetime_utc = datetimeLocal.toISOString();
 
+      // Normalizar teléfono: añadir +34 si no tiene prefijo internacional
+      const normalizePhone = (p: string): string | null => {
+        const cleaned = p.trim().replace(/\s+/g, "");
+        if (!cleaned) return null;
+        // Si ya tiene prefijo internacional, mantenerlo
+        if (cleaned.startsWith("+")) return cleaned;
+        // Si empieza con 00, convertir a +
+        if (cleaned.startsWith("00")) return "+" + cleaned.slice(2);
+        // Si no tiene prefijo, añadir +34 (España)
+        return "+34" + cleaned;
+      };
+
+      const normalizedPhone = normalizePhone(phone);
+
       await createReservation({
         tenantId,
         restaurantId,
         name: name.trim(),
-        phone: phone.trim() || null,
+        phone: normalizedPhone,
         party_size: partySize,
         datetime_utc,
         notes: notes.trim() || null,
         source: "manual",
         tz: defaultTz,
         status: "confirmed",
-        sendWhatsAppConfirmation: sendWhatsApp && !!phone.trim(),
+        sendWhatsAppConfirmation: sendWhatsApp && !!normalizedPhone,
       });
 
       onSuccess();
