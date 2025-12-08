@@ -661,7 +661,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 </div>
               </div>
             )}
-            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 pb-20">
             {displayRows.map((r, index) => {
               // En modo búsqueda o vista multi-día, mostrar separador de día si cambia
               const isMultiDayView = dateRange !== "day";
