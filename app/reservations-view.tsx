@@ -1135,19 +1135,16 @@ function ReservationDrawer({
   }
 
   async function handleStatusChange(newStatus: string) {
-    console.log(`[StatusChange] Changing reservation ${reservation.id} from "${reservation.status}" to "${newStatus}"`);
     setSaving(true);
     setError(null);
     try {
-      const result = await updateReservationStatus({
+      await updateReservationStatus({
         reservationId: reservation.id,
         status: newStatus,
       });
-      console.log(`[StatusChange] Success:`, result);
-      // Cerrar drawer y refrescar lista
       onUpdated();
     } catch (err: unknown) {
-      console.error("[StatusChange] Error:", err);
+      console.error("Error changing status:", err);
       const errorMessage = err instanceof Error ? err.message : "Error desconocido";
       setError(`Error al cambiar el estado: ${errorMessage}`);
     } finally {
