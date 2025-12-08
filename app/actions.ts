@@ -302,7 +302,7 @@ export async function getPendingTodayCount(opts: {
 
 /**
  * Cambia el estado de una reserva.
- * Estados válidos: pending, confirmed, reconfirmed, checked_in, seated, cancelled, no_show, finished
+ * Estados válidos: pending, confirmed, reconfirmed, arrived, seated, cancelled, no_show, finished
  */
 export async function updateReservationStatus(params: {
   reservationId: string;
@@ -777,7 +777,7 @@ export async function getOrCreateCheckinQR(reservationId: string): Promise<{
 }
 
 /**
- * Valida un token de check-in y marca la reserva como "checked_in"
+ * Valida un token de check-in y marca la reserva como "arrived"
  * Devuelve los datos de la reserva si es válido
  */
 export async function validateCheckinToken(token: string): Promise<{
@@ -812,7 +812,7 @@ export async function validateCheckinToken(token: string): Promise<{
     return { success: false, error: "Esta reserva ha sido cancelada" };
   }
 
-  if (reservation.status === "checked_in") {
+  if (reservation.status === "arrived") {
     return { success: false, error: "El cliente ya ha hecho check-in", reservation };
   }
 
@@ -841,10 +841,10 @@ export async function validateCheckinToken(token: string): Promise<{
     };
   }
 
-  // Actualizar estado a "checked_in"
+  // Actualizar estado a "arrived"
   const { error: updateError } = await supabase
     .from("reservations")
-    .update({ status: "checked_in" })
+    .update({ status: "arrived" })
     .eq("id", reservation.id);
 
   if (updateError) {
@@ -855,7 +855,7 @@ export async function validateCheckinToken(token: string): Promise<{
   // Devolver reserva actualizada
   return {
     success: true,
-    reservation: { ...reservation, status: "checked_in" }
+    reservation: { ...reservation, status: "arrived" }
   };
 }
 

@@ -855,7 +855,7 @@ function StatusBadge({ status }: { status?: string }) {
       text: "text-teal-700 dark:text-teal-300",
       label: "Reconfirmada",
     },
-    checked_in: {
+    arrived: {
       bg: "bg-blue-100 dark:bg-blue-900/30",
       text: "text-blue-700 dark:text-blue-300",
       label: "Llegó",
@@ -1083,7 +1083,7 @@ function ReservationModal({
                 {/* Acción principal - siguiente paso en el flujo */}
                 {(reservation.status === "confirmed" || reservation.status === "reconfirmed") && (
                   <button
-                    onClick={() => onQuickAction(reservation, "checked_in")}
+                    onClick={() => onQuickAction(reservation, "arrived")}
                     className="w-full py-3.5 rounded-xl text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1092,7 +1092,7 @@ function ReservationModal({
                     Marcar llegada
                   </button>
                 )}
-                {reservation.status === "checked_in" && (
+                {reservation.status === "arrived" && (
                   <button
                     onClick={() => onQuickAction(reservation, "seated")}
                     className="w-full py-3.5 rounded-xl text-sm font-semibold bg-sky-500 hover:bg-sky-600 text-white transition-colors flex items-center justify-center gap-2"
@@ -1116,13 +1116,13 @@ function ReservationModal({
                 )}
 
                 {/* Acciones secundarias - todos los estados manuales */}
-                {["confirmed", "reconfirmed", "checked_in", "seated"].includes(reservation.status || "") && (
+                {["confirmed", "reconfirmed", "arrived", "seated"].includes(reservation.status || "") && (
                   <>
                     {/* Acciones de avance manual (saltar pasos o corregir) */}
                     <div className="flex flex-wrap gap-2 pt-1">
-                      {reservation.status !== "checked_in" && (
+                      {reservation.status !== "arrived" && (
                         <button
-                          onClick={() => onQuickAction(reservation, "checked_in")}
+                          onClick={() => onQuickAction(reservation, "arrived")}
                           className="px-3 py-2 rounded-xl text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition-colors"
                         >
                           Llegada

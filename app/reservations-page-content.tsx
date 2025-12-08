@@ -19,7 +19,12 @@ export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: P
     // Incrementar el trigger para que SummaryCards se recargue
     setRefreshTrigger((prev) => prev + 1);
     // Forzar refresh del Server Component para actualizar el badge de pendientes
-    router.refresh();
+    // Envolver en try-catch para evitar que errores de Server Components rompan el flujo
+    try {
+      router.refresh();
+    } catch (e) {
+      console.error("[handleReservationChange] router.refresh error:", e);
+    }
   };
 
   return (

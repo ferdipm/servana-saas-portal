@@ -852,7 +852,7 @@ function StatusChip({ s, datetimeUtc }: { s?: string; datetimeUtc?: string }) {
       bg: "bg-teal-50/80 dark:bg-teal-900/20",
       brd: "border-teal-200/60 dark:border-teal-800/50",
     },
-    checked_in: {
+    arrived: {
       dot: "bg-blue-400",
       label: "Llegó",
       txt: "text-blue-900 dark:text-blue-200",
@@ -1146,7 +1146,12 @@ function ReservationDrawer({
       });
       console.log("[handleStatusChange] updateReservationStatus returned:", result);
       console.log("[handleStatusChange] Calling onUpdated...");
-      onUpdated();
+      // Llamar onUpdated de forma que errores del refresh no bloqueen el flujo
+      try {
+        onUpdated();
+      } catch (refreshErr) {
+        console.error("[handleStatusChange] onUpdated error (ignorado):", refreshErr);
+      }
       console.log("[handleStatusChange] onUpdated completed");
     } catch (err: unknown) {
       console.error("[handleStatusChange] Error caught:", err);
@@ -1512,7 +1517,7 @@ function ReservationDrawer({
                     disabled:opacity-60
                     whitespace-nowrap
                   "
-                  onClick={() => handleStatusChange("checked_in")}
+                  onClick={() => handleStatusChange("arrived")}
                 >
                   Llegada
                 </button>
