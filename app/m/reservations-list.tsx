@@ -28,7 +28,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   // Estado para el date picker modal
-  const [datePickerOpen, setDatePickerOpen] = useState<"from" | "to" | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   // Helper: obtener inicio de semana (lunes)
   const getWeekStart = (date: Date) => {
@@ -241,23 +241,11 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     return `Del ${startDay} de ${startMonth} al ${endDay} de ${endMonth}`;
   };
 
-  // Handlers para selección de fecha desde/hasta (usados por DatePickerModal)
-  const handleFromDateSelect = (newDate: Date) => {
-    setSelectedDate(newDate);
-    // Si no hay endDate o es anterior a la nueva fecha, poner día siguiente
-    if (!endDate || endDate < newDate) {
-      const nextDay = new Date(newDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      setEndDate(nextDay);
-    }
+  // Handler para selección de rango de fechas (usado por DatePickerModal)
+  const handleRangeSelect = (from: Date, to: Date) => {
+    setSelectedDate(from);
+    setEndDate(to);
     setDateRange("custom");
-  };
-
-  const handleToDateSelect = (newDate: Date) => {
-    if (newDate >= selectedDate) {
-      setEndDate(newDate);
-      setDateRange("custom");
-    }
   };
 
   // Estado para resultados de búsqueda (separado de rows del día actual)
@@ -593,47 +581,25 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
               </button>
             </div>
 
-            {/* Iconos de calendario para rango personalizado */}
-            <div className={`flex items-center bg-white dark:bg-zinc-800/80 rounded-xl p-1 border ${
-              dateRange === "custom"
-                ? "border-indigo-400 dark:border-indigo-600"
-                : "border-zinc-200 dark:border-zinc-700"
-            }`}>
-              {/* Desde: calendario con "1" */}
-              <button
-                type="button"
-                onClick={() => setDatePickerOpen("from")}
-                className={`p-2 rounded-lg transition-colors active:scale-95 ${
-                  dateRange === "custom"
-                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
-                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                }`}
-                title="Desde"
-                aria-label="Seleccionar fecha desde"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                  <text x="12" y="17" textAnchor="middle" fontSize="8" fill="currentColor" stroke="none" fontWeight="bold">1</text>
-                </svg>
-              </button>
-              {/* Hasta: calendario con "31" */}
-              <button
-                type="button"
-                onClick={() => setDatePickerOpen("to")}
-                className={`p-2 rounded-lg transition-colors active:scale-95 ${
-                  dateRange === "custom"
-                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
-                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                }`}
-                title="Hasta"
-                aria-label="Seleccionar fecha hasta"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                  <text x="12" y="17" textAnchor="middle" fontSize="7" fill="currentColor" stroke="none" fontWeight="bold">31</text>
-                </svg>
-              </button>
-            </div>
+            {/* Icono de calendario para rango personalizado */}
+            <button
+              type="button"
+              onClick={() => setDatePickerOpen(true)}
+              className={`flex items-center gap-1 px-3 py-2 rounded-xl border transition-colors active:scale-95 ${
+                dateRange === "custom"
+                  ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                  : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+              }`}
+              title="Seleccionar rango de fechas"
+              aria-label="Seleccionar rango de fechas"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8m-4 5h4" />
+              </svg>
+            </button>
           </div>
 
           {/* Mostrar rango de fechas actual (si no es el periodo actual o es custom) */}
@@ -857,14 +823,13 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         />
       )}
 
-      {/* Modal de selección de fecha */}
+      {/* Modal de selección de rango de fechas */}
       <DatePickerModal
-        isOpen={datePickerOpen !== null}
-        mode={datePickerOpen || "from"}
-        selectedDate={datePickerOpen === "to" && endDate ? endDate : selectedDate}
-        minDate={datePickerOpen === "to" ? selectedDate : undefined}
-        onSelect={datePickerOpen === "to" ? handleToDateSelect : handleFromDateSelect}
-        onClose={() => setDatePickerOpen(null)}
+        isOpen={datePickerOpen}
+        fromDate={selectedDate}
+        toDate={endDate}
+        onRangeSelect={handleRangeSelect}
+        onClose={() => setDatePickerOpen(false)}
       />
     </div>
   );
