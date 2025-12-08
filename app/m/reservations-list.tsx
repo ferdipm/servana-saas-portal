@@ -87,15 +87,19 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         return newDate;
       });
     } else if (dateRange === "month") {
+      // Para mes: avanzar al inicio del mes siguiente
       setSelectedDate(prev => {
         const newDate = new Date(prev);
         newDate.setMonth(newDate.getMonth() + 1);
-        return getMonthStart(newDate);
+        newDate.setDate(1); // Ir al día 1 del mes siguiente
+        return newDate;
       });
       setEndDate(prev => {
         if (!prev) return null;
+        // Calcular el fin del mes siguiente basado en el mes actual + 1
         const newDate = new Date(prev);
-        newDate.setMonth(newDate.getMonth() + 1);
+        newDate.setDate(1); // Ir al día 1
+        newDate.setMonth(newDate.getMonth() + 1); // Mes siguiente
         return getMonthEnd(newDate);
       });
     }
@@ -122,15 +126,19 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         return newDate;
       });
     } else if (dateRange === "month") {
+      // Para mes: retroceder al inicio del mes anterior
       setSelectedDate(prev => {
         const newDate = new Date(prev);
         newDate.setMonth(newDate.getMonth() - 1);
-        return getMonthStart(newDate);
+        newDate.setDate(1); // Ir al día 1 del mes anterior
+        return newDate;
       });
       setEndDate(prev => {
         if (!prev) return null;
+        // Calcular el fin del mes anterior
         const newDate = new Date(prev);
-        newDate.setMonth(newDate.getMonth() - 1);
+        newDate.setDate(1); // Ir al día 1
+        newDate.setMonth(newDate.getMonth() - 1); // Mes anterior
         return getMonthEnd(newDate);
       });
     }
@@ -497,10 +505,10 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Botón Nueva Reserva + Selector de día (solo en modo today) */}
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Botón Nueva Reserva + Selector de día (solo en modo today) - Header fijo */}
       {mode === "today" && (
-        <div className="sticky top-0 z-30 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 space-y-2.5">
+        <div className="flex-shrink-0 bg-zinc-50 dark:bg-[#0a0a0c] px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 space-y-2.5">
           {/* Fila: Nueva Reserva + Búsqueda inline */}
           <div className="flex gap-2">
             <button
@@ -605,65 +613,64 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             </div>
 
             {/* Iconos de calendario para rango personalizado */}
-            <div className={`flex items-center gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border ${
+            <div className={`flex items-center bg-white dark:bg-zinc-800/80 rounded-xl p-1 border ${
               dateRange === "custom"
                 ? "border-indigo-400 dark:border-indigo-600"
                 : "border-zinc-200 dark:border-zinc-700"
             }`}>
-              {/* Desde (flecha derecha → inicio del rango) */}
+              {/* Desde: calendario con "1" */}
               <button
+                type="button"
                 onClick={() => fromDateInputRef.current?.showPicker()}
                 className={`p-2 rounded-lg transition-colors active:scale-95 ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
-                aria-label="Desde"
+                aria-label="Fecha desde"
                 title="Desde"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 15l3-0m0 0l0 0m-3 0h6" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 12l3 3-3 3" />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  <text x="12" y="17" textAnchor="middle" fontSize="8" fill="currentColor" stroke="none" fontWeight="bold">1</text>
                 </svg>
               </button>
-              {/* Hasta (flecha izquierda ← a la izquierda del calendario) */}
+              {/* Hasta: calendario con "31" */}
               <button
+                type="button"
                 onClick={() => toDateInputRef.current?.showPicker()}
                 className={`p-2 rounded-lg transition-colors active:scale-95 ${
                   dateRange === "custom"
                     ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
                     : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 }`}
-                aria-label="Hasta"
+                aria-label="Fecha hasta"
                 title="Hasta"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  {/* Flecha izquierda */}
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l4-4m-4 4l4 4m-4-4h6" />
-                  {/* Calendario desplazado a la derecha */}
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 6V4m6 2V4m-7 6h8M12 18h10a1 1 0 001-1V8a1 1 0 00-1-1H12a1 1 0 00-1 1v9a1 1 0 001 1z" />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  <text x="12" y="17" textAnchor="middle" fontSize="7" fill="currentColor" stroke="none" fontWeight="bold">31</text>
                 </svg>
               </button>
-              {/* Inputs ocultos para los date pickers */}
-              <input
-                ref={fromDateInputRef}
-                type="date"
-                className="sr-only"
-                value={formatDateForInput(selectedDate)}
-                onChange={handleFromDateChange}
-                aria-label="Fecha desde"
-              />
-              <input
-                ref={toDateInputRef}
-                type="date"
-                className="sr-only"
-                value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
-                onChange={handleToDateChange}
-                min={formatDateForInput(selectedDate)}
-                aria-label="Fecha hasta"
-              />
             </div>
+            {/* Inputs ocultos para los date pickers */}
+            <input
+              ref={fromDateInputRef}
+              type="date"
+              className="sr-only"
+              value={formatDateForInput(selectedDate)}
+              onChange={handleFromDateChange}
+              aria-label="Fecha desde"
+            />
+            <input
+              ref={toDateInputRef}
+              type="date"
+              className="sr-only"
+              value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
+              onChange={handleToDateChange}
+              min={formatDateForInput(selectedDate)}
+              aria-label="Fecha hasta"
+            />
           </div>
 
           {/* Mostrar rango de fechas actual (si no es el periodo actual o es custom) */}
