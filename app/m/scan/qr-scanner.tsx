@@ -138,9 +138,18 @@ export function QRScanner() {
     });
   };
 
-  const goToReservations = () => {
+  const handleExit = useCallback(async () => {
+    // Stop scanner before navigating to prevent memory leaks
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {
+        // Ignore errors when stopping
+      }
+      scannerRef.current = null;
+    }
     router.push("/m/reservas");
-  };
+  }, [router]);
 
   // Check if showing result (success or error)
   const showingResult = scanState.status === "success" || scanState.status === "error";
@@ -178,10 +187,10 @@ export function QRScanner() {
               Escanear otro
             </button>
             <button
-              onClick={goToReservations}
+              onClick={handleExit}
               className="flex-1 py-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 rounded-xl font-medium transition-colors"
             >
-              Ver reservas
+              Salir
             </button>
           </div>
         </div>
@@ -218,10 +227,10 @@ export function QRScanner() {
               Reintentar
             </button>
             <button
-              onClick={goToReservations}
+              onClick={handleExit}
               className="flex-1 py-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 rounded-xl font-medium transition-colors"
             >
-              Ver reservas
+              Salir
             </button>
           </div>
         </div>

@@ -20,13 +20,16 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     return today;
   });
   // Rango de fechas para vista multi-día
-  const [dateRange, setDateRange] = useState<"day" | "week" | "month">("day");
+  const [dateRange, setDateRange] = useState<"day" | "week" | "month" | "custom">("day");
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showNewReservation, setShowNewReservation] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // Refs para inputs de fecha desde/hasta
+  const fromDateInputRef = useRef<HTMLInputElement>(null);
+  const toDateInputRef = useRef<HTMLInputElement>(null);
 
   // Helper: obtener inicio de semana (lunes)
   const getWeekStart = (date: Date) => {
@@ -142,41 +145,36 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     setDateRange("day");
   };
 
-  // Cambiar a vista Semana (lunes a domingo de la semana actual)
+  // Cambiar a vista Semana (desde hoy hasta el domingo)
   const setWeekView = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const weekStart = getWeekStart(today);
     const weekEnd = getWeekEnd(today);
-    setSelectedDate(weekStart);
+    setSelectedDate(today);
     setEndDate(weekEnd);
     setDateRange("week");
   };
 
-  // Cambiar a vista Mes
+  // Cambiar a vista Mes (desde hoy hasta fin de mes)
   const setMonthView = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const monthStart = getMonthStart(today);
     const monthEnd = getMonthEnd(today);
-    setSelectedDate(monthStart);
+    setSelectedDate(today);
     setEndDate(monthEnd);
     setDateRange("month");
   };
 
-  // Verificar si estamos en la semana/mes actual
+  // Verificar si estamos en el periodo actual (empezando desde hoy)
   const isCurrentPeriod = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (dateRange === "day") {
       return selectedDate.getTime() === today.getTime();
-    } else if (dateRange === "week") {
-      const currentWeekStart = getWeekStart(today);
-      return selectedDate.getTime() === currentWeekStart.getTime();
-    } else if (dateRange === "month") {
-      const currentMonthStart = getMonthStart(today);
-      return selectedDate.getTime() === currentMonthStart.getTime();
+    } else if (dateRange === "week" || dateRange === "month") {
+      // Ahora semana y mes empiezan desde hoy
+      return selectedDate.getTime() === today.getTime();
     }
     return false;
   };
@@ -205,23 +203,58 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       return formatSelectedDate();
     }
 
-    if (dateRange === "week" && endDate) {
+    // Para semana, mes y custom mostrar "del X al Y"
+    if (endDate) {
       const startDay = selectedDate.getDate();
       const endDay = endDate.getDate();
       const startMonth = selectedDate.toLocaleDateString("es-ES", { month: "short" });
       const endMonth = endDate.toLocaleDateString("es-ES", { month: "short" });
 
       if (startMonth === endMonth) {
-        return `${startDay} - ${endDay} ${startMonth}`;
+        return `Del ${startDay} al ${endDay} de ${startMonth}`;
       }
-      return `${startDay} ${startMonth} - ${endDay} ${endMonth}`;
-    }
-
-    if (dateRange === "month") {
-      return selectedDate.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+      return `Del ${startDay} ${startMonth} al ${endDay} ${endMonth}`;
     }
 
     return formatSelectedDate();
+  };
+
+  // Formatear rango para el header de la lista
+  const formatRangeHeader = () => {
+    if (dateRange === "day" || !endDate) return null;
+
+    const startDay = selectedDate.getDate();
+    const endDay = endDate.getDate();
+    const startMonth = selectedDate.toLocaleDateString("es-ES", { month: "long" });
+    const endMonth = endDate.toLocaleDateString("es-ES", { month: "long" });
+
+    if (startMonth === endMonth) {
+      return `Del ${startDay} al ${endDay} de ${startMonth}`;
+    }
+    return `Del ${startDay} de ${startMonth} al ${endDay} de ${endMonth}`;
+  };
+
+  // Handlers para selección de fecha desde/hasta
+  const handleFromDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = new Date(e.target.value + "T00:00:00");
+    if (!isNaN(newDate.getTime())) {
+      setSelectedDate(newDate);
+      // Si no hay endDate o es anterior a la nueva fecha, poner día siguiente
+      if (!endDate || endDate < newDate) {
+        const nextDay = new Date(newDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        setEndDate(nextDay);
+      }
+      setDateRange("custom");
+    }
+  };
+
+  const handleToDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = new Date(e.target.value + "T00:00:00");
+    if (!isNaN(newDate.getTime()) && newDate >= selectedDate) {
+      setEndDate(newDate);
+      setDateRange("custom");
+    }
   };
 
   // Estado para resultados de búsqueda (separado de rows del día actual)
@@ -510,67 +543,131 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             </div>
           </div>
 
-          {/* Selector de rango: Hoy | Semana | Mes + botones -/+ */}
-          <div className="flex items-stretch gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border border-zinc-200 dark:border-zinc-700">
-            {/* Botón retroceder */}
-            <button
-              onClick={goToPrevious}
-              className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
-              aria-label="Anterior"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+          {/* Selector de rango: Hoy | Semana | Mes + botones -/+ + calendarios */}
+          <div className="flex items-stretch gap-2">
+            {/* Grupo principal de navegación */}
+            <div className="flex-1 flex items-stretch gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border border-zinc-200 dark:border-zinc-700">
+              {/* Botón retroceder */}
+              <button
+                onClick={goToPrevious}
+                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+                aria-label="Anterior"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
 
-            {/* Presets: Hoy, Semana, Mes */}
-            <div className="flex-1 flex items-center justify-center gap-1">
+              {/* Presets: Hoy, Semana, Mes */}
+              <div className="flex-1 flex items-center justify-center gap-1">
+                <button
+                  onClick={setTodayView}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                    dateRange === "day"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                  }`}
+                >
+                  Hoy
+                </button>
+                <button
+                  onClick={setWeekView}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                    dateRange === "week"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                  }`}
+                >
+                  Semana
+                </button>
+                <button
+                  onClick={setMonthView}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                    dateRange === "month"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
+                  }`}
+                >
+                  Mes
+                </button>
+              </div>
+
+              {/* Botón avanzar */}
               <button
-                onClick={setTodayView}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                  dateRange === "day"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
-                }`}
+                onClick={goToNext}
+                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+                aria-label="Siguiente"
               >
-                Hoy
-              </button>
-              <button
-                onClick={setWeekView}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                  dateRange === "week"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
-                }`}
-              >
-                Semana
-              </button>
-              <button
-                onClick={setMonthView}
-                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                  dateRange === "month"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
-                }`}
-              >
-                Mes
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             </div>
 
-            {/* Botón avanzar */}
-            <button
-              onClick={goToNext}
-              className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
-              aria-label="Siguiente"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            {/* Iconos de calendario para rango personalizado */}
+            <div className={`flex items-center gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border ${
+              dateRange === "custom"
+                ? "border-indigo-400 dark:border-indigo-600"
+                : "border-zinc-200 dark:border-zinc-700"
+            }`}>
+              {/* Desde (flecha derecha → inicio del rango) */}
+              <button
+                onClick={() => fromDateInputRef.current?.showPicker()}
+                className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                  dateRange === "custom"
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
+                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                }`}
+                aria-label="Desde"
+                title="Desde"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 15l3-0m0 0l0 0m-3 0h6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 12l3 3-3 3" />
+                </svg>
+              </button>
+              {/* Hasta (flecha izquierda ← a la izquierda del calendario) */}
+              <button
+                onClick={() => toDateInputRef.current?.showPicker()}
+                className={`p-2 rounded-lg transition-colors active:scale-95 ${
+                  dateRange === "custom"
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30"
+                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                }`}
+                aria-label="Hasta"
+                title="Hasta"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  {/* Flecha izquierda */}
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12l4-4m-4 4l4 4m-4-4h6" />
+                  {/* Calendario desplazado a la derecha */}
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 6V4m6 2V4m-7 6h8M12 18h10a1 1 0 001-1V8a1 1 0 00-1-1H12a1 1 0 00-1 1v9a1 1 0 001 1z" />
+                </svg>
+              </button>
+              {/* Inputs ocultos para los date pickers */}
+              <input
+                ref={fromDateInputRef}
+                type="date"
+                className="sr-only"
+                value={formatDateForInput(selectedDate)}
+                onChange={handleFromDateChange}
+                aria-label="Fecha desde"
+              />
+              <input
+                ref={toDateInputRef}
+                type="date"
+                className="sr-only"
+                value={endDate ? formatDateForInput(endDate) : formatDateForInput(selectedDate)}
+                onChange={handleToDateChange}
+                min={formatDateForInput(selectedDate)}
+                aria-label="Fecha hasta"
+              />
+            </div>
           </div>
 
-          {/* Mostrar rango de fechas actual (si no es el periodo actual) */}
-          {!isCurrentPeriod() && (
+          {/* Mostrar rango de fechas actual (si no es el periodo actual o es custom) */}
+          {(!isCurrentPeriod() || dateRange === "custom") && (
             <div className="text-center text-sm text-indigo-600 dark:text-indigo-400 font-medium">
               {formatDateRangeLabel()}
             </div>
@@ -614,7 +711,21 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             </p>
           </div>
         ) : (
-          <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <>
+            {/* Header del rango de fechas (para vistas multi-día) */}
+            {!isSearchMode && formatRangeHeader() && (
+              <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-indigo-100/50 dark:from-indigo-950/40 dark:to-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                    {formatRangeHeader()}
+                  </span>
+                  <span className="text-xs text-indigo-600/70 dark:text-indigo-400/70 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full">
+                    {displayRows.length} reserva{displayRows.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            )}
+            <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {displayRows.map((r, index) => {
               // En modo búsqueda o vista multi-día, mostrar separador de día si cambia
               const isMultiDayView = dateRange !== "day";
@@ -746,6 +857,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
               );
             })}
           </ul>
+          </>
         )}
       </div>
 
