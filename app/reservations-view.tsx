@@ -1108,16 +1108,12 @@ function ReservationDrawer({
       return;
     }
 
-    // Construir fecha/hora y validar que no sea pasado
+    // Construir fecha/hora
+    // Nota: En edición de reservas existentes permitimos fechas pasadas
+    // (ej: marcar llegada de un retrasado). Solo validamos en nuevas reservas.
     const [hourStr, minuteStr] = editTime.split(":");
     const dt = new Date(editDate);
     dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
-
-    const now = new Date();
-    if (dt.getTime() < now.getTime()) {
-      setError("La fecha y hora deben ser en el futuro.");
-      return;
-    }
 
     setSaving(true);
     try {
@@ -1269,13 +1265,7 @@ function ReservationDrawer({
                     locale={es}
                     selected={editDate}
                     onSelect={(d) => setEditDate(d ?? undefined)}
-                    disabled={(dateValue) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const d = new Date(dateValue);
-                      d.setHours(0, 0, 0, 0);
-                      return d < today;
-                    }}
+                    // En modo edición permitimos fechas pasadas (ej: reservas retrasadas)
                   />
                 </PopoverContent>
               </Popover>
