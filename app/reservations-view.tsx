@@ -7,6 +7,8 @@ import {
   updateReservationStatus,
   updateReservationDetails,
   createReservation,
+  getRestaurantShiftsForDate,
+  Shift,
 } from "./actions";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
@@ -79,6 +81,9 @@ export function ReservationsView({
 
   // offset para los botones rápidos (Hoy, +1 día)
   const [dayOffset, setDayOffset] = useState(0);
+
+  // Turnos del restaurante para la fecha seleccionada
+  const [shifts, setShifts] = useState<Shift[]>([]);
 
   // Ref para el cursor actual (para paginación sin causar re-renders del callback)
   const nextCursorRef = useRef<string | null>(null);
@@ -191,6 +196,19 @@ export function ReservationsView({
     loadInitial();
   }, [loadInitial]);
 
+  // Cargar turnos cuando cambia la fecha (solo si no es modo pending)
+  useEffect(() => {
+    if (isPendingMode || !restaurantId) return;
+
+    const loadShifts = async () => {
+      const selectedDate = new Date(from);
+      const shiftsData = await getRestaurantShiftsForDate(restaurantId, selectedDate);
+      setShifts(shiftsData);
+    };
+
+    loadShifts();
+  }, [from, restaurantId, isPendingMode]);
+
   // Suscripción en tiempo real para nuevas reservas
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -241,6 +259,85 @@ export function ReservationsView({
     // Filtros concretos: respetamos el status, pero nunca mostramos pending aquí
     return rows.filter((r) => r.status !== "pending");
   }, [rows, isPendingMode, status]);
+
+  // Helper para convertir "HH:MM" a minutos desde medianoche
+  const timeToMinutes = useCallback((time: string): number => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  }, []);
+
+  // Determinar el turno de una reserva basándose en su hora
+  const getShiftForReservation = useCallback(
+    (dateStr: string, tz: string): Shift | null => {
+      if (shifts.length === 0) return null;
+
+      const dtUtc = new Date(dateStr);
+      const timeStr = dtUtc.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: tz,
+      });
+      const reservationMinutes = timeToMinutes(timeStr);
+
+      // Buscar en qué turno cae la reserva
+      for (const shift of shifts) {
+        const shiftStart = timeToMinutes(shift.startTime);
+        const shiftEnd = timeToMinutes(shift.endTime);
+
+        // Manejar turnos que cruzan medianoche
+        if (shiftEnd < shiftStart) {
+          if (reservationMinutes >= shiftStart || reservationMinutes < shiftEnd) {
+            return shift;
+          }
+        } else {
+          if (reservationMinutes >= shiftStart && reservationMinutes < shiftEnd) {
+            return shift;
+          }
+        }
+      }
+
+      // Si no está dentro de ningún turno, asignar al más cercano
+      let closestShift = shifts[0];
+      let minDistance = Infinity;
+      for (const shift of shifts) {
+        const shiftStart = timeToMinutes(shift.startTime);
+        const distance = Math.abs(reservationMinutes - shiftStart);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestShift = shift;
+        }
+      }
+      return closestShift;
+    },
+    [shifts, timeToMinutes]
+  );
+
+  // Obtener colores del turno
+  const getShiftColors = useCallback((shiftName: string): string => {
+    const name = shiftName.toLowerCase();
+    if (name.includes("desayuno") || name.includes("breakfast")) {
+      return "bg-amber-50/90 dark:bg-amber-900/30 border-amber-200/60 dark:border-amber-800/50 text-amber-900 dark:text-amber-100";
+    }
+    if (name.includes("comida") || name.includes("lunch") || name.includes("almuerzo")) {
+      return "bg-emerald-50/90 dark:bg-emerald-900/30 border-emerald-200/60 dark:border-emerald-800/50 text-emerald-900 dark:text-emerald-100";
+    }
+    if (name.includes("cena") || name.includes("dinner")) {
+      return "bg-indigo-50/90 dark:bg-indigo-900/30 border-indigo-200/60 dark:border-indigo-800/50 text-indigo-900 dark:text-indigo-100";
+    }
+    return "bg-zinc-50/90 dark:bg-zinc-800/50 border-zinc-200/60 dark:border-zinc-700/50 text-zinc-900 dark:text-zinc-100";
+  }, []);
+
+  // Contar reservas por turno
+  const getShiftReservationCount = useCallback(
+    (shiftName: string): number => {
+      return visibleRows.filter((r) => {
+        const shift = getShiftForReservation(r.datetime_utc, r.tz || defaultTz);
+        return shift?.name === shiftName;
+      }).length;
+    },
+    [visibleRows, getShiftForReservation, defaultTz]
+  );
 
   const parentRef = useRef<HTMLDivElement | null>(null);
   const rowVirtualizer = useVirtualizer({
@@ -532,12 +629,44 @@ export function ReservationsView({
             {rowVirtualizer.getVirtualItems().map((vRow) => {
               const r = visibleRows[vRow.index];
               if (!r) return null;
+
+              // Determinar si mostrar header de turno
+              const currentShift = getShiftForReservation(r.datetime_utc, r.tz || defaultTz);
+              let showShiftHeader = false;
+              if (shifts.length > 0 && currentShift && !debouncedQ.trim()) {
+                if (vRow.index === 0) {
+                  showShiftHeader = true;
+                } else {
+                  const prevRow = visibleRows[vRow.index - 1];
+                  if (prevRow) {
+                    const prevShift = getShiftForReservation(prevRow.datetime_utc, prevRow.tz || defaultTz);
+                    showShiftHeader = currentShift.name !== prevShift?.name;
+                  }
+                }
+              }
+
               return (
                 <div
                   key={r.id}
                   className="absolute left-0 right-0"
                   style={{ transform: `translateY(${vRow.start}px)` }}
                 >
+                  {showShiftHeader && currentShift && (
+                    <div className={`px-3 md:px-6 py-2.5 border-b ${getShiftColors(currentShift.name)}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold flex items-center gap-2">
+                          <span className="text-base">{currentShift.emoji}</span>
+                          {currentShift.name}
+                          <span className="text-xs font-normal opacity-75">
+                            {currentShift.startTime} - {currentShift.endTime}
+                          </span>
+                        </span>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 dark:bg-black/20">
+                          {getShiftReservationCount(currentShift.name)} reservas
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   <ReservationRow
                     r={r}
                     defaultTz={defaultTz}

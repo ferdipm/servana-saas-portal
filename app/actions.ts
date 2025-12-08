@@ -506,3 +506,169 @@ export async function logout() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/**
+ * Tipo para un turno de restaurante
+ */
+export type Shift = {
+  name: string;
+  emoji: string;
+  startTime: string;
+  endTime: string;
+};
+
+/**
+ * Obtiene los turnos configurados para un restaurante basado en opening_hours
+ * Los turnos se detectan por hora:
+ * - Desayuno: 7:00-12:00
+ * - Comida: 12:00-17:00
+ * - Cena: 19:00+
+ */
+export async function getRestaurantShifts(restaurantId: string): Promise<Shift[]> {
+  const supabase = await supabaseServer();
+
+  const { data, error } = await supabase
+    .from("restaurant_info")
+    .select("opening_hours")
+    .eq("id", restaurantId)
+    .single();
+
+  if (error || !data?.opening_hours) {
+    return [];
+  }
+
+  const openingHours = data.opening_hours as Record<string, string>;
+
+  // Obtener día actual en español
+  const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const today = new Date();
+  const todayName = dayNames[today.getDay()];
+
+  const todayHours = openingHours[todayName];
+  if (!todayHours || todayHours === "Cerrado") {
+    return [];
+  }
+
+  // Parsear los rangos de horas
+  const shifts: Shift[] = [];
+  const ranges = todayHours.split(",");
+
+  ranges.forEach((range: string) => {
+    const [start, end] = range.trim().split("-");
+    if (!start || !end) return;
+
+    const startHour = parseInt(start.split(":")[0]);
+
+    let shiftName = "Turno";
+    let shiftEmoji = "⏰";
+
+    if (startHour >= 7 && startHour < 12) {
+      shiftName = "Desayuno";
+      shiftEmoji = "☕";
+    } else if (startHour >= 12 && startHour < 17) {
+      shiftName = "Comida";
+      shiftEmoji = "🍽️";
+    } else if (startHour >= 19 || startHour < 2) {
+      shiftName = "Cena";
+      shiftEmoji = "🌙";
+    }
+
+    shifts.push({
+      name: shiftName,
+      emoji: shiftEmoji,
+      startTime: start,
+      endTime: end,
+    });
+  });
+
+  return shifts;
+}
+
+/**
+ * Obtiene los turnos para una fecha específica (considera días especiales)
+ */
+export async function getRestaurantShiftsForDate(
+  restaurantId: string,
+  date: Date
+): Promise<Shift[]> {
+  const supabase = await supabaseServer();
+
+  const { data, error } = await supabase
+    .from("restaurant_info")
+    .select("opening_hours, special_days")
+    .eq("id", restaurantId)
+    .single();
+
+  if (error || !data?.opening_hours) {
+    return [];
+  }
+
+  const openingHours = data.opening_hours as Record<string, string>;
+  const specialDays = (data.special_days || []) as Array<{
+    date: string;
+    type: string;
+    hours?: string;
+  }>;
+
+  // Formatear fecha para comparar con special_days
+  const dateStr = date.toISOString().split("T")[0];
+
+  // Verificar si hay día especial
+  const specialDay = specialDays.find((sd) => sd.date === dateStr);
+
+  let hoursString: string | null = null;
+
+  if (specialDay) {
+    if (specialDay.type === "closed") {
+      return []; // Día cerrado
+    }
+    if (specialDay.type === "special_hours" && specialDay.hours) {
+      hoursString = specialDay.hours;
+    }
+  }
+
+  // Si no hay día especial, usar horario regular
+  if (!hoursString) {
+    const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const dayName = dayNames[date.getDay()];
+    hoursString = openingHours[dayName];
+  }
+
+  if (!hoursString || hoursString === "Cerrado") {
+    return [];
+  }
+
+  // Parsear los rangos de horas
+  const shifts: Shift[] = [];
+  const ranges = hoursString.split(",");
+
+  ranges.forEach((range: string) => {
+    const [start, end] = range.trim().split("-");
+    if (!start || !end) return;
+
+    const startHour = parseInt(start.split(":")[0]);
+
+    let shiftName = "Turno";
+    let shiftEmoji = "⏰";
+
+    if (startHour >= 7 && startHour < 12) {
+      shiftName = "Desayuno";
+      shiftEmoji = "☕";
+    } else if (startHour >= 12 && startHour < 17) {
+      shiftName = "Comida";
+      shiftEmoji = "🍽️";
+    } else if (startHour >= 19 || startHour < 2) {
+      shiftName = "Cena";
+      shiftEmoji = "🌙";
+    }
+
+    shifts.push({
+      name: shiftName,
+      emoji: shiftEmoji,
+      startTime: start,
+      endTime: end,
+    });
+  });
+
+  return shifts;
+}

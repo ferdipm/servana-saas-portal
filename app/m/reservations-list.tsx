@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { getReservations, Reservation, updateReservationStatus, createReservation } from "../actions";
+import { getReservations, Reservation, updateReservationStatus, createReservation, getRestaurantShiftsForDate, Shift } from "../actions";
 import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 
 type Props = {
@@ -58,6 +58,9 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const [searchResults, setSearchResults] = useState<Reservation[]>([]);
   const [searching, setSearching] = useState(false);
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Turnos del restaurante para la fecha seleccionada
+  const [shifts, setShifts] = useState<Shift[]>([]);
 
   // Búsqueda en servidor (hoy + futuro)
   useEffect(() => {
@@ -171,6 +174,12 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       }
 
       setRows(filtered);
+
+      // Cargar turnos para la fecha seleccionada (solo en modo "today")
+      if (mode === "today") {
+        const shiftsData = await getRestaurantShiftsForDate(restaurantId, selectedDate);
+        setShifts(shiftsData);
+      }
     } finally {
       setLoading(false);
     }
@@ -238,6 +247,48 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         timeZone: tz,
       })
       .replace(".", "");
+  };
+
+  // Función helper para convertir hora a minutos
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Determina en qué turno cae una reserva basado en su hora
+  const getShiftForReservation = (dateStr: string, tz: string): Shift | null => {
+    if (shifts.length === 0) return null;
+
+    const dt = new Date(dateStr);
+    const timeStr = dt.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: tz,
+    });
+    const reservationMinutes = timeToMinutes(timeStr);
+
+    for (const shift of shifts) {
+      const startMinutes = timeToMinutes(shift.startTime);
+      let endMinutes = timeToMinutes(shift.endTime);
+
+      // Manejar turnos que cruzan medianoche
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+        if (reservationMinutes < startMinutes) {
+          const adjustedReservation = reservationMinutes + 24 * 60;
+          if (adjustedReservation >= startMinutes && adjustedReservation <= endMinutes) {
+            return shift;
+          }
+        }
+      }
+
+      if (reservationMinutes >= startMinutes && reservationMinutes <= endMinutes) {
+        return shift;
+      }
+    }
+
+    return null;
   };
 
   return (
@@ -391,6 +442,15 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 return index === 0 || currentDate !== prevDate;
               })();
 
+              // En modo normal (no búsqueda), mostrar header de turno si cambia
+              const currentShift = !isSearchMode && mode === "today" ? getShiftForReservation(r.datetime_utc, r.tz || defaultTz) : null;
+              const prevShift = !isSearchMode && mode === "today" && index > 0
+                ? getShiftForReservation(displayRows[index - 1].datetime_utc, displayRows[index - 1].tz || defaultTz)
+                : null;
+              const showShiftHeader = !isSearchMode && mode === "today" && currentShift && (
+                index === 0 || currentShift.name !== prevShift?.name
+              );
+
               const getDayLabel = (dateStr: string, tz: string) => {
                 const dt = new Date(dateStr);
                 const today = new Date();
@@ -410,8 +470,47 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 });
               };
 
+              // Colores según el turno
+              const getShiftColors = (shiftName: string) => {
+                switch (shiftName) {
+                  case "Desayuno":
+                    return "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-300";
+                  case "Comida":
+                    return "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300";
+                  case "Cena":
+                    return "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-300";
+                  default:
+                    return "bg-zinc-50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300";
+                }
+              };
+
+              // Contar reservas del turno actual
+              const getShiftReservationCount = (shiftName: string) => {
+                return displayRows.filter(res => {
+                  const resShift = getShiftForReservation(res.datetime_utc, res.tz || defaultTz);
+                  return resShift?.name === shiftName;
+                }).length;
+              };
+
               return (
                 <li key={r.id}>
+                  {/* Header de turno (modo normal) */}
+                  {showShiftHeader && currentShift && (
+                    <div className={`sticky top-0 z-10 px-4 py-2.5 border-b ${getShiftColors(currentShift.name)}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold flex items-center gap-2">
+                          <span className="text-base">{currentShift.emoji}</span>
+                          {currentShift.name}
+                          <span className="text-xs font-normal opacity-75">
+                            {currentShift.startTime} - {currentShift.endTime}
+                          </span>
+                        </span>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 dark:bg-black/20">
+                          {getShiftReservationCount(currentShift.name)} reservas
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {/* Separador de día en búsqueda */}
                   {showDayHeader && (
                     <div className="sticky top-0 z-10 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 border-b border-indigo-200 dark:border-indigo-900/50">
