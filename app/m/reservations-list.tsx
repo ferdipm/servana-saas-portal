@@ -19,6 +19,9 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     today.setHours(0, 0, 0, 0);
     return today;
   });
+  // Rango de fechas para vista multi-día
+  const [dateRange, setDateRange] = useState<"day" | "week" | "custom">("day");
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showNewReservation, setShowNewReservation] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +55,68 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return selectedDate.getTime() === today.getTime();
+  };
+
+  // Funciones para cambiar de rango
+  const setTodayOnly = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setSelectedDate(today);
+    setEndDate(null);
+    setDateRange("day");
+  };
+
+  const setWeekView = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    setSelectedDate(today);
+    setEndDate(weekEnd);
+    setDateRange("week");
+  };
+
+  const setCustomRange = (start: Date, end: Date) => {
+    setSelectedDate(start);
+    setEndDate(end);
+    setDateRange("custom");
+  };
+
+  // Calcular el rango de fechas efectivo
+  const getEffectiveDateRange = () => {
+    const from = new Date(selectedDate);
+    from.setHours(0, 0, 0, 0);
+
+    let to: Date;
+    if (dateRange === "day" || !endDate) {
+      to = new Date(from);
+      to.setDate(to.getDate() + 1);
+    } else {
+      to = new Date(endDate);
+      to.setDate(to.getDate() + 1);
+      to.setHours(0, 0, 0, 0);
+    }
+
+    return { from, to };
+  };
+
+  // Formato de rango para mostrar
+  const formatDateRangeLabel = () => {
+    if (dateRange === "day") {
+      return formatSelectedDate();
+    }
+
+    if (dateRange === "week") {
+      return "Esta semana";
+    }
+
+    if (endDate) {
+      const startStr = selectedDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+      const endStr = endDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+      return `${startStr} - ${endStr}`;
+    }
+
+    return formatSelectedDate();
   };
 
   // Estado para resultados de búsqueda (separado de rows del día actual)
@@ -148,10 +213,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     setLoading(true);
 
     try {
-      const fromDate = new Date(selectedDate);
-      fromDate.setHours(0, 0, 0, 0);
-      const toDate = new Date(fromDate);
-      toDate.setDate(toDate.getDate() + 1);
+      const { from: fromDate, to: toDate } = getEffectiveDateRange();
 
       const from = fromDate.toISOString();
       const to = toDate.toISOString();
@@ -175,15 +237,17 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
 
       setRows(filtered);
 
-      // Cargar turnos para la fecha seleccionada (solo en modo "today")
-      if (mode === "today") {
+      // Cargar turnos para la fecha seleccionada (solo en modo "today" y vista de un día)
+      if (mode === "today" && dateRange === "day") {
         const shiftsData = await getRestaurantShiftsForDate(restaurantId, selectedDate);
         setShifts(shiftsData);
+      } else {
+        setShifts([]); // No mostrar turnos en vista multi-día
       }
     } finally {
       setLoading(false);
     }
-  }, [tenantId, restaurantId, mode, selectedDate]);
+  }, [tenantId, restaurantId, mode, selectedDate, dateRange, endDate]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -338,14 +402,13 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
             </div>
           </div>
 
-          {/* Selector de día - diseño expandido full-width */}
-          <div className="flex items-stretch gap-2 bg-white dark:bg-zinc-800/80 rounded-xl p-1.5 border border-zinc-200 dark:border-zinc-700">
-            {/* Botón Hoy */}
+          {/* Selector de rango con presets */}
+          <div className="flex items-stretch gap-1.5 bg-white dark:bg-zinc-800/80 rounded-xl p-1.5 border border-zinc-200 dark:border-zinc-700">
+            {/* Preset: Hoy */}
             <button
-              onClick={goToToday}
-              disabled={isToday()}
-              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                isToday()
+              onClick={setTodayOnly}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                dateRange === "day" && isToday()
                   ? "bg-indigo-600 text-white shadow-sm"
                   : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300 active:scale-95"
               }`}
@@ -353,14 +416,32 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
               Hoy
             </button>
 
+            {/* Preset: Semana */}
+            <button
+              onClick={setWeekView}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                dateRange === "week"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300 active:scale-95"
+              }`}
+            >
+              Semana
+            </button>
+
             {/* Separador */}
             <div className="w-px bg-zinc-200 dark:bg-zinc-700" />
 
-            {/* Navegador de fecha - expandido */}
-            <div className="flex-1 flex items-center justify-between">
+            {/* Navegador de fecha para selección custom */}
+            <div className="flex-1 flex items-center justify-between min-w-0">
               <button
-                onClick={goToPreviousDay}
-                className="p-2.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+                onClick={() => {
+                  if (dateRange !== "day") {
+                    setDateRange("day");
+                    setEndDate(null);
+                  }
+                  goToPreviousDay();
+                }}
+                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95 shrink-0"
                 aria-label="Día anterior"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,28 +449,42 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 </svg>
               </button>
 
-              {/* Fecha clickable que abre calendario - con input superpuesto */}
-              <div className="flex-1 relative">
-                <div className="py-2 px-3 text-center text-sm font-medium text-zinc-800 dark:text-zinc-100 rounded-lg flex items-center justify-center gap-1.5">
-                  {formatSelectedDate()}
-                  <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Fecha/Rango clickable que abre calendario */}
+              <div className="flex-1 relative min-w-0">
+                <div className={`py-2 px-2 text-center text-sm font-medium rounded-lg flex items-center justify-center gap-1 truncate ${
+                  dateRange === "custom" || (dateRange === "day" && !isToday())
+                    ? "text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30"
+                    : "text-zinc-600 dark:text-zinc-400"
+                }`}>
+                  <span className="truncate">{formatDateRangeLabel()}</span>
+                  <svg className="w-4 h-4 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                {/* Input de fecha transparente superpuesto - clickable en toda el área */}
+                {/* Input de fecha transparente superpuesto */}
                 <input
                   ref={dateInputRef}
                   type="date"
                   value={formatDateForInput(selectedDate)}
-                  onChange={handleDateChange}
+                  onChange={(e) => {
+                    handleDateChange(e);
+                    setDateRange("day");
+                    setEndDate(null);
+                  }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   aria-label="Seleccionar fecha"
                 />
               </div>
 
               <button
-                onClick={goToNextDay}
-                className="p-2.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95"
+                onClick={() => {
+                  if (dateRange !== "day") {
+                    setDateRange("day");
+                    setEndDate(null);
+                  }
+                  goToNextDay();
+                }}
+                className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors active:scale-95 shrink-0"
                 aria-label="Día siguiente"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,25 +524,28 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 ? "No se encontraron resultados"
                 : mode === "pending"
                 ? "No hay reservas pendientes"
+                : dateRange === "week"
+                ? "No hay reservas esta semana"
                 : `No hay reservas para ${formatSelectedDate().toLowerCase()}`}
             </p>
           </div>
         ) : (
           <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {displayRows.map((r, index) => {
-              // En modo búsqueda, mostrar separador de día si cambia
-              const showDayHeader = isSearchMode && (() => {
+              // En modo búsqueda o vista multi-día, mostrar separador de día si cambia
+              const isMultiDayView = dateRange !== "day";
+              const showDayHeader = (isSearchMode || isMultiDayView) && (() => {
                 const currentDate = new Date(r.datetime_utc).toDateString();
                 const prevDate = index > 0 ? new Date(displayRows[index - 1].datetime_utc).toDateString() : null;
                 return index === 0 || currentDate !== prevDate;
               })();
 
-              // En modo normal (no búsqueda), mostrar header de turno si cambia
-              const currentShift = !isSearchMode && mode === "today" ? getShiftForReservation(r.datetime_utc, r.tz || defaultTz) : null;
-              const prevShift = !isSearchMode && mode === "today" && index > 0
+              // En modo normal (no búsqueda) y vista de un día, mostrar header de turno si cambia
+              const currentShift = !isSearchMode && mode === "today" && dateRange === "day" ? getShiftForReservation(r.datetime_utc, r.tz || defaultTz) : null;
+              const prevShift = !isSearchMode && mode === "today" && dateRange === "day" && index > 0
                 ? getShiftForReservation(displayRows[index - 1].datetime_utc, displayRows[index - 1].tz || defaultTz)
                 : null;
-              const showShiftHeader = !isSearchMode && mode === "today" && currentShift && (
+              const showShiftHeader = !isSearchMode && mode === "today" && dateRange === "day" && currentShift && (
                 index === 0 || currentShift.name !== prevShift?.name
               );
 
@@ -511,10 +609,18 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                       </div>
                     </div>
                   )}
-                  {/* Separador de día en búsqueda */}
+                  {/* Separador de día en búsqueda o vista multi-día */}
                   {showDayHeader && (
-                    <div className="sticky top-0 z-10 bg-indigo-50 dark:bg-indigo-950/30 px-4 py-2 border-b border-indigo-200 dark:border-indigo-900/50">
-                      <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 capitalize">
+                    <div className={`sticky top-0 z-10 px-4 py-2 border-b ${
+                      isSearchMode
+                        ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50"
+                        : "bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700"
+                    }`}>
+                      <span className={`text-sm font-semibold capitalize ${
+                        isSearchMode
+                          ? "text-indigo-700 dark:text-indigo-300"
+                          : "text-zinc-700 dark:text-zinc-200"
+                      }`}>
                         {getDayLabel(r.datetime_utc, r.tz || defaultTz)}
                       </span>
                     </div>

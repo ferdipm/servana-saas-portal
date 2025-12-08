@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Html5Qrcode } from "html5-qrcode";
 import { validateCheckinToken, Reservation } from "../../actions";
 
@@ -12,6 +13,7 @@ type ScanState =
   | { status: "error"; message: string; reservation?: Reservation };
 
 export function QRScanner() {
+  const router = useRouter();
   const [scanState, setScanState] = useState<ScanState>({ status: "idle" });
   const [cameraPermission, setCameraPermission] = useState<"granted" | "denied" | "prompt">("prompt");
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -136,10 +138,97 @@ export function QRScanner() {
     });
   };
 
+  const goToReservations = () => {
+    router.push("/m/reservas");
+  };
+
+  // Check if showing result (success or error)
+  const showingResult = scanState.status === "success" || scanState.status === "error";
+
   return (
     <div className="space-y-4">
-      {/* Scanner area */}
-      <div className="relative bg-black rounded-2xl overflow-hidden aspect-square max-w-sm mx-auto">
+      {/* Result cards - shown at top when there's a result */}
+      {scanState.status === "success" && scanState.reservation && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full text-emerald-600 dark:text-emerald-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 mb-2">
+                Check-in completado
+              </h3>
+              <div className="space-y-1 text-sm text-emerald-700 dark:text-emerald-300">
+                <p className="font-medium text-lg">{scanState.reservation.name}</p>
+                <p>{scanState.reservation.party_size} personas</p>
+                <p>{formatTime(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}</p>
+                <p className="text-xs opacity-75 capitalize">
+                  {formatDate(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={resetScanner}
+              className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
+            >
+              Escanear otro
+            </button>
+            <button
+              onClick={goToReservations}
+              className="flex-1 py-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 rounded-xl font-medium transition-colors"
+            >
+              Ver reservas
+            </button>
+          </div>
+        </div>
+      )}
+
+      {scanState.status === "error" && (
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl p-5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full text-red-600 dark:text-red-400">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-800 dark:text-red-200 mb-1">
+                Error
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {scanState.message}
+              </p>
+              {scanState.reservation && (
+                <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+                  <p className="font-medium">{scanState.reservation.name}</p>
+                  <p>{scanState.reservation.party_size} personas - {formatTime(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={resetScanner}
+              className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+            >
+              Reintentar
+            </button>
+            <button
+              onClick={goToReservations}
+              className="flex-1 py-3 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-800 dark:text-zinc-200 rounded-xl font-medium transition-colors"
+            >
+              Ver reservas
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Scanner area - smaller when showing result */}
+      <div className={`relative bg-black rounded-2xl overflow-hidden mx-auto ${showingResult ? 'aspect-video max-w-xs' : 'aspect-square max-w-sm'}`}>
         {/* QR Reader container */}
         <div id="qr-reader" className="w-full h-full" />
 
@@ -181,70 +270,6 @@ export function QRScanner() {
           </div>
         )}
       </div>
-
-      {/* Result cards */}
-      {scanState.status === "success" && scanState.reservation && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full text-emerald-600 dark:text-emerald-400">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 mb-2">
-                Check-in completado
-              </h3>
-              <div className="space-y-1 text-sm text-emerald-700 dark:text-emerald-300">
-                <p className="font-medium text-lg">{scanState.reservation.name}</p>
-                <p>{scanState.reservation.party_size} personas</p>
-                <p>{formatTime(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}</p>
-                <p className="text-xs opacity-75 capitalize">
-                  {formatDate(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}
-                </p>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={resetScanner}
-            className="mt-4 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium transition-colors"
-          >
-            Escanear otro QR
-          </button>
-        </div>
-      )}
-
-      {scanState.status === "error" && (
-        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full text-red-600 dark:text-red-400">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-800 dark:text-red-200 mb-1">
-                Error
-              </h3>
-              <p className="text-sm text-red-700 dark:text-red-300">
-                {scanState.message}
-              </p>
-              {scanState.reservation && (
-                <div className="mt-2 pt-2 border-t border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
-                  <p className="font-medium">{scanState.reservation.name}</p>
-                  <p>{scanState.reservation.party_size} personas - {formatTime(scanState.reservation.datetime_utc, scanState.reservation.tz || "Europe/Zurich")}</p>
-                </div>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={resetScanner}
-            className="mt-4 w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
-          >
-            Intentar de nuevo
-          </button>
-        </div>
-      )}
 
       {/* Permission denied help */}
       {cameraPermission === "denied" && (
