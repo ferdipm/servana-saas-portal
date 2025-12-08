@@ -769,7 +769,7 @@ export async function getOrCreateCheckinQR(reservationId: string): Promise<{
 }
 
 /**
- * Valida un token de check-in y marca la reserva como "seated"
+ * Valida un token de check-in y marca la reserva como "arrived"
  * Devuelve los datos de la reserva si es válido
  */
 export async function validateCheckinToken(token: string): Promise<{
@@ -804,8 +804,12 @@ export async function validateCheckinToken(token: string): Promise<{
     return { success: false, error: "Esta reserva ha sido cancelada" };
   }
 
-  if (reservation.status === "seated") {
+  if (reservation.status === "arrived") {
     return { success: false, error: "El cliente ya ha hecho check-in", reservation };
+  }
+
+  if (reservation.status === "seated") {
+    return { success: false, error: "El cliente ya está sentado", reservation };
   }
 
   if (reservation.status === "finished") {
@@ -829,10 +833,10 @@ export async function validateCheckinToken(token: string): Promise<{
     };
   }
 
-  // Actualizar estado a "seated"
+  // Actualizar estado a "arrived"
   const { error: updateError } = await supabase
     .from("reservations")
-    .update({ status: "seated" })
+    .update({ status: "arrived" })
     .eq("id", reservation.id);
 
   if (updateError) {
@@ -843,7 +847,7 @@ export async function validateCheckinToken(token: string): Promise<{
   // Devolver reserva actualizada
   return {
     success: true,
-    reservation: { ...reservation, status: "seated" }
+    reservation: { ...reservation, status: "arrived" }
   };
 }
 

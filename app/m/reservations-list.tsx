@@ -785,8 +785,11 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                         </div>
                       </div>
 
-                      {/* Estado */}
-                      <StatusBadge status={r.status} />
+                      {/* Estado y badges */}
+                      <div className="flex flex-wrap gap-1.5 justify-end">
+                        <StatusBadge status={r.status} />
+                        <LateBadge datetimeUtc={r.datetime_utc} status={r.status} />
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -847,6 +850,16 @@ function StatusBadge({ status }: { status?: string }) {
       text: "text-emerald-700 dark:text-emerald-300",
       label: "Confirmada",
     },
+    reconfirmed: {
+      bg: "bg-teal-100 dark:bg-teal-900/30",
+      text: "text-teal-700 dark:text-teal-300",
+      label: "Reconfirmada",
+    },
+    arrived: {
+      bg: "bg-blue-100 dark:bg-blue-900/30",
+      text: "text-blue-700 dark:text-blue-300",
+      label: "Llegó",
+    },
     seated: {
       bg: "bg-sky-100 dark:bg-sky-900/30",
       text: "text-sky-700 dark:text-sky-300",
@@ -877,6 +890,26 @@ function StatusBadge({ status }: { status?: string }) {
       {c.label}
     </span>
   );
+}
+
+function LateBadge({ datetimeUtc, status }: { datetimeUtc: string; status?: string }) {
+  // Solo mostrar para confirmed o reconfirmed
+  if (status !== "confirmed" && status !== "reconfirmed") return null;
+
+  const reservationTime = new Date(datetimeUtc);
+  const now = new Date();
+  const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+
+  // Si la hora de reserva ya pasó hace más de 15 minutos
+  if (reservationTime < fifteenMinutesAgo) {
+    return (
+      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
+        Retrasado
+      </span>
+    );
+  }
+
+  return null;
 }
 
 function ReservationModal({
@@ -935,7 +968,10 @@ function ReservationModal({
                 #{reservation.locator || reservation.id.slice(0, 8)}
               </p>
             </div>
-            <StatusBadge status={reservation.status} />
+            <div className="flex flex-wrap gap-1.5 justify-end">
+              <StatusBadge status={reservation.status} />
+              <LateBadge datetimeUtc={reservation.datetime_utc} status={reservation.status} />
+            </div>
           </div>
 
           {/* Detalles */}
@@ -981,59 +1017,88 @@ function ReservationModal({
             )}
           </div>
 
-          {/* Acciones rápidas */}
-          <div className="space-y-2">
-            <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">
-              Acciones rápidas
+          {/* Acciones rápidas - diseño elegante basado en flujo */}
+          <div className="space-y-3">
+            <p className="text-xs text-zinc-500 uppercase tracking-wide">
+              Acciones
             </p>
 
             {isPending ? (
-              <div className="grid grid-cols-2 gap-2">
+              /* Reserva pendiente: Confirmar o Rechazar */
+              <div className="flex gap-3">
                 <button
                   onClick={() => onQuickAction(reservation, "confirmed")}
-                  className="py-3 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
+                  className="flex-1 py-3.5 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex items-center justify-center gap-2"
                 >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                   Confirmar
                 </button>
                 <button
                   onClick={() => onQuickAction(reservation, "cancelled")}
-                  className="py-3 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+                  className="flex-1 py-3.5 rounded-xl text-sm font-semibold bg-rose-500 hover:bg-rose-600 text-white transition-colors flex items-center justify-center gap-2"
                 >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                   Rechazar
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {reservation.status === "confirmed" && (
+              <div className="space-y-2">
+                {/* Acción principal - siguiente paso en el flujo */}
+                {(reservation.status === "confirmed" || reservation.status === "reconfirmed") && (
+                  <button
+                    onClick={() => onQuickAction(reservation, "arrived")}
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Marcar llegada
+                  </button>
+                )}
+                {reservation.status === "arrived" && (
                   <button
                     onClick={() => onQuickAction(reservation, "seated")}
-                    className="py-3 rounded-xl text-sm font-semibold bg-sky-500 hover:bg-sky-600 text-white transition-colors"
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold bg-sky-500 hover:bg-sky-600 text-white transition-colors flex items-center justify-center gap-2"
                   >
-                    Sentar
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                    Sentar en mesa
                   </button>
                 )}
                 {reservation.status === "seated" && (
                   <button
                     onClick={() => onQuickAction(reservation, "finished")}
-                    className="py-3 rounded-xl text-sm font-semibold bg-zinc-500 hover:bg-zinc-600 text-white transition-colors"
+                    className="w-full py-3.5 rounded-xl text-sm font-semibold bg-zinc-600 hover:bg-zinc-700 text-white transition-colors flex items-center justify-center gap-2"
                   >
-                    Finalizar
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Finalizar servicio
                   </button>
                 )}
-                {(reservation.status === "confirmed" || reservation.status === "seated") && (
-                  <button
-                    onClick={() => onQuickAction(reservation, "no_show")}
-                    className="py-3 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white transition-colors"
-                  >
-                    No show
-                  </button>
+
+                {/* Acciones secundarias */}
+                {["confirmed", "reconfirmed", "arrived", "seated"].includes(reservation.status || "") && (
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => onQuickAction(reservation, "no_show")}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 transition-colors"
+                    >
+                      No show
+                    </button>
+                    <button
+                      onClick={() => onQuickAction(reservation, "cancelled")}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 )}
-                <button
-                  onClick={() => onQuickAction(reservation, "cancelled")}
-                  className="py-3 rounded-xl text-sm font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 dark:text-rose-400 transition-colors"
-                >
-                  Cancelar
-                </button>
               </div>
             )}
           </div>

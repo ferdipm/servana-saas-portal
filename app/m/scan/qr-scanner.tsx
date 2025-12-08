@@ -167,7 +167,7 @@ export function QRScanner() {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 mb-2">
-                Check-in completado
+                Llegada registrada
               </h3>
               <div className="space-y-1 text-sm text-emerald-700 dark:text-emerald-300">
                 <p className="font-medium text-lg">{scanState.reservation.name}</p>
