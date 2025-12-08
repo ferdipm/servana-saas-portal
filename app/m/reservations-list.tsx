@@ -24,20 +24,6 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   const [searchQuery, setSearchQuery] = useState("");
   const dateInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const loadingRef = useRef(false);
-
-  // Calcular rango de fechas basado en selectedDate
-  const getDateRange = useCallback((date: Date) => {
-    const fromDate = new Date(date);
-    fromDate.setHours(0, 0, 0, 0);
-    const toDate = new Date(fromDate);
-    toDate.setDate(toDate.getDate() + 1);
-
-    return {
-      from: fromDate.toISOString(),
-      to: toDate.toISOString(),
-    };
-  }, []);
 
   // Navegación de días
   const goToPreviousDay = () => {
@@ -88,8 +74,10 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
     searchDebounceRef.current = setTimeout(async () => {
       setSearching(true);
       try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Buscar desde hace 1 día para incluir reservas de hoy temprano (problemas de timezone)
+        // y hasta 1 año en el futuro
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
         const farFuture = new Date();
         farFuture.setFullYear(farFuture.getFullYear() + 1);
 
@@ -98,7 +86,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           restaurantId,
           q: searchQuery,
           status: "all",
-          from: today.toISOString(),
+          from: yesterday.toISOString(),
           to: farFuture.toISOString(),
           limit: 50,
           cursorCreatedAt: null,
@@ -154,12 +142,17 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
   };
 
   const loadData = useCallback(async () => {
-    if (loadingRef.current) return;
-    loadingRef.current = true;
     setLoading(true);
 
     try {
-      const { from, to } = getDateRange(selectedDate);
+      const fromDate = new Date(selectedDate);
+      fromDate.setHours(0, 0, 0, 0);
+      const toDate = new Date(fromDate);
+      toDate.setDate(toDate.getDate() + 1);
+
+      const from = fromDate.toISOString();
+      const to = toDate.toISOString();
+
       const res = await getReservations({
         tenantId,
         restaurantId,
@@ -180,9 +173,8 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
       setRows(filtered);
     } finally {
       setLoading(false);
-      loadingRef.current = false;
     }
-  }, [tenantId, restaurantId, mode, selectedDate, getDateRange]);
+  }, [tenantId, restaurantId, mode, selectedDate]);
 
   // Cargar datos iniciales
   useEffect(() => {

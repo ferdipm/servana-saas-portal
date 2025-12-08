@@ -366,7 +366,7 @@ export function ReservationsView({
 
               {/* +1 DÍA (acumulativo) */}
               <button
-                onClick={() => setDayRange(dayOffset + 1)}
+                onClick={() => setDayRange(dayOffset < 0 ? 1 : dayOffset + 1)}
                 className={`
                   text-sm px-3 py-1.5 rounded-lg font-medium whitespace-nowrap
                   ${
@@ -405,6 +405,17 @@ export function ReservationsView({
                         const startOfDay = new Date(d);
                         startOfDay.setHours(0, 0, 0, 0);
                         setFrom(startOfDay.toISOString());
+
+                        // También actualizar "to" al final del mismo día si está antes de "from"
+                        const endOfDay = new Date(d);
+                        endOfDay.setHours(23, 59, 59, 999);
+                        const currentTo = to ? new Date(to) : null;
+                        if (!currentTo || currentTo < startOfDay) {
+                          setTo(endOfDay.toISOString());
+                        }
+
+                        // Resetear dayOffset porque estamos usando el calendario manualmente
+                        setDayOffset(-1); // -1 indica selección manual
                       } else {
                         setFrom("");
                       }
@@ -439,6 +450,9 @@ export function ReservationsView({
                         const endOfDay = new Date(d);
                         endOfDay.setHours(23, 59, 59, 999);
                         setTo(endOfDay.toISOString());
+
+                        // Resetear dayOffset porque estamos usando el calendario manualmente
+                        setDayOffset(-1); // -1 indica selección manual
                       } else {
                         setTo("");
                       }
