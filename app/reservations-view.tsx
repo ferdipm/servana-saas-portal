@@ -1126,19 +1126,30 @@ function ReservationDrawer({
         datetime_utc: dt.toISOString(),
       });
       onUpdated();
+    } catch (err) {
+      console.error("Error saving reservation:", err);
+      setError("Error al guardar los cambios. Intenta de nuevo.");
     } finally {
       setSaving(false);
     }
   }
 
   async function handleStatusChange(newStatus: string) {
+    console.log(`[StatusChange] Changing reservation ${reservation.id} from "${reservation.status}" to "${newStatus}"`);
     setSaving(true);
+    setError(null);
     try {
-      await updateReservationStatus({
+      const result = await updateReservationStatus({
         reservationId: reservation.id,
         status: newStatus,
       });
+      console.log(`[StatusChange] Success:`, result);
+      // Cerrar drawer y refrescar lista
       onUpdated();
+    } catch (err: unknown) {
+      console.error("[StatusChange] Error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+      setError(`Error al cambiar el estado: ${errorMessage}`);
     } finally {
       setSaving(false);
     }

@@ -301,7 +301,7 @@ export async function getPendingTodayCount(opts: {
  * ------------------------------------------------------------------*/
 
 /**
- * Cambia el estado de una reserva (pending, confirmed, seated, cancelled, no_show, finished).
+ * Cambia el estado de una reserva (pending, confirmed, seated, cancelled, no_show, finished, arrived, reconfirmed).
  */
 export async function updateReservationStatus(params: {
   reservationId: string;
@@ -310,17 +310,22 @@ export async function updateReservationStatus(params: {
   const supabase = await supabaseServer();
   const { reservationId, status } = params;
 
-  const { error } = await supabase
+  console.log(`[updateReservationStatus] Updating reservation ${reservationId} to status "${status}"`);
+
+  const { data, error } = await supabase
     .from("reservations")
     .update({ status })
-    .eq("id", reservationId);
+    .eq("id", reservationId)
+    .select("id, status")
+    .single();
 
   if (error) {
-    console.error("Error updating reservation status:", error);
+    console.error("[updateReservationStatus] Error:", error);
     throw new Error("Failed to update reservation status");
   }
 
-  return { ok: true };
+  console.log(`[updateReservationStatus] Success:`, data);
+  return { ok: true, data };
 }
 
 /**
