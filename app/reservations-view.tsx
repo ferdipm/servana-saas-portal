@@ -801,6 +801,20 @@ function StatusChip({ s }: { s?: string }) {
       bg: "bg-emerald-50/80 dark:bg-emerald-900/20",
       brd: "border-emerald-200/60 dark:border-emerald-800/50",
     },
+    reconfirmed: {
+      dot: "bg-teal-400",
+      label: "Reconfirmada",
+      txt: "text-teal-900 dark:text-teal-200",
+      bg: "bg-teal-50/80 dark:bg-teal-900/20",
+      brd: "border-teal-200/60 dark:border-teal-800/50",
+    },
+    arrived: {
+      dot: "bg-blue-400",
+      label: "Llegó",
+      txt: "text-blue-900 dark:text-blue-200",
+      bg: "bg-blue-50/80 dark:bg-blue-900/20",
+      brd: "border-blue-200/60 dark:border-blue-800/50",
+    },
     seated: {
       dot: "bg-sky-400",
       label: "Sentado",
@@ -842,6 +856,61 @@ function StatusChip({ s }: { s?: string }) {
       {k.label}
     </span>
   );
+}
+
+/* -------------------------- LATE CHIP -------------------------- */
+
+// Hook singleton para tick global cada minuto (evita múltiples timers)
+let globalTickListeners: Set<() => void> = new Set();
+let globalTickInterval: NodeJS.Timeout | null = null;
+
+function useMinuteTick() {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const listener = () => setTick((t) => t + 1);
+    globalTickListeners.add(listener);
+
+    // Iniciar timer solo si es el primer listener
+    if (globalTickListeners.size === 1 && !globalTickInterval) {
+      globalTickInterval = setInterval(() => {
+        globalTickListeners.forEach((l) => l());
+      }, 300000); // 5 minutos
+    }
+
+    return () => {
+      globalTickListeners.delete(listener);
+      // Limpiar timer si no quedan listeners
+      if (globalTickListeners.size === 0 && globalTickInterval) {
+        clearInterval(globalTickInterval);
+        globalTickInterval = null;
+      }
+    };
+  }, []);
+}
+
+function LateChip({ datetimeUtc, status }: { datetimeUtc: string; status?: string }) {
+  // Usar hook singleton para actualización cada minuto
+  useMinuteTick();
+
+  // Solo mostrar para confirmed o reconfirmed
+  if (status !== "confirmed" && status !== "reconfirmed") return null;
+
+  const reservationTime = new Date(datetimeUtc);
+  const now = new Date();
+  const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
+
+  // Si la hora de reserva ya pasó hace más de 15 minutos
+  if (reservationTime < fifteenMinutesAgo) {
+    return (
+      <span className="inline-flex items-center justify-center gap-1.5 h-6 px-2.5 rounded-full text-xs border bg-orange-50/80 dark:bg-orange-900/20 text-orange-900 dark:text-orange-200 border-orange-200/60 dark:border-orange-800/50">
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+        Retrasado
+      </span>
+    );
+  }
+
+  return null;
 }
 
 /* ---------------------------- ROW ----------------------------- */
@@ -906,8 +975,11 @@ function ReservationRow({
               {dayShort}
             </div>
           </div>
-          {/* Derecha: estado */}
-          <StatusChip s={r.status} />
+          {/* Derecha: estado y badges */}
+          <div className="flex items-center gap-1.5">
+            <StatusChip s={r.status} />
+            <LateChip datetimeUtc={r.datetime_utc} status={r.status} />
+          </div>
         </div>
         <div className="flex items-center justify-between gap-2 mt-1.5">
           {/* Nombre */}
@@ -936,8 +1008,9 @@ function ReservationRow({
           #{r.locator ?? r.id.slice(0, 8)}
         </div>
 
-        <div className="truncate">
+        <div className="truncate flex items-center gap-2">
           <StatusChip s={r.status} />
+          <LateChip datetimeUtc={r.datetime_utc} status={r.status} />
         </div>
       </div>
     </div>
@@ -1381,12 +1454,12 @@ function ReservationDrawer({
               </div>
             ) : (
               // Vista general: todos los estados rápidos
-              <div className="flex gap-2 flex-nowrap">
+              <div className="flex flex-wrap gap-2">
                 {/* Confirmada */}
                 <button
                   disabled={saving}
                   className="
-                    flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                    px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-emerald-500/40
                     bg-emerald-500/10 text-emerald-700 dark:text-emerald-200
                     hover:bg-emerald-500/20
@@ -1398,11 +1471,27 @@ function ReservationDrawer({
                   Confirmada
                 </button>
 
+                {/* Llegada */}
+                <button
+                  disabled={saving}
+                  className="
+                    px-3 py-1.5 rounded-lg text-xs font-medium
+                    border border-indigo-500/40
+                    bg-indigo-500/10 text-indigo-700 dark:text-indigo-200
+                    hover:bg-indigo-500/20
+                    disabled:opacity-60
+                    whitespace-nowrap
+                  "
+                  onClick={() => handleStatusChange("arrived")}
+                >
+                  Llegada
+                </button>
+
                 {/* Sentada */}
                 <button
                   disabled={saving}
                   className="
-                    flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                    px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-sky-500/40
                     bg-sky-500/10 text-sky-700 dark:text-sky-200
                     hover:bg-sky-500/20
@@ -1418,7 +1507,7 @@ function ReservationDrawer({
                 <button
                   disabled={saving}
                   className="
-                    flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                    px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-zinc-500/40
                     bg-zinc-500/10 text-zinc-700 dark:text-zinc-100
                     hover:bg-zinc-500/20
@@ -1434,7 +1523,7 @@ function ReservationDrawer({
                 <button
                   disabled={saving}
                   className="
-                    flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                    px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-rose-400/50
                     bg-rose-500/10 text-rose-700 dark:text-rose-200
                     hover:bg-rose-500/20
@@ -1450,7 +1539,7 @@ function ReservationDrawer({
                 <button
                   disabled={saving}
                   className="
-                    flex-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                    px-3 py-1.5 rounded-lg text-xs font-medium
                     border border-amber-400/50
                     bg-amber-500/10 text-amber-700 dark:text-amber-200
                     hover:bg-amber-500/20

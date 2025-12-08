@@ -892,7 +892,39 @@ function StatusBadge({ status }: { status?: string }) {
   );
 }
 
+// Hook singleton para tick global cada minuto (evita múltiples timers)
+let globalTickListeners: Set<() => void> = new Set();
+let globalTickInterval: NodeJS.Timeout | null = null;
+
+function useMinuteTick() {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const listener = () => setTick((t) => t + 1);
+    globalTickListeners.add(listener);
+
+    // Iniciar timer solo si es el primer listener
+    if (globalTickListeners.size === 1 && !globalTickInterval) {
+      globalTickInterval = setInterval(() => {
+        globalTickListeners.forEach((l) => l());
+      }, 300000); // 5 minutos
+    }
+
+    return () => {
+      globalTickListeners.delete(listener);
+      // Limpiar timer si no quedan listeners
+      if (globalTickListeners.size === 0 && globalTickInterval) {
+        clearInterval(globalTickInterval);
+        globalTickInterval = null;
+      }
+    };
+  }, []);
+}
+
 function LateBadge({ datetimeUtc, status }: { datetimeUtc: string; status?: string }) {
+  // Usar hook singleton para actualización cada minuto
+  useMinuteTick();
+
   // Solo mostrar para confirmed o reconfirmed
   if (status !== "confirmed" && status !== "reconfirmed") return null;
 
@@ -903,7 +935,8 @@ function LateBadge({ datetimeUtc, status }: { datetimeUtc: string; status?: stri
   // Si la hora de reserva ya pasó hace más de 15 minutos
   if (reservationTime < fifteenMinutesAgo) {
     return (
-      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
+      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 flex items-center gap-1">
+        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
         Retrasado
       </span>
     );
@@ -1082,22 +1115,52 @@ function ReservationModal({
                   </button>
                 )}
 
-                {/* Acciones secundarias */}
+                {/* Acciones secundarias - todos los estados manuales */}
                 {["confirmed", "reconfirmed", "arrived", "seated"].includes(reservation.status || "") && (
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => onQuickAction(reservation, "no_show")}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 transition-colors"
-                    >
-                      No show
-                    </button>
-                    <button
-                      onClick={() => onQuickAction(reservation, "cancelled")}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
+                  <>
+                    {/* Acciones de avance manual (saltar pasos o corregir) */}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {reservation.status !== "arrived" && (
+                        <button
+                          onClick={() => onQuickAction(reservation, "arrived")}
+                          className="px-3 py-2 rounded-xl text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 transition-colors"
+                        >
+                          Llegada
+                        </button>
+                      )}
+                      {reservation.status !== "seated" && (
+                        <button
+                          onClick={() => onQuickAction(reservation, "seated")}
+                          className="px-3 py-2 rounded-xl text-xs font-medium bg-sky-100 dark:bg-sky-900/30 hover:bg-sky-200 dark:hover:bg-sky-900/50 text-sky-700 dark:text-sky-300 transition-colors"
+                        >
+                          Sentada
+                        </button>
+                      )}
+                      {reservation.status !== "finished" && (
+                        <button
+                          onClick={() => onQuickAction(reservation, "finished")}
+                          className="px-3 py-2 rounded-xl text-xs font-medium bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 transition-colors"
+                        >
+                          Finalizada
+                        </button>
+                      )}
+                    </div>
+                    {/* Acciones negativas */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onQuickAction(reservation, "no_show")}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 transition-colors"
+                      >
+                        No show
+                      </button>
+                      <button
+                        onClick={() => onQuickAction(reservation, "cancelled")}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
