@@ -11,13 +11,27 @@ interface ReservationSourcesChartProps {
   }[];
 }
 
-const COLORS = {
+const COLORS: Record<string, string> = {
+  // WhatsApp variations
   WhatsApp: "#10b981",
+  whatsapp: "#10b981",
+  // Manual/Portal variations
+  manual: "#6366f1",
+  Manual: "#6366f1",
+  portal: "#6366f1",
+  Portal: "#6366f1",
   Web: "#6366f1",
+  // Phone variations
   Phone: "#f59e0b",
-  "Teléfono": "#f59e0b", // Same color as Phone
+  phone: "#f59e0b",
+  "Teléfono": "#f59e0b",
+  // Walk-in variations
   WalkIn: "#8b5cf6",
+  walkin: "#8b5cf6",
+  "walk-in": "#8b5cf6",
+  // Default
   Other: "#71717a",
+  other: "#71717a",
 };
 
 export function ReservationSourcesChart({
