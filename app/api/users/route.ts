@@ -1,6 +1,6 @@
 // API for user management (list, create, update, delete)
 // Users are created with email + password (email can be fictitious)
-// v1.3 - Fixed: use supabaseAdmin for inserts to bypass RLS policies
+// v1.4 - Added detailed error message for user_restaurants insert
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
@@ -290,11 +290,12 @@ export async function POST(request: NextRequest) {
 
     if (accessError) {
       console.error("[Users API] Error granting restaurant access:", accessError);
+      console.error("[Users API] Insert data was:", { auth_user_id: authUserId, restaurant_id: restaurantId, tenant_id: tenantId, role });
       // Rollback: delete from tenant_users and auth
       await supabaseAdmin.from("tenant_users").delete().eq("auth_user_id", authUserId);
       await supabaseAdmin.auth.admin.deleteUser(authUserId);
       return NextResponse.json(
-        { error: "Error asignando usuario al restaurante" },
+        { error: `Error asignando usuario al restaurante: ${accessError.message}` },
         { status: 500 }
       );
     }
