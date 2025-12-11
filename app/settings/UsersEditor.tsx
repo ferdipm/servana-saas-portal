@@ -5,12 +5,10 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 type User = {
   id: string;
-  username: string | null;
+  email: string;
   displayName: string | null;
-  email: string | null;
   role: string;
   createdAt: string;
-  isLocalUser: boolean;
 };
 
 type UsersEditorProps = {
@@ -36,10 +34,10 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
 
   // New user form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState("staff");
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [newRole, setNewRole] = useState("staff");
   const [creating, setCreating] = useState(false);
 
   // Delete confirmation
@@ -89,10 +87,10 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           restaurantId,
-          username: newUsername,
+          email: newEmail,
           password: newPassword,
           role: newRole,
-          displayName: newDisplayName || newUsername,
+          displayName: newDisplayName || undefined,
         }),
       });
 
@@ -104,17 +102,17 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
 
       // Add new user to list
       setUsers((prev) => [...prev, data.user]);
-      setSuccess(`Usuario "${newUsername}" creado correctamente`);
+      setSuccess(`Usuario "${newEmail}" creado. Ya puede acceder con su contraseña.`);
 
       // Reset form
-      setNewUsername("");
+      setNewEmail("");
       setNewPassword("");
-      setNewRole("staff");
       setNewDisplayName("");
+      setNewRole("staff");
       setShowAddForm(false);
 
-      // Clear success after 3s
-      setTimeout(() => setSuccess(null), 3000);
+      // Clear success after 5s
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err: any) {
       console.error("Error creating user:", err);
       setError(err.message);
@@ -192,11 +190,8 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
     }
   }
 
-  function getUserIdentifier(user: User): string {
-    if (user.displayName) return user.displayName;
-    if (user.username) return user.username;
-    if (user.email) return user.email;
-    return "Usuario";
+  function getUserDisplayName(user: User): string {
+    return user.displayName || user.email;
   }
 
   if (loading) {
@@ -257,18 +252,33 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs text-zinc-500 dark:text-zinc-400">
-                Nombre de usuario *
+                Email *
               </label>
               <input
-                type="text"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                placeholder="ej: ana, carlos"
-                pattern="^[a-zA-Z0-9_-]{3,20}$"
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="usuario@email.com"
                 required
                 className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <p className="text-[10px] text-zinc-400">3-20 caracteres, sin espacios</p>
+              <p className="text-[10px] text-zinc-400">Puede ser ficticio (ej: camarero1@mirestaurante.local)</p>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-500 dark:text-zinc-400">
+                Contraseña *
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              <p className="text-[10px] text-zinc-400">Mínimo 6 caracteres</p>
             </div>
 
             <div className="space-y-1">
@@ -286,21 +296,6 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
 
             <div className="space-y-1">
               <label className="text-xs text-zinc-500 dark:text-zinc-400">
-                Contraseña *
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                minLength={6}
-                required
-                className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-zinc-500 dark:text-zinc-400">
                 Rol *
               </label>
               <select
@@ -308,6 +303,7 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
                 onChange={(e) => setNewRole(e.target.value)}
                 className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
+                <option value="admin">Administrador</option>
                 <option value="manager">Manager</option>
                 <option value="staff">Staff</option>
                 <option value="waiter">Camarero</option>
@@ -331,10 +327,10 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
               type="button"
               onClick={() => {
                 setShowAddForm(false);
-                setNewUsername("");
+                setNewEmail("");
                 setNewPassword("");
-                setNewRole("staff");
                 setNewDisplayName("");
+                setNewRole("staff");
               }}
               className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
             >
@@ -363,30 +359,16 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
                   <span className="text-sm font-medium text-indigo-600 dark:text-indigo-300">
-                    {getUserIdentifier(user).charAt(0).toUpperCase()}
+                    {getUserDisplayName(user).charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {getUserIdentifier(user)}
+                    {getUserDisplayName(user)}
                   </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {user.username && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        @{user.username}
-                      </span>
-                    )}
-                    {user.email && !user.isLocalUser && (
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {user.email}
-                      </span>
-                    )}
-                    {user.isLocalUser && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                        Usuario local
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -438,7 +420,7 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
               Cambiar Rol
             </h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              Cambiar rol de <strong>{getUserIdentifier(editingUser)}</strong>
+              Cambiar rol de <strong>{getUserDisplayName(editingUser)}</strong>
             </p>
 
             <select
@@ -446,6 +428,7 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
               onChange={(e) => setEditRole(e.target.value)}
               className="w-full rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
+              <option value="admin">Administrador</option>
               <option value="manager">Manager</option>
               <option value="staff">Staff</option>
               <option value="waiter">Camarero</option>
@@ -477,7 +460,7 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
         onConfirm={handleDeleteUser}
         title="Eliminar Usuario"
         message={`¿Estás seguro de que quieres eliminar a "${
-          userToDelete ? getUserIdentifier(userToDelete) : ""
+          userToDelete ? getUserDisplayName(userToDelete) : ""
         }"? Esta acción no se puede deshacer.`}
         confirmText={deleting ? "Eliminando..." : "Eliminar"}
         variant="danger"
@@ -489,8 +472,8 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
           Cómo funciona el acceso
         </h4>
         <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-          <li>• Los usuarios con <strong>nombre de usuario</strong> pueden acceder escribiendo solo su nombre y contraseña</li>
-          <li>• Los usuarios con <strong>email real</strong> acceden con su email y contraseña</li>
+          <li>• Crea usuarios con email y contraseña (el email puede ser ficticio)</li>
+          <li>• El usuario accede al portal con su email y contraseña</li>
           <li>• El <strong>Propietario</strong> tiene control total y no puede ser eliminado</li>
           <li>• Los <strong>Managers</strong> pueden gestionar reservas y ver estadísticas</li>
           <li>• El <strong>Staff</strong> puede ver y gestionar reservas del día</li>

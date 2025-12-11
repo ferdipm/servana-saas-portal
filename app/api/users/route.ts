@@ -1,4 +1,5 @@
 // API for user management (list, create, update, delete)
+// Users are created with email + password (email can be fictitious)
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
@@ -9,15 +10,6 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
-
-// Helper to generate fictitious email from username
-function generateFictitiousEmail(username: string, tenantId: string): string {
-  // Clean username: lowercase, no spaces, alphanumeric only
-  const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, "");
-  // Use first 8 chars of tenant ID for shorter email
-  const shortTenantId = tenantId.replace(/-/g, "").substring(0, 8);
-  return `${cleanUsername}@${shortTenantId}.servana.local`;
-}
 
 // GET: List users for a restaurant
 export async function GET(request: NextRequest) {
@@ -90,7 +82,7 @@ export async function GET(request: NextRequest) {
     // Get tenant_users info for these users
     const { data: tenantUsers, error: tenantUsersError } = await supabase
       .from("tenant_users")
-      .select("auth_user_id, role, username, display_name, created_at")
+      .select("auth_user_id, role, display_name, created_at")
       .eq("tenant_id", currentTenantUser.tenant_id)
       .in("auth_user_id", userIds);
 
@@ -109,23 +101,14 @@ export async function GET(request: NextRequest) {
           tu.auth_user_id
         );
 
-        // Determine display identifier
-        let displayIdentifier = tu.username || tu.display_name;
-        let email = authData?.user?.email || "";
-        let isLocalUser = email.endsWith(".servana.local");
-
-        if (!displayIdentifier && !isLocalUser) {
-          displayIdentifier = email;
-        }
+        const email = authData?.user?.email || "";
 
         return {
           id: tu.auth_user_id,
-          username: tu.username,
+          email: email,
           displayName: tu.display_name,
-          email: isLocalUser ? null : email, // Don't show fictitious emails
           role: tu.role,
           createdAt: tu.created_at,
-          isLocalUser,
         };
       })
     );
@@ -140,28 +123,20 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Create a new user
+// POST: Create a new user with email + password
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { restaurantId, username, password, role, displayName } = body;
+    const { restaurantId, email, password, role, displayName } = body;
 
-    if (!restaurantId || !username || !password || !role) {
+    if (!restaurantId || !email || !password || !role) {
       return NextResponse.json(
-        { error: "Faltan campos requeridos (restaurantId, username, password, role)" },
+        { error: "Faltan campos requeridos (restaurantId, email, password, role)" },
         { status: 400 }
       );
     }
 
-    // Validate username format
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      return NextResponse.json(
-        { error: "El nombre de usuario debe tener 3-20 caracteres (letras, números, guiones)" },
-        { status: 400 }
-      );
-    }
-
-    // Validate password
+    // Validate password length
     if (password.length < 6) {
       return NextResponse.json(
         { error: "La contraseña debe tener al menos 6 caracteres" },
@@ -169,8 +144,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: "Email inválido" },
+        { status: 400 }
+      );
+    }
+
     // Validate role
-    const validRoles = ["owner", "manager", "staff", "waiter", "viewer"];
+    const validRoles = ["admin", "manager", "staff", "waiter", "viewer"];
     if (!validRoles.includes(role)) {
       return NextResponse.json(
         { error: "Rol inválido" },
@@ -204,42 +188,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only owner can create users
-    if (currentTenantUser.role !== "owner" && currentTenantUser.role !== "admin") {
+    // Only owner, admin, or group_manager can create users
+    const canManageUsers = ["owner", "admin", "group_manager"].includes(currentTenantUser.role);
+    if (!canManageUsers) {
       return NextResponse.json(
-        { error: "Solo el propietario puede crear usuarios" },
+        { error: "No tienes permisos para crear usuarios" },
         { status: 403 }
       );
     }
 
     const tenantId = currentTenantUser.tenant_id;
 
-    // Check if username already exists in this tenant
-    const { data: existingUser, error: existingError } = await supabase
-      .from("tenant_users")
-      .select("id")
-      .eq("tenant_id", tenantId)
-      .eq("username", username.toLowerCase())
-      .single();
+    // Check if email already exists in Supabase Auth
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email.toLowerCase());
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Ya existe un usuario con ese nombre" },
-        { status: 409 }
-      );
+      // Check if already in this tenant
+      const { data: existingTenantUser } = await supabase
+        .from("tenant_users")
+        .select("id")
+        .eq("auth_user_id", existingUser.id)
+        .eq("tenant_id", tenantId)
+        .single();
+
+      if (existingTenantUser) {
+        return NextResponse.json(
+          { error: "Ya existe un usuario con ese email en este restaurante" },
+          { status: 409 }
+        );
+      }
     }
 
-    // Generate fictitious email
-    const fictitiousEmail = generateFictitiousEmail(username, tenantId);
-
-    // Create user in Supabase Auth
+    // Create user in Supabase Auth with password (ready to login immediately)
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: fictitiousEmail,
+      email: email.toLowerCase(),
       password: password,
-      email_confirm: true, // Auto-confirm since it's a fictitious email
+      email_confirm: true, // Auto-confirm since admin is creating the user
       user_metadata: {
-        username: username.toLowerCase(),
-        display_name: displayName || username,
+        display_name: displayName || email.split("@")[0],
         role: role,
         tenant_id: tenantId,
         created_via: "portal",
@@ -248,6 +235,15 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       console.error("[Users API] Error creating auth user:", authError);
+
+      // Handle duplicate email error
+      if (authError.message.includes("already been registered")) {
+        return NextResponse.json(
+          { error: "Ya existe un usuario con ese email" },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
         { error: `Error creando usuario: ${authError.message}` },
         { status: 500 }
@@ -263,8 +259,7 @@ export async function POST(request: NextRequest) {
         auth_user_id: authUserId,
         tenant_id: tenantId,
         role: role,
-        username: username.toLowerCase(),
-        display_name: displayName || username,
+        display_name: displayName || email.split("@")[0],
       });
 
     if (tenantUserError) {
@@ -290,16 +285,15 @@ export async function POST(request: NextRequest) {
       // Don't rollback - user is created, just missing restaurant access
     }
 
-    console.log(`[Users API] User created: ${username} (${role}) for restaurant ${restaurantId}`);
+    console.log(`[Users API] User created: ${email} (${role}) for restaurant ${restaurantId}`);
 
     return NextResponse.json({
       success: true,
       user: {
         id: authUserId,
-        username: username.toLowerCase(),
-        displayName: displayName || username,
+        email: email.toLowerCase(),
+        displayName: displayName || email.split("@")[0],
         role: role,
-        isLocalUser: true,
       },
     });
   } catch (error) {
@@ -359,10 +353,11 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Only owner can delete users
-    if (currentTenantUser.role !== "owner" && currentTenantUser.role !== "admin") {
+    // Only owner, admin, or group_manager can delete users
+    const canManageUsers = ["owner", "admin", "group_manager"].includes(currentTenantUser.role);
+    if (!canManageUsers) {
       return NextResponse.json(
-        { error: "Solo el propietario puede eliminar usuarios" },
+        { error: "No tienes permisos para eliminar usuarios" },
         { status: 403 }
       );
     }
@@ -388,10 +383,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Cannot delete another owner
-    if (targetUser.role === "owner" && currentTenantUser.role !== "owner") {
+    // Cannot delete owner
+    if (targetUser.role === "owner") {
       return NextResponse.json(
-        { error: "No puedes eliminar a un propietario" },
+        { error: "No se puede eliminar al propietario" },
         { status: 403 }
       );
     }
@@ -408,7 +403,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Check if user has access to other restaurants
-    const { data: otherAccess, error: otherAccessError } = await supabase
+    const { data: otherAccess } = await supabase
       .from("user_restaurant_access")
       .select("id")
       .eq("user_id", userId);
@@ -433,7 +428,7 @@ export async function DELETE(request: NextRequest) {
 
       console.log(`[Users API] User ${userId} completely deleted`);
     } else {
-      console.log(`[Users API] User ${userId} removed from restaurant ${restaurantId}, but has access to ${otherAccess.length} other restaurants`);
+      console.log(`[Users API] User ${userId} removed from restaurant ${restaurantId}`);
     }
 
     return NextResponse.json({ success: true });
@@ -485,10 +480,11 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Only owner can change roles
-    if (currentTenantUser.role !== "owner" && currentTenantUser.role !== "admin") {
+    // Only owner, admin, or group_manager can change roles
+    const canManageUsers = ["owner", "admin", "group_manager"].includes(currentTenantUser.role);
+    if (!canManageUsers) {
       return NextResponse.json(
-        { error: "Solo el propietario puede modificar usuarios" },
+        { error: "No tienes permisos para modificar usuarios" },
         { status: 403 }
       );
     }
@@ -517,7 +513,7 @@ export async function PATCH(request: NextRequest) {
     // Build update object
     const updates: Record<string, string> = {};
     if (role) {
-      const validRoles = ["owner", "manager", "staff", "waiter", "viewer"];
+      const validRoles = ["admin", "manager", "staff", "waiter", "viewer"];
       if (!validRoles.includes(role)) {
         return NextResponse.json(
           { error: "Rol inválido" },

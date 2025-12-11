@@ -310,7 +310,7 @@ export function SettingsContent({
         <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
           <UsersEditor
             restaurantId={restaurantId}
-            isReadOnly={role !== "owner" && role !== "admin"}
+            isReadOnly={!["owner", "admin", "group_manager"].includes(role)}
           />
         </section>
       )}
