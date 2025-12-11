@@ -65,6 +65,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps) {
         restaurantId={currentRestaurantId}
         tenantId={tenantId}
         initialPeriod={period}
+        restaurantName={restaurantInfo?.name || ""}
       />
     </DashboardShell>
   );

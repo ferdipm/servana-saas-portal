@@ -30,6 +30,7 @@ interface AnalyticsContentProps {
   restaurantId: string;
   tenantId: string;
   initialPeriod: string;
+  restaurantName: string;
 }
 
 interface AnalyticsData {
@@ -76,6 +77,7 @@ export function AnalyticsContent({
   restaurantId,
   tenantId,
   initialPeriod,
+  restaurantName,
 }: AnalyticsContentProps) {
   const [period, setPeriod] = useState(initialPeriod);
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -154,7 +156,7 @@ export function AnalyticsContent({
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-indigo-500" />
-            Analytics y Ocupación
+            Analíticas y Ocupación{restaurantName ? ` de ${restaurantName}` : ""}
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Análisis detallado de reservas y ocupación en tiempo real

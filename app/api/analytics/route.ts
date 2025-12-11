@@ -301,8 +301,11 @@ function groupReservationsByTime(reservations: any[]) {
   }
 
   reservations.forEach((r) => {
+    // Convert UTC time to Spain local time to get the correct hour
     const date = new Date(r.datetime_utc);
-    const hour = date.getUTCHours();
+    const spainTimeString = date.toLocaleString('en-US', { timeZone: 'Europe/Madrid', hour: 'numeric', hour12: false });
+    const hour = parseInt(spainTimeString, 10);
+
     const existing = timeMap.get(hour) || { count: 0, guests: 0 };
     timeMap.set(hour, {
       count: existing.count + 1,
@@ -345,8 +348,10 @@ async function groupReservationsByTurn(
 
   // Assign reservations to turns
   reservations.forEach((r) => {
+    // Convert UTC time to Spain local time to get the correct hour
     const date = new Date(r.datetime_utc);
-    const hour = date.getUTCHours();
+    const spainTimeString = date.toLocaleString('en-US', { timeZone: 'Europe/Madrid', hour: 'numeric', hour12: false });
+    const hour = parseInt(spainTimeString, 10);
     const turn = findTurnForHour(hour, turns);
 
     if (turn) {
@@ -523,8 +528,10 @@ async function getRealTimeOccupancy(
   });
 
   todayReservations?.forEach((r: any) => {
+    // Convert UTC time to Spain local time to get the correct hour
     const date = new Date(r.datetime_utc);
-    const hour = date.getUTCHours();
+    const spainTimeString = date.toLocaleString('en-US', { timeZone: 'Europe/Madrid', hour: 'numeric', hour12: false });
+    const hour = parseInt(spainTimeString, 10);
     const turn = findTurnForHour(hour, turns);
 
     if (turn) {
