@@ -1,5 +1,6 @@
 // API for user management (list, create, update, delete)
 // Users are created with email + password (email can be fictitious)
+// v1.1 - Added email field to tenant_users insert
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
