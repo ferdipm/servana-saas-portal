@@ -1,6 +1,6 @@
 // API for user management (list, create, update, delete)
 // Users are created with email + password (email can be fictitious)
-// v1.2 - Fixed: added name field to tenant_users, added role to user_restaurants
+// v1.3 - Fixed: use supabaseAdmin for inserts to bypass RLS policies
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
@@ -254,9 +254,9 @@ export async function POST(request: NextRequest) {
 
     const authUserId = authUser.user.id;
 
-    // Insert into tenant_users
+    // Insert into tenant_users (use admin client to bypass RLS)
     const userName = displayName || email.split("@")[0];
-    const { error: tenantUserError } = await supabase
+    const { error: tenantUserError } = await supabaseAdmin
       .from("tenant_users")
       .insert({
         auth_user_id: authUserId,
@@ -277,8 +277,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert into user_restaurants
-    const { error: accessError } = await supabase
+    // Insert into user_restaurants (use admin client to bypass RLS)
+    const { error: accessError } = await supabaseAdmin
       .from("user_restaurants")
       .insert({
         auth_user_id: authUserId,
@@ -290,7 +290,13 @@ export async function POST(request: NextRequest) {
 
     if (accessError) {
       console.error("[Users API] Error granting restaurant access:", accessError);
-      // Don't rollback - user is created, just missing restaurant access
+      // Rollback: delete from tenant_users and auth
+      await supabaseAdmin.from("tenant_users").delete().eq("auth_user_id", authUserId);
+      await supabaseAdmin.auth.admin.deleteUser(authUserId);
+      return NextResponse.json(
+        { error: "Error asignando usuario al restaurante" },
+        { status: 500 }
+      );
     }
 
     console.log(`[Users API] User created: ${email} (${role}) for restaurant ${restaurantId}`);
