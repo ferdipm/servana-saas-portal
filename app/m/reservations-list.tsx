@@ -1187,6 +1187,18 @@ function ReservationModal({
   );
 }
 
+// Tipo para cliente encontrado
+type FoundCustomer = {
+  id: string;
+  name: string | null;
+  phone: string;
+  totalReservations: number;
+  totalNoShows: number;
+  totalCancellations: number;
+  lastVisitAt: string | null;
+  notes: string | null;
+};
+
 function NewReservationModal({
   tenantId,
   restaurantId,
@@ -1202,8 +1214,8 @@ function NewReservationModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
   const [partySize, setPartySize] = useState(2);
   // Usar formato local para evitar problemas de timezone (toISOString convierte a UTC)
   const [date, setDate] = useState(() => {
@@ -1218,6 +1230,55 @@ function NewReservationModal({
   const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Estado para búsqueda de cliente
+  const [searchingCustomer, setSearchingCustomer] = useState(false);
+  const [foundCustomer, setFoundCustomer] = useState<FoundCustomer | null>(null);
+  const [customerSearched, setCustomerSearched] = useState(false);
+
+  // Función para normalizar teléfono
+  const normalizePhoneForSearch = (p: string): string => {
+    const cleaned = p.trim().replace(/\s+/g, "");
+    if (!cleaned) return "";
+    if (cleaned.startsWith("+")) return cleaned;
+    if (cleaned.startsWith("00")) return "+" + cleaned.slice(2);
+    return "+34" + cleaned;
+  };
+
+  // Buscar cliente cuando cambia el teléfono (con debounce)
+  useEffect(() => {
+    const normalized = normalizePhoneForSearch(phone);
+    if (normalized.length < 10) {
+      setFoundCustomer(null);
+      setCustomerSearched(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchingCustomer(true);
+      try {
+        const res = await fetch(`/api/customers/lookup?phone=${encodeURIComponent(normalized)}&restaurantId=${restaurantId}`);
+        const data = await res.json();
+        setCustomerSearched(true);
+        if (data.found && data.customer) {
+          setFoundCustomer(data.customer);
+          // Autorellenar nombre si el cliente tiene uno guardado
+          if (data.customer.name && !name) {
+            setName(data.customer.name);
+          }
+        } else {
+          setFoundCustomer(null);
+        }
+      } catch (err) {
+        console.error("Error buscando cliente:", err);
+        setFoundCustomer(null);
+      } finally {
+        setSearchingCustomer(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [phone, restaurantId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1297,6 +1358,71 @@ function NewReservationModal({
           )}
 
           <div className="space-y-4">
+            {/* Teléfono - PRIMERO para buscar cliente */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Teléfono
+              </label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="+34 600 000 000"
+                />
+                {searchingCustomer && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Badge de cliente conocido */}
+            {foundCustomer && (
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-amber-600 dark:text-amber-400">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                    Cliente habitual
+                  </span>
+                  <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded-full">
+                    {foundCustomer.totalReservations} reservas
+                  </span>
+                </div>
+                <div className="text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
+                  {foundCustomer.name && (
+                    <div>Nombre: <span className="font-medium">{foundCustomer.name}</span></div>
+                  )}
+                  {foundCustomer.lastVisitAt && (
+                    <div>Última visita: {new Date(foundCustomer.lastVisitAt).toLocaleDateString("es-ES")}</div>
+                  )}
+                  {foundCustomer.totalNoShows > 0 && (
+                    <div className="text-rose-600 dark:text-rose-400">
+                      No-shows: {foundCustomer.totalNoShows}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Indicador de cliente nuevo */}
+            {customerSearched && !foundCustomer && phone.trim().length >= 9 && (
+              <div className="p-2 rounded-lg bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800/40">
+                <div className="flex items-center gap-2 text-sm text-sky-700 dark:text-sky-300">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  Cliente nuevo
+                </div>
+              </div>
+            )}
+
             {/* Nombre */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -1340,20 +1466,6 @@ function NewReservationModal({
                   Presencial
                 </button>
               </div>
-            </div>
-
-            {/* Teléfono */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Teléfono
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="+34 600 000 000"
-              />
             </div>
 
             {/* Checkbox enviar WhatsApp */}

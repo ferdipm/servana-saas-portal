@@ -382,6 +382,7 @@ export type CreateReservationInput = {
   tz?: string | null;
   status?: string;
   sendWhatsAppConfirmation?: boolean; // Si true, envía confirmación por WhatsApp
+  customer_id?: string | null; // ID del cliente si ya existe
 };
 
 export async function createReservation(input: CreateReservationInput) {
@@ -399,6 +400,7 @@ export async function createReservation(input: CreateReservationInput) {
     tz = "Europe/Zurich",
     status = "confirmed",
     sendWhatsAppConfirmation = false,
+    customer_id: inputCustomerId = null,
   } = input;
 
   // Resolver restaurant_id
@@ -431,6 +433,57 @@ export async function createReservation(input: CreateReservationInput) {
   // Generar token de check-in automáticamente para reservas confirmadas
   const checkinToken = status === "confirmed" ? generateCheckinToken() : null;
 
+  // Buscar o crear customer si hay teléfono
+  let customerId: string | null = inputCustomerId;
+  if (!customerId && phone && finalRestaurantId) {
+    try {
+      // Normalizar teléfono
+      let normalizedPhone = phone.replace(/\s+/g, "").trim();
+      if (!normalizedPhone.startsWith("+") && !normalizedPhone.startsWith("00")) {
+        normalizedPhone = "+34" + normalizedPhone;
+      } else if (normalizedPhone.startsWith("00")) {
+        normalizedPhone = "+" + normalizedPhone.slice(2);
+      }
+
+      // Buscar customer existente
+      const { data: existingCustomer } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("restaurant_id", finalRestaurantId)
+        .eq("phone", normalizedPhone)
+        .single();
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+        // Actualizar nombre si el customer no tiene uno
+        await supabase
+          .from("customers")
+          .update({ name: name || undefined })
+          .eq("id", customerId)
+          .is("name", null);
+      } else {
+        // Crear nuevo customer
+        const { data: newCustomer } = await supabase
+          .from("customers")
+          .insert({
+            tenant_id: tenantId,
+            restaurant_id: finalRestaurantId,
+            phone: normalizedPhone,
+            name: name || null,
+          })
+          .select("id")
+          .single();
+
+        if (newCustomer) {
+          customerId = newCustomer.id;
+        }
+      }
+    } catch (err) {
+      // No fallar si hay error con customers, solo logear
+      console.error("Error managing customer:", err);
+    }
+  }
+
   const { data, error } = await supabase
     .from("reservations")
     .insert({
@@ -446,6 +499,7 @@ export async function createReservation(input: CreateReservationInput) {
       status,
       reminder_sent: false,
       checkin_token: checkinToken,
+      customer_id: customerId,
     })
     .select("*")
     .single();
