@@ -1,10 +1,15 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 
 export default async function MobileMainMenu() {
-  const { accessibleRestaurants, currentRestaurantId } = await getTenantAndRestaurants();
+  // Leer restaurantId de la cookie para respetar la selección del usuario
+  const cookieStore = await cookies();
+  const requestedRestaurantId = cookieStore.get("selectedRestaurantId")?.value;
+
+  const { accessibleRestaurants, currentRestaurantId } = await getTenantAndRestaurants(requestedRestaurantId);
   const currentRestaurant = accessibleRestaurants.find(r => r.id === currentRestaurantId);
 
   const menuItems = [
