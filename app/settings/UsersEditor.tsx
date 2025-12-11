@@ -472,15 +472,15 @@ export function UsersEditor({ restaurantId, isReadOnly }: UsersEditorProps) {
 
       {/* Delete Confirmation */}
       <ConfirmDialog
-        open={!!userToDelete}
-        onClose={() => setUserToDelete(null)}
+        isOpen={!!userToDelete}
+        onCancel={() => setUserToDelete(null)}
         onConfirm={handleDeleteUser}
         title="Eliminar Usuario"
-        description={`¿Estás seguro de que quieres eliminar a "${
+        message={`¿Estás seguro de que quieres eliminar a "${
           userToDelete ? getUserIdentifier(userToDelete) : ""
         }"? Esta acción no se puede deshacer.`}
         confirmText={deleting ? "Eliminando..." : "Eliminar"}
-        confirmVariant="danger"
+        variant="danger"
       />
 
       {/* Info box */}
