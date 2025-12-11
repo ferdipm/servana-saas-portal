@@ -482,7 +482,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
           <div className="flex gap-2">
             <button
               onClick={() => setShowNewReservation(true)}
-              className="py-2 px-3 rounded-lg text-sm font-medium bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+              className="py-2 px-4 rounded-lg text-sm font-semibold bg-emerald-500 text-white hover:bg-emerald-600 active:bg-emerald-700 shadow-sm transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1206,6 +1206,7 @@ function NewReservationModal({
   });
   const [time, setTime] = useState("13:00");
   const [notes, setNotes] = useState("");
+  const [source, setSource] = useState<"phone" | "walkin">("phone");
   const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -1247,7 +1248,7 @@ function NewReservationModal({
         party_size: partySize,
         datetime_utc,
         notes: notes.trim() || null,
-        source: "manual",
+        source: source,
         tz: defaultTz,
         status: "confirmed",
         sendWhatsAppConfirmation: sendWhatsApp && !!normalizedPhone,
@@ -1300,6 +1301,37 @@ function NewReservationModal({
                 className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Nombre del cliente"
               />
+            </div>
+
+            {/* Origen de la reserva */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Origen
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSource("phone")}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                    source === "phone"
+                      ? "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300"
+                      : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                  }`}
+                >
+                  Teléfono
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSource("walkin")}
+                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                    source === "walkin"
+                      ? "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300"
+                      : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                  }`}
+                >
+                  Presencial
+                </button>
+              </div>
             </div>
 
             {/* Teléfono */}

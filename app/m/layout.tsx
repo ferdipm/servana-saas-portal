@@ -24,6 +24,8 @@ export default async function MobileLayout({ children }: LayoutProps) {
   const {
     tenantId,
     currentRestaurantId,
+    accessibleRestaurants,
+    canSwitch,
   } = await getTenantAndRestaurants();
 
   // Obtener nombre del restaurante
@@ -38,6 +40,8 @@ export default async function MobileLayout({ children }: LayoutProps) {
       tenantId={tenantId}
       restaurantId={currentRestaurantId}
       restaurantName={restaurantInfo?.name || "Restaurante"}
+      restaurants={accessibleRestaurants}
+      canSwitch={canSwitch}
     >
       {children}
     </MobileShell>
