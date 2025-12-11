@@ -259,6 +259,7 @@ export async function POST(request: NextRequest) {
       .insert({
         auth_user_id: authUserId,
         tenant_id: tenantId,
+        email: email.toLowerCase(),
         role: role,
         display_name: displayName || email.split("@")[0],
       });
