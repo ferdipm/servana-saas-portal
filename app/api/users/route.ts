@@ -1,6 +1,6 @@
 // API for user management (list, create, update, delete)
 // Users are created with email + password (email can be fictitious)
-// v1.4 - Added detailed error message for user_restaurants insert
+// v1.5 - Fixed role mapping for user_restaurants (only allows manager, staff, viewer)
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
@@ -11,6 +11,20 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
+
+// Map frontend roles to user_restaurants roles (check constraint only allows: manager, staff, viewer)
+// admin -> they become tenant admin, skip user_restaurants (they see all restaurants)
+// waiter -> mapped to staff
+function mapToRestaurantRole(frontendRole: string): string | null {
+  const roleMap: Record<string, string | null> = {
+    admin: null,        // Admins don't need user_restaurants entry (they see all via tenant_users)
+    manager: "manager",
+    staff: "staff",
+    waiter: "staff",    // waiter is a type of staff
+    viewer: "viewer",
+  };
+  return roleMap[frontendRole] ?? "staff";
+}
 
 // GET: List users for a restaurant
 export async function GET(request: NextRequest) {
@@ -278,26 +292,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert into user_restaurants (use admin client to bypass RLS)
-    const { error: accessError } = await supabaseAdmin
-      .from("user_restaurants")
-      .insert({
-        auth_user_id: authUserId,
-        restaurant_id: restaurantId,
-        tenant_id: tenantId,
-        role: role,
-        is_active: true,
-      });
+    // Map the frontend role to a valid user_restaurants role (manager, staff, viewer)
+    // Admin users don't need user_restaurants entry - they see all restaurants via tenant_users role
+    const restaurantRole = mapToRestaurantRole(role);
 
-    if (accessError) {
-      console.error("[Users API] Error granting restaurant access:", accessError);
-      console.error("[Users API] Insert data was:", { auth_user_id: authUserId, restaurant_id: restaurantId, tenant_id: tenantId, role });
-      // Rollback: delete from tenant_users and auth
-      await supabaseAdmin.from("tenant_users").delete().eq("auth_user_id", authUserId);
-      await supabaseAdmin.auth.admin.deleteUser(authUserId);
-      return NextResponse.json(
-        { error: `Error asignando usuario al restaurante: ${accessError.message}` },
-        { status: 500 }
-      );
+    if (restaurantRole !== null) {
+      const { error: accessError } = await supabaseAdmin
+        .from("user_restaurants")
+        .insert({
+          auth_user_id: authUserId,
+          restaurant_id: restaurantId,
+          tenant_id: tenantId,
+          role: restaurantRole,
+          is_active: true,
+        });
+
+      if (accessError) {
+        console.error("[Users API] Error granting restaurant access:", accessError);
+        console.error("[Users API] Insert data was:", { auth_user_id: authUserId, restaurant_id: restaurantId, tenant_id: tenantId, role: restaurantRole });
+        // Rollback: delete from tenant_users and auth
+        await supabaseAdmin.from("tenant_users").delete().eq("auth_user_id", authUserId);
+        await supabaseAdmin.auth.admin.deleteUser(authUserId);
+        return NextResponse.json(
+          { error: `Error asignando usuario al restaurante: ${accessError.message}` },
+          { status: 500 }
+        );
+      }
+    } else {
+      console.log(`[Users API] User ${email} is admin - skipping user_restaurants (has full tenant access)`);
     }
 
     console.log(`[Users API] User created: ${email} (${role}) for restaurant ${restaurantId}`);
