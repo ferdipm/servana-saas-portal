@@ -10,6 +10,7 @@ import { SetMenusEditor } from "./SetMenusEditor";
 import { WineEditor } from "./WineEditor";
 import { FAQEditor } from "./FAQEditor";
 import { NotificationsEditor } from "./NotificationsEditor";
+import { UsersEditor } from "./UsersEditor";
 
 type InitialInfo = {
   name: string;
@@ -44,7 +45,7 @@ type SettingsContentProps = {
   initialNotificationSettings?: NotificationSettings;
 };
 
-type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo" | "notifications";
+type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo" | "notifications" | "users";
 
 export function SettingsContent({
   tenantId,
@@ -107,6 +108,7 @@ export function SettingsContent({
             { key: "menus", label: "Menus", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" },
             { key: "faqs", label: "FAQs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
             { key: "notifications", label: "Notificaciones", icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
+            { key: "users", label: "Usuarios", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
             { key: "logo", label: "Logo", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" },
           ].map((t) => (
             <button
@@ -300,6 +302,15 @@ export function SettingsContent({
               notify_on_new_reservation: false,
             }}
             isReadOnly={isReadOnly}
+          />
+        </section>
+      )}
+
+      {tab === "users" && (
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <UsersEditor
+            restaurantId={restaurantId}
+            isReadOnly={role !== "owner" && role !== "admin"}
           />
         </section>
       )}

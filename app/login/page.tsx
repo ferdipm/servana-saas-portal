@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabaseBrowser";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); // Can be email or username
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -21,15 +21,48 @@ function LoginForm() {
     setLoading(true);
 
     try {
+      let emailToUse = identifier;
+
+      // If identifier doesn't contain @, resolve username to email
+      if (!identifier.includes("@")) {
+        try {
+          const resolveResponse = await fetch("/api/users/resolve-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier }),
+          });
+
+          const resolveData = await resolveResponse.json();
+
+          if (!resolveResponse.ok) {
+            setError("Usuario no encontrado");
+            setLoading(false);
+            return;
+          }
+
+          emailToUse = resolveData.email;
+        } catch (resolveErr) {
+          console.error("Error resolving username:", resolveErr);
+          setError("Error al verificar usuario");
+          setLoading(false);
+          return;
+        }
+      }
+
       const supabase = createSupabaseBrowserClient();
 
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: emailToUse,
         password,
       });
 
       if (error) {
-        setError(error.message);
+        // Translate common errors to Spanish
+        if (error.message === "Invalid login credentials") {
+          setError("Usuario o contraseña incorrectos");
+        } else {
+          setError(error.message);
+        }
         setLoading(false);
         return;
       }
@@ -55,19 +88,22 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium" htmlFor="email">
-              Email
+            <label className="text-sm font-medium" htmlFor="identifier">
+              Usuario o Email
             </label>
             <input
-              id="email"
-              type="email"
+              id="identifier"
+              type="text"
               required
-              autoComplete="email"
+              autoComplete="username"
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@restaurante.com"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="ana o tu@restaurante.com"
             />
+            <p className="text-[11px] text-muted-foreground">
+              Puedes usar tu nombre de usuario o tu email
+            </p>
           </div>
 
           <div className="space-y-1">
@@ -102,8 +138,7 @@ function LoginForm() {
         </form>
 
         <p className="mt-6 text-xs text-muted-foreground text-center">
-          De momento el alta de usuarios la gestionamos desde el panel de
-          Supabase (invitaciones manuales).
+          ¿No tienes cuenta? Contacta con el propietario de tu restaurante.
         </p>
       </div>
     </div>
