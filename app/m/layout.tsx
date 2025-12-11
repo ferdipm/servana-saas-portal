@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getTenantAndRestaurants } from "@/lib/getTenantAndRestaurants";
 import { MobileShell } from "./mobile-shell";
@@ -21,12 +22,16 @@ export default async function MobileLayout({ children }: LayoutProps) {
     redirect(`/login?redirectTo=/m`);
   }
 
+  // Leer restaurantId de la cookie
+  const cookieStore = await cookies();
+  const requestedRestaurantId = cookieStore.get("selectedRestaurantId")?.value;
+
   const {
     tenantId,
     currentRestaurantId,
     accessibleRestaurants,
     canSwitch,
-  } = await getTenantAndRestaurants();
+  } = await getTenantAndRestaurants(requestedRestaurantId);
 
   // Obtener nombre del restaurante
   const { data: restaurantInfo } = await supabase

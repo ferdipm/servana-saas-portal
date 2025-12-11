@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Restaurant = {
@@ -21,23 +21,20 @@ type Props = {
 
 export function MobileShell({ tenantId, restaurantId, restaurantName, restaurants = [], canSwitch = false, children }: Props) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [showSwitcher, setShowSwitcher] = useState(false);
 
-  // Lógica para cambiar de restaurante
+  // Lógica para cambiar de restaurante usando cookie
   const handleRestaurantChange = (newId: string) => {
-    const params = new URLSearchParams(searchParams?.toString());
-    if (newId) {
-      params.set("restaurantId", newId);
-    } else {
-      params.delete("restaurantId");
-    }
-    const qs = params.toString();
-    const href = qs ? `${pathname}?${qs}` : pathname;
-    router.push(href);
-    router.refresh();
+    // Guardar en cookie para que el servidor la lea
+    document.cookie = `selectedRestaurantId=${newId}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+
+    // Cerrar el selector y refrescar la página completa para que el servidor lea la cookie
     setShowSwitcher(false);
+    router.refresh();
+
+    // Forzar reload completo para asegurar que el layout se re-renderiza
+    window.location.reload();
   };
 
   const hasMultipleRestaurants = canSwitch && restaurants.length > 1;

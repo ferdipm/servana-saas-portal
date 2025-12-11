@@ -1506,6 +1506,22 @@ function ReservationDrawer({
                   Confirmada
                 </button>
 
+                {/* Reconfirmada */}
+                <button
+                  disabled={saving}
+                  className="
+                    px-3 py-1.5 rounded-lg text-xs font-medium
+                    border border-teal-500/40
+                    bg-teal-500/10 text-teal-700 dark:text-teal-200
+                    hover:bg-teal-500/20
+                    disabled:opacity-60
+                    whitespace-nowrap
+                  "
+                  onClick={() => handleStatusChange("reconfirmed")}
+                >
+                  Reconfirmada
+                </button>
+
                 {/* Llegada */}
                 <button
                   disabled={saving}

@@ -1120,6 +1120,14 @@ function ReservationModal({
                   <>
                     {/* Acciones de avance manual (saltar pasos o corregir) */}
                     <div className="flex flex-wrap gap-2 pt-1">
+                      {reservation.status !== "reconfirmed" && reservation.status === "confirmed" && (
+                        <button
+                          onClick={() => onQuickAction(reservation, "reconfirmed")}
+                          className="px-3 py-2 rounded-xl text-xs font-medium bg-teal-100 dark:bg-teal-900/30 hover:bg-teal-200 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 transition-colors"
+                        >
+                          Reconfirmada
+                        </button>
+                      )}
                       {reservation.status !== "arrived" && (
                         <button
                           onClick={() => onQuickAction(reservation, "arrived")}

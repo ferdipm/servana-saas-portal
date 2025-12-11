@@ -213,7 +213,7 @@ export async function getReservationsSummary({
     .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfToday.toISOString())
     .lt("datetime_utc", startOfTomorrow.toISOString())
-    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
+    .in("status", ["confirmed", "reconfirmed", "seated", "finished"]); // 👈 Incluir confirmadas, reconfirmadas, sentadas y finalizadas
 
   console.log('[getReservationsSummary] Resultado para hoy:', { today, todayError });
 
@@ -224,7 +224,7 @@ export async function getReservationsSummary({
     .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfTomorrow.toISOString())
     .lt("datetime_utc", startOfDayAfterTomorrow.toISOString())
-    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
+    .in("status", ["confirmed", "reconfirmed", "seated", "finished"]); // 👈 Incluir confirmadas, reconfirmadas, sentadas y finalizadas
 
   const { count: weekRest, error: weekRestError } = await supabase
     .from("reservations")
@@ -233,7 +233,7 @@ export async function getReservationsSummary({
     .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonday.toISOString())
-    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
+    .in("status", ["confirmed", "reconfirmed", "seated", "finished"]); // 👈 Incluir confirmadas, reconfirmadas, sentadas y finalizadas
 
   const { count: monthRest, error: monthRestError } = await supabase
     .from("reservations")
@@ -242,7 +242,7 @@ export async function getReservationsSummary({
     .in("restaurant_id", filterRestaurantIds)
     .gte("datetime_utc", startOfDayAfterTomorrow.toISOString())
     .lt("datetime_utc", startOfNextMonth.toISOString())
-    .in("status", ["confirmed", "seated", "finished"]); // 👈 Incluir confirmadas, sentadas y finalizadas
+    .in("status", ["confirmed", "reconfirmed", "seated", "finished"]); // 👈 Incluir confirmadas, reconfirmadas, sentadas y finalizadas
 
   if (todayError || tomorrowError || weekRestError || monthRestError) {
     console.error("Error obteniendo summary", {
