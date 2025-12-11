@@ -418,10 +418,31 @@ function calculateTurnDaysActive(openingHours: any, turns: any[]): Map<string, n
 function groupReservationsBySource(reservations: any[]) {
   const sourceMap = new Map<string, number>();
 
+  // Translate source names to Spanish for display
+  const sourceTranslations: Record<string, string> = {
+    phone: "Teléfono",
+    Phone: "Teléfono",
+    whatsapp: "WhatsApp",
+    WhatsApp: "WhatsApp",
+    web: "Web",
+    Web: "Web",
+    walkin: "Presencial",
+    "walk-in": "Presencial",
+    email: "Email",
+    Email: "Email",
+    bot: "Bot IA",
+    Bot: "Bot IA",
+    app: "Aplicación",
+    App: "Aplicación",
+    manual: "Manual",
+    Manual: "Manual",
+    Other: "Otro",
+    other: "Otro",
+  };
+
   reservations.forEach((r) => {
-    let source = r.source || "Other";
-    // Translate "Phone" to "Teléfono" for Spanish display
-    if (source === "Phone") source = "Teléfono";
+    const rawSource = r.source || "Other";
+    const source = sourceTranslations[rawSource] || rawSource;
     sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
   });
 

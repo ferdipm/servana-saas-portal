@@ -38,8 +38,8 @@ function translateSource(source: string | null | undefined): string {
     manual: "Manual",
     web: "Web",
     bot: "Bot IA",
-    walkin: "Sin reserva",
-    "walk-in": "Sin reserva",
+    walkin: "Presencial",
+    "walk-in": "Presencial",
     email: "Email",
     app: "Aplicación",
   };
@@ -1617,6 +1617,7 @@ function NewReservationDrawer({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState("20:00");
   const [notes, setNotes] = useState("");
+  const [source, setSource] = useState<"phone" | "walkin">("phone");
   const [sendWhatsApp, setSendWhatsApp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1656,7 +1657,7 @@ function NewReservationDrawer({
         party_size: numericPartySize,
         datetime_utc: dt.toISOString(),
         notes: notes || null,
-        source: "phone",
+        source: source,
         tz: defaultTz,
         status: "confirmed", // reservas manuales → confirmadas por defecto
         sendWhatsAppConfirmation: sendWhatsApp && !!phone, // solo si está activado Y hay teléfono
@@ -1722,6 +1723,39 @@ function NewReservationDrawer({
               className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               placeholder="Nombre del cliente"
             />
+          </div>
+
+          {/* Origen de la reserva */}
+          <div>
+            <div className="text-xs text-zinc-500 mb-1">Origen de la reserva</div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSource("phone")}
+                className={`
+                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${source === "phone"
+                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
+                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  }
+                `}
+              >
+                Teléfono
+              </button>
+              <button
+                type="button"
+                onClick={() => setSource("walkin")}
+                className={`
+                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${source === "walkin"
+                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
+                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  }
+                `}
+              >
+                Presencial
+              </button>
+            </div>
           </div>
 
           {/* Teléfono / Comensales */}
