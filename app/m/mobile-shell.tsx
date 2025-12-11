@@ -112,11 +112,11 @@ export function MobileShell({ tenantId, restaurantId, restaurantName, restaurant
             {hasMultipleRestaurants ? (
               <button
                 onClick={() => setShowSwitcher(true)}
-                className="inline-flex items-center gap-1.5 text-base font-semibold text-zinc-800 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                className="inline-flex items-center gap-2 text-base font-semibold text-zinc-800 dark:text-zinc-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors max-w-full"
               >
-                <span className="truncate max-w-[140px]">{restaurantName}</span>
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                <span className="truncate">{restaurantName}</span>
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
             ) : (
@@ -132,10 +132,10 @@ export function MobileShell({ tenantId, restaurantId, restaurantName, restaurant
       {showSwitcher && (
         <>
           <div
-            className="fixed inset-0 bg-black/50 z-50"
+            className="fixed inset-0 bg-black/50 z-[60]"
             onClick={() => setShowSwitcher(false)}
           />
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[60vh] overflow-auto safe-area-bottom animate-slide-up">
+          <div className="fixed bottom-0 left-0 right-0 z-[60] bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[60vh] overflow-auto pb-20 animate-slide-up">
             <div className="sticky top-0 bg-white dark:bg-zinc-900 pt-3 pb-2">
               <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
             </div>

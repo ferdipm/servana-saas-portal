@@ -1436,12 +1436,19 @@ function NewReservationModal({
             </div>
           </div>
 
-          {/* Botones */}
-          <div className="mt-6 space-y-2">
+          {/* Botones - en fila horizontal */}
+          <div className="mt-4 flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
@@ -1451,13 +1458,6 @@ function NewReservationModal({
               ) : (
                 "Crear Reserva"
               )}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full py-3 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-            >
-              Cancelar
             </button>
           </div>
         </form>
