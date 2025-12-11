@@ -1,6 +1,6 @@
 // API for user management (list, create, update, delete)
 // Users are created with email + password (email can be fictitious)
-// v1.1 - Added email field to tenant_users insert
+// v1.2 - Fixed: added name field to tenant_users, added role to user_restaurants
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { createClient } from "@supabase/supabase-js";
@@ -255,6 +255,7 @@ export async function POST(request: NextRequest) {
     const authUserId = authUser.user.id;
 
     // Insert into tenant_users
+    const userName = displayName || email.split("@")[0];
     const { error: tenantUserError } = await supabase
       .from("tenant_users")
       .insert({
@@ -262,7 +263,8 @@ export async function POST(request: NextRequest) {
         tenant_id: tenantId,
         email: email.toLowerCase(),
         role: role,
-        display_name: displayName || email.split("@")[0],
+        name: userName,
+        display_name: userName,
       });
 
     if (tenantUserError) {
@@ -282,6 +284,7 @@ export async function POST(request: NextRequest) {
         auth_user_id: authUserId,
         restaurant_id: restaurantId,
         tenant_id: tenantId,
+        role: role,
         is_active: true,
       });
 
