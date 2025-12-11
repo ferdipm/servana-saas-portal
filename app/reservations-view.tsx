@@ -1649,11 +1649,35 @@ function NewReservationDrawer({
 
     setSaving(true);
     try {
+      // Normalize phone: add +34 prefix if Spanish number without prefix
+      let normalizedPhone: string | null = null;
+      if (phone) {
+        const cleaned = phone.replace(/\s+/g, '').trim();
+        if (cleaned) {
+          if (cleaned.startsWith('+')) {
+            // Already has international prefix
+            normalizedPhone = cleaned;
+          } else if (cleaned.startsWith('00')) {
+            // International format with 00 prefix -> convert to +
+            normalizedPhone = '+' + cleaned.slice(2);
+          } else if (/^[67]\d{8}$/.test(cleaned)) {
+            // Spanish mobile (6xx or 7xx, 9 digits) -> add +34
+            normalizedPhone = '+34' + cleaned;
+          } else if (/^9\d{8}$/.test(cleaned)) {
+            // Spanish landline (9xx, 9 digits) -> add +34
+            normalizedPhone = '+34' + cleaned;
+          } else {
+            // Keep as-is (might be partial or other format)
+            normalizedPhone = cleaned;
+          }
+        }
+      }
+
       await createReservation({
         tenantId,
         restaurantId: restaurantId || undefined,
         name: name.trim(),
-        phone: phone || null,
+        phone: normalizedPhone,
         party_size: numericPartySize,
         datetime_utc: dt.toISOString(),
         notes: notes || null,
