@@ -61,9 +61,10 @@ export async function GET(request: NextRequest) {
 
     // Get users with access to this restaurant
     const { data: restaurantAccess, error: accessError } = await supabase
-      .from("user_restaurant_access")
-      .select("user_id")
-      .eq("restaurant_id", restaurantId);
+      .from("user_restaurants")
+      .select("auth_user_id")
+      .eq("restaurant_id", restaurantId)
+      .eq("is_active", true);
 
     if (accessError) {
       console.error("[Users API] Error fetching restaurant access:", accessError);
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userIds = restaurantAccess?.map((a) => a.user_id) || [];
+    const userIds = restaurantAccess?.map((a) => a.auth_user_id) || [];
 
     if (userIds.length === 0) {
       return NextResponse.json({ users: [] });
@@ -272,12 +273,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert into user_restaurant_access
+    // Insert into user_restaurants
     const { error: accessError } = await supabase
-      .from("user_restaurant_access")
+      .from("user_restaurants")
       .insert({
-        user_id: authUserId,
+        auth_user_id: authUserId,
         restaurant_id: restaurantId,
+        tenant_id: tenantId,
+        is_active: true,
       });
 
     if (accessError) {
@@ -391,22 +394,23 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Remove restaurant access
+    // Remove restaurant access (soft delete by setting is_active = false)
     const { error: accessDeleteError } = await supabase
-      .from("user_restaurant_access")
-      .delete()
-      .eq("user_id", userId)
+      .from("user_restaurants")
+      .update({ is_active: false })
+      .eq("auth_user_id", userId)
       .eq("restaurant_id", restaurantId);
 
     if (accessDeleteError) {
       console.error("[Users API] Error removing restaurant access:", accessDeleteError);
     }
 
-    // Check if user has access to other restaurants
+    // Check if user has access to other active restaurants
     const { data: otherAccess } = await supabase
-      .from("user_restaurant_access")
+      .from("user_restaurants")
       .select("id")
-      .eq("user_id", userId);
+      .eq("auth_user_id", userId)
+      .eq("is_active", true);
 
     // If no other restaurant access, delete the user completely
     if (!otherAccess || otherAccess.length === 0) {

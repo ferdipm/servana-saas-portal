@@ -1,6 +1,6 @@
 # Esquema de Base de Datos - Supabase
 
-> Documentación generada automáticamente el 8/12/2025, 23:27:34
+> Documentación generada automáticamente el 11/12/2025, 18:16:00
 
 ## Información General
 
@@ -13,16 +13,17 @@
 
 ## Resumen de Tablas
 
-Total de tablas: **10**
+Total de tablas: **11**
 
 - [`chat_history`](#tabla-chat_history) (7 columnas)
 - [`conversations`](#tabla-conversations) (8 columnas)
+- [`customers`](#tabla-customers) (14 columnas)
 - [`knowledge_usage`](#tabla-knowledge_usage) (8 columnas)
-- [`reservations`](#tabla-reservations) (20 columnas)
+- [`reservations`](#tabla-reservations) (21 columnas)
 - [`restaurant_info`](#tabla-restaurant_info) (23 columnas)
 - [`restaurant_knowledge_chunks`](#tabla-restaurant_knowledge_chunks) (12 columnas)
 - [`session_state`](#tabla-session_state) (10 columnas)
-- [`tenant_users`](#tabla-tenant_users) (8 columnas)
+- [`tenant_users`](#tabla-tenant_users) (10 columnas)
 - [`tenants`](#tabla-tenants) (27 columnas)
 - [`user_restaurants`](#tabla-user_restaurants) (8 columnas)
 
@@ -133,6 +134,69 @@ Total de tablas: **10**
 
 ---
 
+## Tabla: `customers`
+
+### Columnas
+
+| Columna | Tipo | Nullable | Default | PK | Longitud Max |
+|---------|------|----------|---------|----|--------------|
+| `id` | uuid | NO | gen_random_uuid() | 🔑 | - |
+| `tenant_id` | uuid | NO | - |  | - |
+| `restaurant_id` | uuid | NO | - |  | - |
+| `phone` | character varying | NO | - |  | 30 |
+| `name` | character varying | YES | - |  | 150 |
+| `email` | character varying | YES | - |  | 255 |
+| `preferred_language` | character varying | YES | - |  | 10 |
+| `notes` | text | YES | - |  | - |
+| `total_reservations` | integer | YES | 0 |  | - |
+| `total_no_shows` | integer | YES | 0 |  | - |
+| `total_cancellations` | integer | YES | 0 |  | - |
+| `last_visit_at` | timestamp with time zone | YES | - |  | - |
+| `created_at` | timestamp with time zone | YES | now() |  | - |
+| `updated_at` | timestamp with time zone | YES | now() |  | - |
+
+### Relaciones (Foreign Keys)
+
+- `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
+  - Constraint: `customers_restaurant_id_fkey`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+- `tenant_id` → [`tenants.id`](#tabla-tenants)
+  - Constraint: `customers_tenant_id_fkey`
+  - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+
+### Índices
+
+- **customers_restaurant_id_phone_key**
+  ```sql
+  CREATE UNIQUE INDEX customers_restaurant_id_phone_key ON public.customers USING btree (restaurant_id, phone)
+  ```
+- **idx_customers_phone**
+  ```sql
+  CREATE INDEX idx_customers_phone ON public.customers USING btree (phone)
+  ```
+- **idx_customers_restaurant_phone**
+  ```sql
+  CREATE INDEX idx_customers_restaurant_phone ON public.customers USING btree (restaurant_id, phone)
+  ```
+- **idx_customers_tenant**
+  ```sql
+  CREATE INDEX idx_customers_tenant ON public.customers USING btree (tenant_id)
+  ```
+
+### Políticas RLS (Row Level Security)
+
+- **customers_allow_all** (ALL) - PERMISSIVE
+  - USING: `true`
+
+### Triggers
+
+- **trigger_customers_updated_at**
+  - Timing: BEFORE
+  - Event: UPDATE
+  - Action: `EXECUTE FUNCTION update_customers_updated_at()`
+
+---
+
 ## Tabla: `knowledge_usage`
 
 ### Columnas
@@ -199,12 +263,16 @@ Total de tablas: **10**
 | `confirmation_sent_at` | timestamp with time zone | YES | - |  | - |
 | `confirmation_replied_at` | timestamp with time zone | YES | - |  | - |
 | `checkin_token` | text | YES | - |  | - |
+| `customer_id` | uuid | YES | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
 - `restaurant_id` → [`restaurant_info.id`](#tabla-restaurant_info)
   - Constraint: `fk_reservations_restaurant`
   - ON UPDATE: NO ACTION, ON DELETE: CASCADE
+- `customer_id` → [`customers.id`](#tabla-customers)
+  - Constraint: `reservations_customer_id_fkey`
+  - ON UPDATE: NO ACTION, ON DELETE: SET NULL
 - `tenant_id` → [`tenants.id`](#tabla-tenants)
   - Constraint: `reservations_tenant_id_fkey`
   - ON UPDATE: NO ACTION, ON DELETE: NO ACTION
@@ -234,6 +302,10 @@ Total de tablas: **10**
 - **idx_reservations_confirmation_status**
   ```sql
   CREATE INDEX idx_reservations_confirmation_status ON public.reservations USING btree (confirmation_status) WHERE (confirmation_status = 'pending'::text)
+  ```
+- **idx_reservations_customer**
+  ```sql
+  CREATE INDEX idx_reservations_customer ON public.reservations USING btree (customer_id)
   ```
 - **idx_reservations_datetime**
   ```sql
@@ -311,6 +383,17 @@ Total de tablas: **10**
   - WITH CHECK: `true`
 - **server can read all** (SELECT) - PERMISSIVE
   - USING: `true`
+
+### Triggers
+
+- **trigger_update_customer_stats**
+  - Timing: AFTER
+  - Event: INSERT
+  - Action: `EXECUTE FUNCTION update_customer_stats()`
+- **trigger_update_customer_stats**
+  - Timing: AFTER
+  - Event: UPDATE
+  - Action: `EXECUTE FUNCTION update_customer_stats()`
 
 ---
 
@@ -524,6 +607,8 @@ Total de tablas: **10**
 | `auth_user_id` | uuid | YES | - |  | - |
 | `is_active` | boolean | YES | true |  | - |
 | `created_at` | timestamp with time zone | YES | now() |  | - |
+| `username` | text | YES | - |  | - |
+| `display_name` | text | YES | - |  | - |
 
 ### Relaciones (Foreign Keys)
 
@@ -544,6 +629,14 @@ Total de tablas: **10**
 - **tenant_users_tenant_id_email_key**
   ```sql
   CREATE UNIQUE INDEX tenant_users_tenant_id_email_key ON public.tenant_users USING btree (tenant_id, email)
+  ```
+- **tenant_users_username_idx**
+  ```sql
+  CREATE INDEX tenant_users_username_idx ON public.tenant_users USING btree (username) WHERE (username IS NOT NULL)
+  ```
+- **tenant_users_username_unique_idx**
+  ```sql
+  CREATE UNIQUE INDEX tenant_users_username_unique_idx ON public.tenant_users USING btree (tenant_id, username) WHERE (username IS NOT NULL)
   ```
 
 ### Políticas RLS (Row Level Security)
@@ -695,7 +788,7 @@ Total de tablas: **10**
 
 ## Funciones de Base de Datos
 
-Total de funciones: **126**
+Total de funciones: **128**
 
 ### `array_to_halfvec(numeric[], integer, boolean)`
 
@@ -2689,6 +2782,85 @@ AS '$libdir/vector', $function$subvector$function$
 
 ---
 
+### `update_customer_stats()`
+
+**Returns**: `trigger`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_customer_stats()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  -- Update total_reservations count
+  IF TG_OP = 'INSERT' AND NEW.customer_id IS NOT NULL THEN
+    UPDATE customers
+    SET total_reservations = total_reservations + 1,
+        updated_at = NOW()
+    WHERE id = NEW.customer_id;
+  END IF;
+
+  -- Update no-show count when status changes to no_show
+  IF TG_OP = 'UPDATE' AND NEW.status = 'no_show' AND OLD.status != 'no_show' AND NEW.customer_id IS NOT NULL THEN
+    UPDATE customers
+    SET total_no_shows = total_no_shows + 1,
+        updated_at = NOW()
+    WHERE id = NEW.customer_id;
+  END IF;
+
+  -- Update cancellation count when status changes to canceled
+  IF TG_OP = 'UPDATE' AND NEW.status = 'canceled' AND OLD.status != 'canceled' AND NEW.customer_id IS NOT NULL THEN
+    UPDATE customers
+    SET total_cancellations = total_cancellations + 1,
+        updated_at = NOW()
+    WHERE id = NEW.customer_id;
+  END IF;
+
+  -- Update last_visit_at when checked in
+  IF TG_OP = 'UPDATE' AND NEW.status = 'seated' AND OLD.status != 'seated' AND NEW.customer_id IS NOT NULL THEN
+    UPDATE customers
+    SET last_visit_at = NOW(),
+        updated_at = NOW()
+    WHERE id = NEW.customer_id;
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+
+```
+
+</details>
+
+---
+
+### `update_customers_updated_at()`
+
+**Returns**: `trigger`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.update_customers_updated_at()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$function$
+
+```
+
+</details>
+
+---
+
 ### `update_knowledge_chunks_updated_at()`
 
 **Returns**: `trigger`
@@ -2959,26 +3131,6 @@ AS '$libdir/vector', $function$vector_concat$function$
 
 ---
 
-### `vector_dims(vector)`
-
-**Returns**: `integer`
-
-<details>
-<summary>Ver definición</summary>
-
-```sql
-CREATE OR REPLACE FUNCTION public.vector_dims(vector)
- RETURNS integer
- LANGUAGE c
- IMMUTABLE PARALLEL SAFE STRICT
-AS '$libdir/vector', $function$vector_dims$function$
-
-```
-
-</details>
-
----
-
 ### `vector_dims(halfvec)`
 
 **Returns**: `integer`
@@ -2992,6 +3144,26 @@ CREATE OR REPLACE FUNCTION public.vector_dims(halfvec)
  LANGUAGE c
  IMMUTABLE PARALLEL SAFE STRICT
 AS '$libdir/vector', $function$halfvec_vector_dims$function$
+
+```
+
+</details>
+
+---
+
+### `vector_dims(vector)`
+
+**Returns**: `integer`
+
+<details>
+<summary>Ver definición</summary>
+
+```sql
+CREATE OR REPLACE FUNCTION public.vector_dims(vector)
+ RETURNS integer
+ LANGUAGE c
+ IMMUTABLE PARALLEL SAFE STRICT
+AS '$libdir/vector', $function$vector_dims$function$
 
 ```
 
