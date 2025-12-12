@@ -540,7 +540,7 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 <button
                   onClick={setTodayView}
                   className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                    dateRange === "day"
+                    dateRange === "day" && isCurrentPeriod()
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 active:scale-95"
                   }`}

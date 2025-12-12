@@ -90,6 +90,8 @@ export function ReservationsView({
 
   // Estado para el date picker popover (calendario desde-hasta)
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [pickerStep, setPickerStep] = useState<1 | 2>(1); // 1 = seleccionando desde, 2 = seleccionando hasta
+  const [tempFromDate, setTempFromDate] = useState<Date | null>(null);
 
   // Helper: obtener inicio de semana (lunes)
   const getWeekStart = useCallback((date: Date) => {
@@ -682,7 +684,14 @@ export function ReservationsView({
               </div>
 
               {/* Icono de calendario para rango personalizado (desde-hasta) */}
-              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <Popover open={datePickerOpen} onOpenChange={(open) => {
+                setDatePickerOpen(open);
+                if (!open) {
+                  // Resetear estado del picker al cerrar
+                  setPickerStep(1);
+                  setTempFromDate(null);
+                }
+              }}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
@@ -702,30 +711,85 @@ export function ReservationsView({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
+                  {/* Indicadores Desde/Hasta estilo móvil */}
                   <div className="p-3 border-b border-zinc-200 dark:border-zinc-700">
-                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Selecciona rango de fechas</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                      {selectedDate && endDate
-                        ? `${selectedDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" })} → ${endDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`
-                        : "Haz clic en dos fechas"}
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 text-center mb-2">
+                      Seleccionar rango de fechas
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <div className={`flex-1 px-3 py-1.5 rounded-lg border-2 transition-all ${
+                        pickerStep === 1
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
+                      }`}>
+                        <div className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Desde</div>
+                        <div className={`text-sm font-semibold ${
+                          pickerStep === 1 ? "text-indigo-700 dark:text-indigo-300" : "text-zinc-900 dark:text-zinc-100"
+                        }`}>
+                          {tempFromDate
+                            ? tempFromDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" })
+                            : "—"}
+                        </div>
+                      </div>
+
+                      <svg className="w-4 h-4 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+
+                      <div className={`flex-1 px-3 py-1.5 rounded-lg border-2 transition-all ${
+                        pickerStep === 2
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
+                      }`}>
+                        <div className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Hasta</div>
+                        <div className={`text-sm font-semibold ${
+                          pickerStep === 2 ? "text-indigo-700 dark:text-indigo-300" : "text-zinc-500 dark:text-zinc-400"
+                        }`}>
+                          {pickerStep === 2 ? "Selecciona..." : "—"}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-center text-[11px] text-zinc-500 dark:text-zinc-400 mt-2">
+                      {pickerStep === 1 ? "Toca la fecha de inicio" : "Ahora toca la fecha final"}
                     </p>
                   </div>
                   <Calendar
-                    mode="range"
+                    mode="single"
                     locale={es}
-                    selected={{
-                      from: selectedDate,
-                      to: endDate || undefined,
-                    }}
-                    onSelect={(range) => {
-                      if (range?.from) {
-                        setSelectedDate(range.from);
-                        setEndDate(range.to || null);
-                        if (range.from && range.to) {
+                    selected={pickerStep === 1 ? tempFromDate || undefined : undefined}
+                    onSelect={(day) => {
+                      if (!day) return;
+                      if (pickerStep === 1) {
+                        setTempFromDate(day);
+                        setPickerStep(2);
+                      } else {
+                        // Paso 2: seleccionar fecha final
+                        if (tempFromDate) {
+                          // Si clickan una fecha anterior al "desde", intercambiar
+                          if (day < tempFromDate) {
+                            setSelectedDate(day);
+                            setEndDate(tempFromDate);
+                          } else {
+                            setSelectedDate(tempFromDate);
+                            setEndDate(day);
+                          }
                           setDateRange("custom");
                           setDatePickerOpen(false);
+                          // Resetear estado del picker para la próxima vez
+                          setPickerStep(1);
+                          setTempFromDate(null);
                         }
                       }
+                    }}
+                    modifiers={{
+                      selected: tempFromDate ? [tempFromDate] : [],
+                    }}
+                    modifiersStyles={{
+                      selected: {
+                        backgroundColor: "rgb(79 70 229)",
+                        color: "white",
+                        borderRadius: "9999px",
+                      },
                     }}
                     numberOfMonths={1}
                   />
@@ -757,9 +821,11 @@ export function ReservationsView({
 
           {/* Mostrar rango de fechas actual (si no es "Hoy" o es custom/week/month) */}
           {(!isCurrentPeriod || dateRange !== "day") && (
-            <div className="mt-2 text-center text-sm text-indigo-600 dark:text-indigo-400 font-medium">
-              {formatDateRangeLabel()}
-              <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mt-3 mx-2 py-2.5 px-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/40 text-center">
+              <span className="text-sm text-indigo-700 dark:text-indigo-300 font-semibold">
+                {formatDateRangeLabel()}
+              </span>
+              <span className="ml-2 text-xs text-indigo-500 dark:text-indigo-400/80">
                 ({visibleRows.length} reserva{visibleRows.length !== 1 ? "s" : ""})
               </span>
             </div>
@@ -829,12 +895,50 @@ export function ReservationsView({
                 }
               }
 
+              // Determinar si mostrar header de día (cuando vista multi-día)
+              let showDayHeader = false;
+              let dayHeaderText = "";
+              const isMultiDay = endDate !== null;
+              if (isMultiDay && !debouncedQ.trim()) {
+                const currentDay = new Date(r.datetime_utc).toDateString();
+                if (vRow.index === 0) {
+                  showDayHeader = true;
+                } else {
+                  const prevRow = visibleRows[vRow.index - 1];
+                  if (prevRow) {
+                    const prevDay = new Date(prevRow.datetime_utc).toDateString();
+                    showDayHeader = currentDay !== prevDay;
+                  }
+                }
+                if (showDayHeader) {
+                  const d = new Date(r.datetime_utc);
+                  dayHeaderText = d.toLocaleDateString("es-ES", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long"
+                  });
+                  // Capitalizar primera letra
+                  dayHeaderText = dayHeaderText.charAt(0).toUpperCase() + dayHeaderText.slice(1);
+                }
+              }
+
               return (
                 <div
                   key={r.id}
                   className="absolute left-0 right-0"
                   style={{ transform: `translateY(${vRow.start}px)` }}
                 >
+                  {/* Header de día (vista multi-día) */}
+                  {showDayHeader && (
+                    <div className="px-3 md:px-6 py-3 bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800/80 dark:to-zinc-800/40 border-b border-zinc-200 dark:border-zinc-700">
+                      <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
+                        {dayHeaderText}
+                      </span>
+                    </div>
+                  )}
                   {showShiftHeader && currentShift && (
                     <div className={`px-3 md:px-6 py-2.5 border-b ${getShiftColors(currentShift.name)}`}>
                       <div className="flex items-center justify-between">
