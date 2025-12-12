@@ -1602,6 +1602,8 @@ function NewReservationModal({
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
+                  onBlur={(e) => setTime(e.target.value)}
+                  onInput={(e) => setTime((e.target as HTMLInputElement).value)}
                   className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>

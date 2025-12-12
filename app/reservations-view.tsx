@@ -2381,6 +2381,8 @@ function NewReservationDrawer({
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
+                onBlur={(e) => setTime(e.target.value)}
+                onInput={(e) => setTime((e.target as HTMLInputElement).value)}
                 className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               />
               <div className="text-[11px] text-zinc-500 mt-1">
@@ -2480,9 +2482,11 @@ function NewReservationDrawer({
             <span className="font-medium text-emerald-600 dark:text-emerald-300">Confirmada</span>{" "}
             (reservas creadas manualmente).
           </div>
+        </div>
 
-          {/* Botones: Cancelar y Crear reserva */}
-          <div className="pt-4 pb-2 flex gap-3">
+        {/* Footer fijo con botones - fuera del área scrollable */}
+        <div className="px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0b0b0d] pb-safe">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
