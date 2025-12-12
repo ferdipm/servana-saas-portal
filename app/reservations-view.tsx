@@ -589,7 +589,7 @@ export function ReservationsView({
     // Altura dinámica: base + extra si tiene headers
     estimateSize: (index) => {
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-      const baseHeight = isMobile ? 68 : 52; // Reducido para más densidad
+      const baseHeight = isMobile ? 68 : 72; // Ligeramente reducido (antes 92)
       const dayHeaderHeight = rowsWithDayHeader.has(index) ? 40 : 0;
       const shiftHeaderHeight = rowsWithShiftHeader.has(index) ? 44 : 0;
       return baseHeight + dayHeaderHeight + shiftHeaderHeight;
@@ -1304,7 +1304,7 @@ function ReservationRow({
     <div
       onClick={onClick}
       className="
-        px-3 md:px-5 py-2.5 md:py-2
+        px-3 md:px-6 py-2.5 md:py-2.5
         text-sm transition-colors
         hover:bg-black/[.025] dark:hover:bg-white/[.035]
         border-b border-zinc-200/40 dark:border-zinc-800/40
@@ -1329,7 +1329,7 @@ function ReservationRow({
             <LateChip datetimeUtc={r.datetime_utc} status={r.status} />
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 mt-1">
+        <div className="flex items-center justify-between gap-2 mt-1.5">
           {/* Nombre */}
           <div className="font-medium text-zinc-800 dark:text-zinc-200 truncate">
             {r.name}
@@ -1341,35 +1341,22 @@ function ReservationRow({
         </div>
       </div>
 
-      {/* Vista desktop: fila compacta en una línea */}
-      <div className="hidden md:flex items-center gap-3 text-[13px]">
-        {/* Hora - destacada */}
-        <div className="font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums w-12">
-          {time}
+      {/* Vista desktop: grid de columnas (diseño original, un poco más compacto) */}
+      <div className="hidden md:grid grid-cols-[1fr_1.2fr_.9fr_1fr_1fr_auto] gap-4 items-center">
+        <div className="truncate">
+          <div className="font-medium">{day}</div>
+          <div className="text-[12px] text-zinc-500">{time}</div>
         </div>
 
-        {/* Nombre - principal */}
-        <div className="font-medium text-zinc-800 dark:text-zinc-200 truncate min-w-0 flex-1">
-          {r.name}
+        <div className="truncate">{r.name}</div>
+        <div className="truncate">{r.party_size ?? "—"}</div>
+        <div className="truncate">{r.phone ?? "—"}</div>
+
+        <div className="truncate font-mono text-[13px] text-zinc-400">
+          #{r.locator ?? r.id.slice(0, 8)}
         </div>
 
-        {/* Comensales */}
-        <div className="text-zinc-600 dark:text-zinc-400 w-14 text-center">
-          {r.party_size ?? "—"} pax
-        </div>
-
-        {/* Teléfono */}
-        <div className="text-zinc-500 dark:text-zinc-500 truncate w-28">
-          {r.phone ?? "—"}
-        </div>
-
-        {/* Localizador */}
-        <div className="font-mono text-[12px] text-zinc-400 w-20">
-          #{r.locator ?? r.id.slice(0, 6)}
-        </div>
-
-        {/* Estado */}
-        <div className="w-24">
+        <div className="truncate">
           <StatusChip s={r.status} datetimeUtc={r.datetime_utc} />
         </div>
       </div>
