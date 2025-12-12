@@ -1653,6 +1653,16 @@ function NewReservationDrawer({
   const [foundCustomer, setFoundCustomer] = useState<FoundCustomer | null>(null);
   const [customerSearched, setCustomerSearched] = useState(false);
 
+  // Estado para ocupación del turno
+  const [shiftOccupancy, setShiftOccupancy] = useState<{
+    shiftName: string;
+    currentCovers: number;
+    totalCapacity: number;
+    availableSpots: number;
+    utilizationPercent: number;
+  } | null>(null);
+  const [loadingOccupancy, setLoadingOccupancy] = useState(false);
+
   // Función para normalizar teléfono
   const normalizePhoneForSearch = (p: string): string => {
     const cleaned = p.trim().replace(/\s+/g, "");
@@ -1698,6 +1708,46 @@ function NewReservationDrawer({
 
     return () => clearTimeout(timer);
   }, [phone, restaurantId]);
+
+  // Buscar ocupación del turno cuando cambia fecha/hora (con debounce)
+  useEffect(() => {
+    if (!restaurantId || !date || !time) {
+      setShiftOccupancy(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLoadingOccupancy(true);
+      try {
+        // Construir datetime UTC
+        const [hourStr, minuteStr] = time.split(":");
+        const dt = new Date(date);
+        dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
+
+        const res = await fetch(`/api/shift-occupancy?restaurantId=${restaurantId}&datetimeUtc=${dt.toISOString()}`);
+        const data = await res.json();
+
+        if (data.found && data.occupancy) {
+          setShiftOccupancy({
+            shiftName: data.shift.name,
+            currentCovers: data.occupancy.currentCovers,
+            totalCapacity: data.occupancy.totalCapacity,
+            availableSpots: data.occupancy.availableSpots,
+            utilizationPercent: data.occupancy.utilizationPercent,
+          });
+        } else {
+          setShiftOccupancy(null);
+        }
+      } catch (err) {
+        console.error("Error obteniendo ocupación:", err);
+        setShiftOccupancy(null);
+      } finally {
+        setLoadingOccupancy(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [date, time, restaurantId]);
 
   async function handleCreate() {
     // limpiamos error previo
@@ -1815,7 +1865,40 @@ function NewReservationDrawer({
             </div>
           )}
 
-          {/* Teléfono - PRIMERO para buscar cliente */}
+          {/* Origen de la reserva - PRIMERO */}
+          <div>
+            <div className="text-xs text-zinc-500 mb-1">Tipo de reserva</div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSource("phone")}
+                className={`
+                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${source === "phone"
+                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
+                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  }
+                `}
+              >
+                📞 Teléfono
+              </button>
+              <button
+                type="button"
+                onClick={() => setSource("walkin")}
+                className={`
+                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
+                  ${source === "walkin"
+                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
+                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  }
+                `}
+              >
+                🚶 Presencial
+              </button>
+            </div>
+          </div>
+
+          {/* Teléfono - para buscar cliente */}
           <div>
             <div className="text-xs text-zinc-500 mb-1">Teléfono</div>
             <div className="relative">
@@ -1833,34 +1916,35 @@ function NewReservationDrawer({
             </div>
           </div>
 
-          {/* Badge de cliente conocido */}
+          {/* Badge de cliente conocido - diseño premium compacto */}
           {foundCustomer && (
-            <div className="p-3 rounded-lg bg-amber-50/80 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-800/40">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-amber-600 dark:text-amber-400">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <div className="px-3 py-2 rounded-md bg-gradient-to-r from-slate-50 to-zinc-50 dark:from-zinc-800/60 dark:to-zinc-800/40 border border-slate-200/80 dark:border-zinc-700/60 shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20">
+                  <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
-                </span>
-                <span className="text-xs font-semibold text-amber-800 dark:text-amber-200">
-                  Cliente habitual
-                </span>
-                <span className="ml-auto px-2 py-0.5 text-[10px] font-medium bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded-full">
-                  {foundCustomer.totalReservations} reservas
-                </span>
-              </div>
-              <div className="text-[11px] text-amber-700 dark:text-amber-300 space-y-0.5">
-                {foundCustomer.name && (
-                  <div>Nombre: <span className="font-medium">{foundCustomer.name}</span></div>
-                )}
-                {foundCustomer.lastVisitAt && (
-                  <div>Última visita: {new Date(foundCustomer.lastVisitAt).toLocaleDateString("es-ES")}</div>
-                )}
-                {foundCustomer.totalNoShows > 0 && (
-                  <div className="text-rose-600 dark:text-rose-400">
-                    No-shows: {foundCustomer.totalNoShows}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-slate-700 dark:text-zinc-200">
+                      {foundCustomer.name || "Cliente habitual"}
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded">
+                      {foundCustomer.totalReservations}×
+                    </span>
+                    {foundCustomer.totalNoShows > 0 && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded">
+                        {foundCustomer.totalNoShows} NS
+                      </span>
+                    )}
                   </div>
-                )}
+                  {foundCustomer.lastVisitAt && (
+                    <div className="text-[10px] text-slate-500 dark:text-zinc-400">
+                      Última: {new Date(foundCustomer.lastVisitAt).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1886,39 +1970,6 @@ function NewReservationDrawer({
               className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm"
               placeholder="Nombre del cliente"
             />
-          </div>
-
-          {/* Origen de la reserva */}
-          <div>
-            <div className="text-xs text-zinc-500 mb-1">Origen de la reserva</div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setSource("phone")}
-                className={`
-                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
-                  ${source === "phone"
-                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
-                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                  }
-                `}
-              >
-                Teléfono
-              </button>
-              <button
-                type="button"
-                onClick={() => setSource("walkin")}
-                className={`
-                  flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors
-                  ${source === "walkin"
-                    ? "bg-indigo-500/15 border-indigo-400/60 text-indigo-700 dark:text-indigo-200"
-                    : "bg-white dark:bg-zinc-900/60 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-                  }
-                `}
-              >
-                Presencial
-              </button>
-            </div>
           </div>
 
           {/* Comensales */}
@@ -2012,6 +2063,58 @@ function NewReservationDrawer({
               </div>
             </div>
           </div>
+
+          {/* Indicador de ocupación del turno */}
+          {(shiftOccupancy || loadingOccupancy) && (
+            <div className={`
+              px-3 py-2 rounded-md border transition-colors
+              ${loadingOccupancy ? "bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700" : ""}
+              ${shiftOccupancy && shiftOccupancy.utilizationPercent >= 90 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/60" : ""}
+              ${shiftOccupancy && shiftOccupancy.utilizationPercent >= 70 && shiftOccupancy.utilizationPercent < 90 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/60" : ""}
+              ${shiftOccupancy && shiftOccupancy.utilizationPercent < 70 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/60" : ""}
+            `}>
+              {loadingOccupancy ? (
+                <div className="flex items-center gap-2 text-xs text-zinc-500">
+                  <div className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                  Consultando ocupación...
+                </div>
+              ) : shiftOccupancy && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-medium ${
+                      shiftOccupancy.utilizationPercent >= 90 ? "text-rose-700 dark:text-rose-300" :
+                      shiftOccupancy.utilizationPercent >= 70 ? "text-amber-700 dark:text-amber-300" :
+                      "text-emerald-700 dark:text-emerald-300"
+                    }`}>
+                      {shiftOccupancy.shiftName}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                      {shiftOccupancy.currentCovers}/{shiftOccupancy.totalCapacity} pax
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          shiftOccupancy.utilizationPercent >= 90 ? "bg-rose-500" :
+                          shiftOccupancy.utilizationPercent >= 70 ? "bg-amber-500" :
+                          "bg-emerald-500"
+                        }`}
+                        style={{ width: `${Math.min(100, shiftOccupancy.utilizationPercent)}%` }}
+                      />
+                    </div>
+                    <span className={`text-[10px] font-medium ${
+                      shiftOccupancy.utilizationPercent >= 90 ? "text-rose-600 dark:text-rose-400" :
+                      shiftOccupancy.utilizationPercent >= 70 ? "text-amber-600 dark:text-amber-400" :
+                      "text-emerald-600 dark:text-emerald-400"
+                    }`}>
+                      {shiftOccupancy.availableSpots} libres
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Notas internas */}
           <div>
