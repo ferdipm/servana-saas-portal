@@ -58,19 +58,28 @@ export function ReservationsView({
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>(initialStatus ?? "all");
 
-  // Por defecto: HOY 00:00 → MAÑANA 00:00
-  const [from, setFrom] = useState<string>(() => {
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    return base.toISOString();
+  // Sistema de rango de fechas estilo móvil
+  const [dateRange, setDateRange] = useState<"day" | "week" | "month" | "custom">("day");
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
   });
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
-  const [to, setTo] = useState<string>(() => {
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    base.setDate(base.getDate() + 1);
-    return base.toISOString();
-  });
+  // Derivar from/to del estado selectedDate y endDate
+  const from = useMemo(() => selectedDate.toISOString(), [selectedDate]);
+  const to = useMemo(() => {
+    if (endDate) {
+      const toDate = new Date(endDate);
+      toDate.setDate(toDate.getDate() + 1);
+      toDate.setHours(0, 0, 0, 0);
+      return toDate.toISOString();
+    }
+    const toDate = new Date(selectedDate);
+    toDate.setDate(toDate.getDate() + 1);
+    return toDate.toISOString();
+  }, [selectedDate, endDate]);
 
   const [rows, setRows] = useState<Reservation[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -79,8 +88,188 @@ export function ReservationsView({
   const [selected, setSelected] = useState<Reservation | null>(null);
   const [creating, setCreating] = useState(false);
 
-  // offset para los botones rápidos (Hoy, +1 día)
-  const [dayOffset, setDayOffset] = useState(0);
+  // Helper: obtener inicio de semana (lunes)
+  const getWeekStart = useCallback((date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d;
+  }, []);
+
+  // Helper: obtener fin de semana (domingo)
+  const getWeekEnd = useCallback((date: Date) => {
+    const start = getWeekStart(date);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    return end;
+  }, [getWeekStart]);
+
+  // Helper: obtener inicio de mes
+  const getMonthStart = useCallback((date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(1);
+    return d;
+  }, []);
+
+  // Helper: obtener fin de mes
+  const getMonthEnd = useCallback((date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0);
+    return d;
+  }, []);
+
+  // Navegación: avanzar según el modo
+  const goToNext = useCallback(() => {
+    if (dateRange === "day") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 1);
+        return newDate;
+      });
+    } else if (dateRange === "week") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 7);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() + 7);
+        return newDate;
+      });
+    } else if (dateRange === "month") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() + 1);
+        newDate.setDate(1);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(1);
+        newDate.setMonth(newDate.getMonth() + 1);
+        return getMonthEnd(newDate);
+      });
+    }
+  }, [dateRange, getMonthEnd]);
+
+  // Navegación: retroceder según el modo
+  const goToPrevious = useCallback(() => {
+    if (dateRange === "day") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 1);
+        return newDate;
+      });
+    } else if (dateRange === "week") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 7);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(newDate.getDate() - 7);
+        return newDate;
+      });
+    } else if (dateRange === "month") {
+      setSelectedDate(prev => {
+        const newDate = new Date(prev);
+        newDate.setMonth(newDate.getMonth() - 1);
+        newDate.setDate(1);
+        return newDate;
+      });
+      setEndDate(prev => {
+        if (!prev) return null;
+        const newDate = new Date(prev);
+        newDate.setDate(1);
+        newDate.setMonth(newDate.getMonth() - 1);
+        return getMonthEnd(newDate);
+      });
+    }
+  }, [dateRange, getMonthEnd]);
+
+  // Cambiar a vista Hoy
+  const setTodayView = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setSelectedDate(today);
+    setEndDate(null);
+    setDateRange("day");
+  }, []);
+
+  // Cambiar a vista Semana
+  const setWeekView = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekEnd = getWeekEnd(today);
+    setSelectedDate(today);
+    setEndDate(weekEnd);
+    setDateRange("week");
+  }, [getWeekEnd]);
+
+  // Cambiar a vista Mes
+  const setMonthView = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const monthEnd = getMonthEnd(today);
+    setSelectedDate(today);
+    setEndDate(monthEnd);
+    setDateRange("month");
+  }, [getMonthEnd]);
+
+  // Verificar si estamos en el periodo actual
+  const isCurrentPeriod = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return selectedDate.getTime() === today.getTime();
+  }, [selectedDate]);
+
+  // Formatear fecha seleccionada
+  const formatSelectedDate = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (selectedDate.getTime() === today.getTime()) return "Hoy";
+    if (selectedDate.getTime() === tomorrow.getTime()) return "Mañana";
+
+    return selectedDate.toLocaleDateString("es-ES", {
+      weekday: "short",
+      day: "numeric",
+      month: "short"
+    });
+  }, [selectedDate]);
+
+  // Formato de rango para mostrar
+  const formatDateRangeLabel = useCallback(() => {
+    if (dateRange === "day") {
+      return formatSelectedDate();
+    }
+
+    if (endDate) {
+      const startDay = selectedDate.getDate();
+      const endDay = endDate.getDate();
+      const startMonth = selectedDate.toLocaleDateString("es-ES", { month: "short" });
+      const endMonth = endDate.toLocaleDateString("es-ES", { month: "short" });
+
+      if (startMonth === endMonth) {
+        return `Del ${startDay} al ${endDay} de ${startMonth}`;
+      }
+      return `Del ${startDay} ${startMonth} al ${endDay} ${endMonth}`;
+    }
+
+    return formatSelectedDate();
+  }, [dateRange, selectedDate, endDate, formatSelectedDate]);
 
   // Turnos del restaurante para la fecha seleccionada
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -364,21 +553,6 @@ export function ReservationsView({
     return () => el.removeEventListener("scroll", onScroll);
   }, [nextCursor, loading, loadMore]);
 
-  function setDayRange(offset: number) {
-    setDayOffset(offset);
-
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    base.setDate(base.getDate() + offset);
-
-    const fromDate = new Date(base);
-    const toDate = new Date(base);
-    toDate.setDate(toDate.getDate() + 1);
-
-    setFrom(fromDate.toISOString());
-    setTo(toDate.toISOString());
-  }
-
   const statusOptions = isPendingMode
     ? [
         { value: "pending", label: "Pendiente" },
@@ -440,118 +614,95 @@ export function ReservationsView({
               )}
             </div>
 
-            {/* Rango + botones rápidos + nueva reserva */}
+            {/* Sistema de navegación de fechas estilo móvil */}
             <div className="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap md:justify-end">
-              <span className="hidden md:inline text-sm text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                Ver reservas de:
-              </span>
+              {/* Grupo de navegación con flechas y presets */}
+              <div className="flex items-stretch gap-1 bg-white dark:bg-zinc-800/80 rounded-xl p-1 border border-zinc-200 dark:border-zinc-700">
+                {/* Botón retroceder */}
+                <button
+                  onClick={goToPrevious}
+                  className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  aria-label="Anterior"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
 
-              {/* HOY */}
-              <button
-                onClick={() => setDayRange(0)}
-                className={`
-                  text-sm px-3 py-1.5 rounded-lg font-medium whitespace-nowrap
-                  ${
-                    dayOffset === 0
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white/70 dark:bg-zinc-900/50 border border-zinc-400/40 dark:border-zinc-700/40 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70"
-                  }
-                `}
-              >
-                Hoy
-              </button>
+                {/* Presets: Hoy, Semana, Mes */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={setTodayView}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                      dateRange === "day"
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    }`}
+                  >
+                    Hoy
+                  </button>
+                  <button
+                    onClick={setWeekView}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                      dateRange === "week"
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    }`}
+                  >
+                    Semana
+                  </button>
+                  <button
+                    onClick={setMonthView}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
+                      dateRange === "month"
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    }`}
+                  >
+                    Mes
+                  </button>
+                </div>
 
-              {/* +1 DÍA (acumulativo) */}
-              <button
-                onClick={() => setDayRange(dayOffset < 0 ? 1 : dayOffset + 1)}
-                className={`
-                  text-sm px-3 py-1.5 rounded-lg font-medium whitespace-nowrap
-                  ${
-                    dayOffset > 0
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white/70 dark:bg-zinc-900/50 border border-zinc-400/40 dark:border-zinc-700/40 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70"
-                  }
-                `}
-              >
-                +1 día
-              </button>
+                {/* Botón avanzar */}
+                <button
+                  onClick={goToNext}
+                  className="p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                  aria-label="Siguiente"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
 
-              {/* DatePicker Desde - solo desktop */}
+              {/* Icono de calendario para rango personalizado */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button
-                    className="
-                      hidden md:flex
-                      h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm items-center gap-2 whitespace-nowrap
-                    "
+                    className={`flex items-center gap-1 px-3 py-2 rounded-xl border transition-colors ${
+                      dateRange === "custom"
+                        ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                        : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                    }`}
+                    title="Seleccionar fecha específica"
                   >
-                    Desde{" "}
-                    {from ? new Date(from).toLocaleDateString("es-ES") : ""}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
                   </button>
                 </PopoverTrigger>
-
                 <PopoverContent className="p-0">
                   <Calendar
                     mode="single"
                     locale={es}
-                    selected={from ? new Date(from) : undefined}
+                    selected={selectedDate}
                     onSelect={(d) => {
                       if (d) {
-                        // Setear al inicio del día (00:00:00.000)
-                        const startOfDay = new Date(d);
-                        startOfDay.setHours(0, 0, 0, 0);
-                        setFrom(startOfDay.toISOString());
-
-                        // También actualizar "to" al final del mismo día si está antes de "from"
-                        const endOfDay = new Date(d);
-                        endOfDay.setHours(23, 59, 59, 999);
-                        const currentTo = to ? new Date(to) : null;
-                        if (!currentTo || currentTo < startOfDay) {
-                          setTo(endOfDay.toISOString());
-                        }
-
-                        // Resetear dayOffset porque estamos usando el calendario manualmente
-                        setDayOffset(-1); // -1 indica selección manual
-                      } else {
-                        setFrom("");
-                      }
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-
-              {/* DatePicker Hasta - solo desktop */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="
-                      hidden md:flex
-                      h-9 px-3 rounded-lg border border-zinc-300/60 dark:border-zinc-700/60
-                      bg-white/80 dark:bg-zinc-900/60 text-sm items-center gap-2 whitespace-nowrap
-                    "
-                  >
-                    Hasta{" "}
-                    {to ? new Date(to).toLocaleDateString("es-ES") : ""}
-                  </button>
-                </PopoverTrigger>
-
-                <PopoverContent className="p-0">
-                  <Calendar
-                    mode="single"
-                    locale={es}
-                    selected={to ? new Date(to) : undefined}
-                    onSelect={(d) => {
-                      if (d) {
-                        // Setear al final del día (23:59:59.999)
-                        const endOfDay = new Date(d);
-                        endOfDay.setHours(23, 59, 59, 999);
-                        setTo(endOfDay.toISOString());
-
-                        // Resetear dayOffset porque estamos usando el calendario manualmente
-                        setDayOffset(-1); // -1 indica selección manual
-                      } else {
-                        setTo("");
+                        const newDate = new Date(d);
+                        newDate.setHours(0, 0, 0, 0);
+                        setSelectedDate(newDate);
+                        setEndDate(null);
+                        setDateRange("custom");
                       }
                     }}
                   />
@@ -580,6 +731,16 @@ export function ReservationsView({
               )}
             </div>
           </div>
+
+          {/* Mostrar rango de fechas actual (si no es "Hoy" o es custom/week/month) */}
+          {(!isCurrentPeriod || dateRange !== "day") && (
+            <div className="mt-2 text-center text-sm text-indigo-600 dark:text-indigo-400 font-medium">
+              {formatDateRangeLabel()}
+              <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">
+                ({visibleRows.length} reserva{visibleRows.length !== 1 ? "s" : ""})
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Header columnas - solo visible en desktop */}
@@ -1941,7 +2102,7 @@ function NewReservationDrawer({
                     </span>
                     {foundCustomer.totalNoShows > 0 && (
                       <span className="px-1.5 py-0.5 text-[9px] font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded">
-                        {foundCustomer.totalNoShows} NS
+                        {foundCustomer.totalNoShows} no-show{foundCustomer.totalNoShows !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>

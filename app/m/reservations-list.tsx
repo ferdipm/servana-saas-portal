@@ -1479,7 +1479,7 @@ function NewReservationModal({
                       </span>
                       {foundCustomer.totalNoShows > 0 && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded">
-                          {foundCustomer.totalNoShows} NS
+                          {foundCustomer.totalNoShows} no-show{foundCustomer.totalNoShows !== 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
