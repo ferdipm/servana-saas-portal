@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { DatePickerModal } from "./m/date-picker-modal";
 
 type Props = {
   tenantId: string;
@@ -88,6 +89,16 @@ export function ReservationsView({
   const [selected, setSelected] = useState<Reservation | null>(null);
   const [creating, setCreating] = useState(false);
 
+  // Estado para el date picker modal (calendario desde-hasta)
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  // Handler para selección de rango de fechas
+  const handleRangeSelect = useCallback((from: Date, to: Date) => {
+    setSelectedDate(from);
+    setEndDate(to);
+    setDateRange("custom");
+  }, []);
+
   // Helper: obtener inicio de semana (lunes)
   const getWeekStart = useCallback((date: Date) => {
     const d = new Date(date);
@@ -132,16 +143,17 @@ export function ReservationsView({
         return newDate;
       });
     } else if (dateRange === "week") {
+      // Avanzar a la siguiente semana completa (lunes a domingo)
       setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + 7);
-        return newDate;
+        const nextWeekStart = getWeekStart(prev);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+        return nextWeekStart;
       });
       setEndDate(prev => {
         if (!prev) return null;
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + 7);
-        return newDate;
+        const nextWeekEnd = getWeekEnd(prev);
+        nextWeekEnd.setDate(nextWeekEnd.getDate() + 7);
+        return nextWeekEnd;
       });
     } else if (dateRange === "month") {
       setSelectedDate(prev => {
@@ -158,7 +170,7 @@ export function ReservationsView({
         return getMonthEnd(newDate);
       });
     }
-  }, [dateRange, getMonthEnd]);
+  }, [dateRange, getMonthEnd, getWeekStart, getWeekEnd]);
 
   // Navegación: retroceder según el modo
   const goToPrevious = useCallback(() => {
@@ -169,16 +181,17 @@ export function ReservationsView({
         return newDate;
       });
     } else if (dateRange === "week") {
+      // Retroceder a la semana anterior completa (lunes a domingo)
       setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() - 7);
-        return newDate;
+        const prevWeekStart = getWeekStart(prev);
+        prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+        return prevWeekStart;
       });
       setEndDate(prev => {
         if (!prev) return null;
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() - 7);
-        return newDate;
+        const prevWeekEnd = getWeekEnd(prev);
+        prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
+        return prevWeekEnd;
       });
     } else if (dateRange === "month") {
       setSelectedDate(prev => {
@@ -195,7 +208,7 @@ export function ReservationsView({
         return getMonthEnd(newDate);
       });
     }
-  }, [dateRange, getMonthEnd]);
+  }, [dateRange, getMonthEnd, getWeekStart, getWeekEnd]);
 
   // Cambiar a vista Hoy
   const setTodayView = useCallback(() => {
@@ -206,15 +219,16 @@ export function ReservationsView({
     setDateRange("day");
   }, []);
 
-  // Cambiar a vista Semana
+  // Cambiar a vista Semana (semana completa lunes a domingo)
   const setWeekView = useCallback(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const weekStart = getWeekStart(today);
     const weekEnd = getWeekEnd(today);
-    setSelectedDate(today);
+    setSelectedDate(weekStart);
     setEndDate(weekEnd);
     setDateRange("week");
-  }, [getWeekEnd]);
+  }, [getWeekStart, getWeekEnd]);
 
   // Cambiar a vista Mes
   const setMonthView = useCallback(() => {
@@ -629,12 +643,12 @@ export function ReservationsView({
                   </svg>
                 </button>
 
-                {/* Presets: Hoy, Semana, Mes */}
+                {/* Presets: Hoy, Semana, Mes - Solo activos cuando corresponden */}
                 <div className="flex items-center gap-1">
                   <button
                     onClick={setTodayView}
                     className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
-                      dateRange === "day"
+                      dateRange === "day" && isCurrentPeriod
                         ? "bg-indigo-600 text-white shadow-sm"
                         : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                     }`}
@@ -675,39 +689,24 @@ export function ReservationsView({
                 </button>
               </div>
 
-              {/* Icono de calendario para rango personalizado */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className={`flex items-center gap-1 px-3 py-2 rounded-xl border transition-colors ${
-                      dateRange === "custom"
-                        ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-                        : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-                    }`}
-                    title="Seleccionar fecha específica"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0">
-                  <Calendar
-                    mode="single"
-                    locale={es}
-                    selected={selectedDate}
-                    onSelect={(d) => {
-                      if (d) {
-                        const newDate = new Date(d);
-                        newDate.setHours(0, 0, 0, 0);
-                        setSelectedDate(newDate);
-                        setEndDate(null);
-                        setDateRange("custom");
-                      }
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+              {/* Icono de calendario para rango personalizado (desde-hasta) */}
+              <button
+                type="button"
+                onClick={() => setDatePickerOpen(true)}
+                className={`flex items-center gap-1 px-3 py-2 rounded-xl border transition-colors ${
+                  dateRange === "custom"
+                    ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
+                    : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                }`}
+                title="Seleccionar rango de fechas"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8m-4 5h4" />
+                </svg>
+              </button>
 
               {/* Botón NUEVA RESERVA MANUAL */}
               {!isPendingMode && (
@@ -880,6 +879,15 @@ export function ReservationsView({
           }}
         />
       )}
+
+      {/* Modal de calendario desde-hasta */}
+      <DatePickerModal
+        isOpen={datePickerOpen}
+        fromDate={selectedDate}
+        toDate={endDate}
+        onRangeSelect={handleRangeSelect}
+        onClose={() => setDatePickerOpen(false)}
+      />
     </>
   );
 }
