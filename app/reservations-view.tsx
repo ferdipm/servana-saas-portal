@@ -1644,7 +1644,7 @@ function NewReservationDrawer({
   const [time, setTime] = useState("20:00");
   const [notes, setNotes] = useState("");
   const [source, setSource] = useState<"phone" | "walkin">("phone");
-  const [sendWhatsApp, setSendWhatsApp] = useState(false);
+  const [sendWhatsApp, setSendWhatsApp] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1716,11 +1716,14 @@ function NewReservationDrawer({
   useEffect(() => {
     if (!restaurantId || !date || !time) {
       setShiftOccupancy(null);
+      setLoadingOccupancy(false);
       return;
     }
 
+    // Mostrar loading mientras esperamos el debounce
+    setLoadingOccupancy(true);
+
     const timer = setTimeout(async () => {
-      setLoadingOccupancy(true);
       try {
         // Construir datetime UTC
         const [hourStr, minuteStr] = time.split(":");
@@ -1747,7 +1750,7 @@ function NewReservationDrawer({
       } finally {
         setLoadingOccupancy(false);
       }
-    }, 300);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [date, time, restaurantId]);
@@ -1987,27 +1990,6 @@ function NewReservationDrawer({
             />
           </div>
 
-          {/* Checkbox enviar confirmación WhatsApp */}
-          {phone && (
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40">
-              <input
-                type="checkbox"
-                id="sendWhatsApp"
-                checked={sendWhatsApp}
-                onChange={(e) => setSendWhatsApp(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <label htmlFor="sendWhatsApp" className="flex-1 cursor-pointer">
-                <div className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                  Enviar confirmación por WhatsApp
-                </div>
-                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                  El cliente recibirá un mensaje con los detalles de la reserva y un QR de check-in.
-                </div>
-              </label>
-            </div>
-          )}
-
           {/* Fecha + hora */}
           <div className="grid grid-cols-2 gap-4">
             {/* Fecha con popover, igual estilo que en la lista */}
@@ -2128,11 +2110,32 @@ function NewReservationDrawer({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={4}
+              rows={3}
               className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-300 dark:border-zinc-700 px-2 py-1.5 text-sm resize-none"
               placeholder="Alergias, peticiones especiales…"
             />
           </div>
+
+          {/* Checkbox enviar confirmación WhatsApp - solo si hay teléfono */}
+          {phone && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/20 border border-emerald-200/60 dark:border-emerald-800/40">
+              <input
+                type="checkbox"
+                id="sendWhatsApp"
+                checked={sendWhatsApp}
+                onChange={(e) => setSendWhatsApp(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="sendWhatsApp" className="flex-1 cursor-pointer">
+                <div className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                  Enviar confirmación por WhatsApp
+                </div>
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  El cliente recibirá un mensaje con los detalles y QR de check-in.
+                </div>
+              </label>
+            </div>
+          )}
 
           {/* Info de estado inicial */}
           <div className="text-xs text-zinc-500 pt-2">
@@ -2141,17 +2144,31 @@ function NewReservationDrawer({
             (reservas creadas manualmente).
           </div>
 
-          {/* Botón crear reserva centrado bajo el texto de estado inicial */}
-          <div className="pt-5 pb-2 flex justify-center">
+          {/* Botones: Cancelar y Crear reserva */}
+          <div className="pt-4 pb-2 flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="
+                flex-1 px-4 py-2.5 rounded-lg text-sm font-medium
+                border border-zinc-300 dark:border-zinc-600
+                bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                hover:bg-zinc-50 dark:hover:bg-zinc-700
+                transition-colors
+              "
+            >
+              Cancelar
+            </button>
             <button
               disabled={saving}
               onClick={handleCreate}
               className="
-                px-4 py-2 rounded-lg text-sm font-medium
+                flex-1 px-4 py-2.5 rounded-lg text-sm font-medium
                 border border-emerald-400/60
-                bg-emerald-500/15 text-emerald-700 dark:text-emerald-50
-                hover:bg-emerald-500/25
-                disabled:opacity-60
+                bg-emerald-500 text-white
+                hover:bg-emerald-600
+                disabled:opacity-60 disabled:cursor-not-allowed
+                transition-colors
               "
             >
               {saving ? "Creando…" : "Crear reserva"}

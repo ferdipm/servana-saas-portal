@@ -1227,7 +1227,7 @@ function NewReservationModal({
   const [time, setTime] = useState("13:00");
   const [notes, setNotes] = useState("");
   const [source, setSource] = useState<"phone" | "walkin">("phone");
-  const [sendWhatsApp, setSendWhatsApp] = useState(false);
+  const [sendWhatsApp, setSendWhatsApp] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -1294,11 +1294,14 @@ function NewReservationModal({
   useEffect(() => {
     if (!date || !time) {
       setShiftOccupancy(null);
+      setLoadingOccupancy(false);
       return;
     }
 
+    // Mostrar loading mientras esperamos el debounce
+    setLoadingOccupancy(true);
+
     const timer = setTimeout(async () => {
-      setLoadingOccupancy(true);
       try {
         const dt = new Date(`${date}T${time}:00`);
 
@@ -1322,7 +1325,7 @@ function NewReservationModal({
       } finally {
         setLoadingOccupancy(false);
       }
-    }, 300);
+    }, 600);
 
     return () => clearTimeout(timer);
   }, [date, time, restaurantId]);
