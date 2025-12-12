@@ -1472,7 +1472,7 @@ function NewReservationModal({
                         {foundCustomer.name || "Cliente habitual"}
                       </span>
                       <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded">
-                        {foundCustomer.totalReservations}×
+                        {foundCustomer.totalReservations} reserva{foundCustomer.totalReservations !== 1 ? "s" : ""}
                       </span>
                       {foundCustomer.totalNoShows > 0 && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded">

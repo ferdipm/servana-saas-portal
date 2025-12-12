@@ -1663,6 +1663,9 @@ function NewReservationDrawer({
   } | null>(null);
   const [loadingOccupancy, setLoadingOccupancy] = useState(false);
 
+  // Estado para controlar el popover del calendario
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   // Función para normalizar teléfono
   const normalizePhoneForSearch = (p: string): string => {
     const cleaned = p.trim().replace(/\s+/g, "");
@@ -1931,7 +1934,7 @@ function NewReservationDrawer({
                       {foundCustomer.name || "Cliente habitual"}
                     </span>
                     <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded">
-                      {foundCustomer.totalReservations}×
+                      {foundCustomer.totalReservations} reserva{foundCustomer.totalReservations !== 1 ? "s" : ""}
                     </span>
                     {foundCustomer.totalNoShows > 0 && (
                       <span className="px-1.5 py-0.5 text-[9px] font-medium bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded">
@@ -2010,7 +2013,7 @@ function NewReservationDrawer({
             {/* Fecha con popover, igual estilo que en la lista */}
             <div>
               <div className="text-xs text-zinc-500 mb-1">Fecha *</div>
-              <Popover>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <button
                     className="
@@ -2036,7 +2039,10 @@ function NewReservationDrawer({
                     mode="single"
                     locale={es}
                     selected={date}
-                    onSelect={(d) => setDate(d ?? undefined)}
+                    onSelect={(d) => {
+                      setDate(d ?? undefined);
+                      setCalendarOpen(false);
+                    }}
                     disabled={(dateValue) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
