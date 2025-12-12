@@ -74,16 +74,18 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         return newDate;
       });
     } else if (dateRange === "week") {
+      // Avanzar al lunes de la siguiente semana
       setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + 7);
-        return newDate;
+        const currentEnd = getWeekEnd(prev);
+        const nextWeekStart = new Date(currentEnd);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 1); // Lunes siguiente
+        return nextWeekStart;
       });
       setEndDate(prev => {
         if (!prev) return null;
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + 7);
-        return newDate;
+        const nextWeekStart = new Date(prev);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 1); // Lunes siguiente
+        return getWeekEnd(nextWeekStart);
       });
     } else if (dateRange === "month") {
       // Para mes: avanzar al inicio del mes siguiente
@@ -113,16 +115,18 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         return newDate;
       });
     } else if (dateRange === "week") {
+      // Retroceder al lunes de la semana anterior
       setSelectedDate(prev => {
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() - 7);
-        return newDate;
+        const currentStart = getWeekStart(prev);
+        const prevWeekEnd = new Date(currentStart);
+        prevWeekEnd.setDate(prevWeekEnd.getDate() - 1); // Domingo anterior
+        return getWeekStart(prevWeekEnd); // Lunes de esa semana
       });
       setEndDate(prev => {
         if (!prev) return null;
-        const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() - 7);
-        return newDate;
+        const currentStart = getWeekStart(prev);
+        currentStart.setDate(currentStart.getDate() - 1); // Domingo anterior
+        return getWeekEnd(getWeekStart(currentStart)); // Domingo de la semana anterior
       });
     } else if (dateRange === "month") {
       // Para mes: retroceder al inicio del mes anterior
@@ -1405,15 +1409,15 @@ function NewReservationModal({
       />
 
       {/* Modal desde abajo */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[90vh] flex flex-col safe-area-bottom animate-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up">
         {/* Handle */}
-        <div className="pt-3 pb-2 flex-shrink-0">
+        <div className="pt-2 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
         </div>
 
         {/* Contenido scrollable */}
-        <div className="flex-1 overflow-auto px-5">
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+        <div className="flex-1 min-h-0 overflow-auto px-4 pb-2">
+          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3">
             Nueva Reserva
           </h2>
 
@@ -1423,17 +1427,17 @@ function NewReservationModal({
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Tipo de reserva - PRIMERO */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Tipo de reserva
               </label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setSource("phone")}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                     source === "phone"
                       ? "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300"
                       : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
@@ -1444,7 +1448,7 @@ function NewReservationModal({
                 <button
                   type="button"
                   onClick={() => setSource("walkin")}
-                  className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-colors ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${
                     source === "walkin"
                       ? "bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300"
                       : "bg-white dark:bg-zinc-800 border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
@@ -1457,7 +1461,7 @@ function NewReservationModal({
 
             {/* Teléfono - para buscar cliente */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Teléfono
               </label>
               <div className="relative">
@@ -1465,12 +1469,12 @@ function NewReservationModal({
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="+34 600 000 000"
                 />
                 {searchingCustomer && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
               </div>
@@ -1523,59 +1527,54 @@ function NewReservationModal({
 
             {/* Nombre */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Nombre *
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Nombre del cliente"
               />
             </div>
 
             {/* Checkbox enviar WhatsApp */}
             {phone.trim() && (
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
                 <input
                   type="checkbox"
                   id="sendWhatsAppMobile"
                   checked={sendWhatsApp}
                   onChange={(e) => setSendWhatsApp(e.target.checked)}
-                  className="mt-0.5 h-5 w-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                  className="h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
                 />
-                <label htmlFor="sendWhatsAppMobile" className="flex-1">
-                  <div className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                    Enviar confirmación por WhatsApp
-                  </div>
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    El cliente recibirá un mensaje con detalles y QR de check-in.
-                  </div>
+                <label htmlFor="sendWhatsAppMobile" className="flex-1 text-xs text-emerald-800 dark:text-emerald-200">
+                  Enviar confirmación por WhatsApp
                 </label>
               </div>
             )}
 
             {/* Personas */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Personas
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setPartySize(Math.max(1, partySize - 1))}
-                  className="w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xl"
+                  className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-base"
                 >
                   -
                 </button>
-                <span className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 w-12 text-center">
+                <span className="text-base font-semibold text-zinc-900 dark:text-zinc-100 w-8 text-center">
                   {partySize}
                 </span>
                 <button
                   type="button"
                   onClick={() => setPartySize(partySize + 1)}
-                  className="w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-xl"
+                  className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-base"
                 >
                   +
                 </button>
@@ -1583,20 +1582,20 @@ function NewReservationModal({
             </div>
 
             {/* Fecha y Hora */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Hora
                 </label>
                 <input
@@ -1605,7 +1604,7 @@ function NewReservationModal({
                   onChange={(e) => setTime(e.target.value)}
                   onBlur={(e) => setTime(e.target.value)}
                   onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -1613,33 +1612,33 @@ function NewReservationModal({
             {/* Indicador de ocupación del turno */}
             {(shiftOccupancy || loadingOccupancy) && (
               <div className={`
-                px-3 py-2.5 rounded-xl border transition-colors
+                px-2 py-1.5 rounded-lg border transition-colors text-xs
                 ${loadingOccupancy ? "bg-zinc-50 dark:bg-zinc-800/40 border-zinc-200 dark:border-zinc-700" : ""}
                 ${shiftOccupancy && shiftOccupancy.utilizationPercent >= 90 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/60" : ""}
                 ${shiftOccupancy && shiftOccupancy.utilizationPercent >= 70 && shiftOccupancy.utilizationPercent < 90 ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/60" : ""}
                 ${shiftOccupancy && shiftOccupancy.utilizationPercent < 70 ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/60" : ""}
               `}>
                 {loadingOccupancy ? (
-                  <div className="flex items-center gap-2 text-sm text-zinc-500">
-                    <div className="w-4 h-4 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
-                    Consultando ocupación...
+                  <div className="flex items-center gap-2 text-zinc-500">
+                    <div className="w-3 h-3 border-2 border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                    Consultando...
                   </div>
                 ) : shiftOccupancy && (
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-medium ${
+                    <div className="flex items-center gap-1.5">
+                      <span className={`font-medium ${
                         shiftOccupancy.utilizationPercent >= 90 ? "text-rose-700 dark:text-rose-300" :
                         shiftOccupancy.utilizationPercent >= 70 ? "text-amber-700 dark:text-amber-300" :
                         "text-emerald-700 dark:text-emerald-300"
                       }`}>
                         {shiftOccupancy.shiftName}
                       </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                        {shiftOccupancy.currentCovers}/{shiftOccupancy.totalCapacity} pax
+                      <span className="text-zinc-500 dark:text-zinc-400">
+                        {shiftOccupancy.currentCovers}/{shiftOccupancy.totalCapacity}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
                             shiftOccupancy.utilizationPercent >= 90 ? "bg-rose-500" :
@@ -1649,7 +1648,7 @@ function NewReservationModal({
                           style={{ width: `${Math.min(100, shiftOccupancy.utilizationPercent)}%` }}
                         />
                       </div>
-                      <span className={`text-xs font-medium ${
+                      <span className={`font-medium ${
                         shiftOccupancy.utilizationPercent >= 90 ? "text-rose-600 dark:text-rose-400" :
                         shiftOccupancy.utilizationPercent >= 70 ? "text-amber-600 dark:text-amber-400" :
                         "text-emerald-600 dark:text-emerald-400"
@@ -1664,14 +1663,14 @@ function NewReservationModal({
 
             {/* Notas */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Notas
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                rows={1}
+                className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 placeholder="Notas adicionales..."
               />
             </div>
@@ -1679,7 +1678,7 @@ function NewReservationModal({
         </div>
 
         {/* Footer fijo con botones - fuera del área scrollable */}
-        <div className="flex-shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pb-safe">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pb-safe">
           <div className="flex gap-3">
             <button
               type="button"
