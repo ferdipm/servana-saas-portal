@@ -537,13 +537,70 @@ export function ReservationsView({
   );
 
   const parentRef = useRef<HTMLDivElement | null>(null);
+
+  // Pre-calcular qué filas tienen header de día (para vista multi-día)
+  const rowsWithDayHeader = useMemo(() => {
+    const isMultiDay = endDate !== null;
+    if (!isMultiDay || debouncedQ.trim()) return new Set<number>();
+
+    const headerIndices = new Set<number>();
+    for (let i = 0; i < visibleRows.length; i++) {
+      const r = visibleRows[i];
+      const currentDay = new Date(r.datetime_utc).toDateString();
+      if (i === 0) {
+        headerIndices.add(i);
+      } else {
+        const prevRow = visibleRows[i - 1];
+        const prevDay = new Date(prevRow.datetime_utc).toDateString();
+        if (currentDay !== prevDay) {
+          headerIndices.add(i);
+        }
+      }
+    }
+    return headerIndices;
+  }, [visibleRows, endDate, debouncedQ]);
+
+  // Pre-calcular qué filas tienen header de turno
+  const rowsWithShiftHeader = useMemo(() => {
+    if (shifts.length === 0 || debouncedQ.trim()) return new Set<number>();
+
+    const headerIndices = new Set<number>();
+    for (let i = 0; i < visibleRows.length; i++) {
+      const r = visibleRows[i];
+      const currentShift = getShiftForReservation(r.datetime_utc, r.tz || defaultTz);
+      if (!currentShift) continue;
+
+      if (i === 0) {
+        headerIndices.add(i);
+      } else {
+        const prevRow = visibleRows[i - 1];
+        const prevShift = getShiftForReservation(prevRow.datetime_utc, prevRow.tz || defaultTz);
+        if (currentShift.name !== prevShift?.name) {
+          headerIndices.add(i);
+        }
+      }
+    }
+    return headerIndices;
+  }, [visibleRows, shifts, debouncedQ, getShiftForReservation, defaultTz]);
+
   const rowVirtualizer = useVirtualizer({
     count: visibleRows.length,
     getScrollElement: () => parentRef.current,
-    // Altura estimada: 72px en móvil (card compacta), 92px en desktop
-    estimateSize: () => (typeof window !== 'undefined' && window.innerWidth < 768 ? 72 : 92),
+    // Altura dinámica: base + extra si tiene headers
+    estimateSize: (index) => {
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      const baseHeight = isMobile ? 72 : 92;
+      const dayHeaderHeight = rowsWithDayHeader.has(index) ? 44 : 0;
+      const shiftHeaderHeight = rowsWithShiftHeader.has(index) ? 48 : 0;
+      return baseHeight + dayHeaderHeight + shiftHeaderHeight;
+    },
     overscan: 8,
   });
+
+  // Re-medir filas cuando cambien los headers
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [rowsWithDayHeader, rowsWithShiftHeader, rowVirtualizer]);
 
   useEffect(() => {
     const el = parentRef.current;
@@ -880,46 +937,21 @@ export function ReservationsView({
               const r = visibleRows[vRow.index];
               if (!r) return null;
 
-              // Determinar si mostrar header de turno
-              const currentShift = getShiftForReservation(r.datetime_utc, r.tz || defaultTz);
-              let showShiftHeader = false;
-              if (shifts.length > 0 && currentShift && !debouncedQ.trim()) {
-                if (vRow.index === 0) {
-                  showShiftHeader = true;
-                } else {
-                  const prevRow = visibleRows[vRow.index - 1];
-                  if (prevRow) {
-                    const prevShift = getShiftForReservation(prevRow.datetime_utc, prevRow.tz || defaultTz);
-                    showShiftHeader = currentShift.name !== prevShift?.name;
-                  }
-                }
-              }
+              // Usar los sets pre-calculados para determinar headers
+              const showDayHeader = rowsWithDayHeader.has(vRow.index);
+              const showShiftHeader = rowsWithShiftHeader.has(vRow.index);
+              const currentShift = showShiftHeader ? getShiftForReservation(r.datetime_utc, r.tz || defaultTz) : null;
 
-              // Determinar si mostrar header de día (cuando vista multi-día)
-              let showDayHeader = false;
+              // Calcular texto del día si necesario
               let dayHeaderText = "";
-              const isMultiDay = endDate !== null;
-              if (isMultiDay && !debouncedQ.trim()) {
-                const currentDay = new Date(r.datetime_utc).toDateString();
-                if (vRow.index === 0) {
-                  showDayHeader = true;
-                } else {
-                  const prevRow = visibleRows[vRow.index - 1];
-                  if (prevRow) {
-                    const prevDay = new Date(prevRow.datetime_utc).toDateString();
-                    showDayHeader = currentDay !== prevDay;
-                  }
-                }
-                if (showDayHeader) {
-                  const d = new Date(r.datetime_utc);
-                  dayHeaderText = d.toLocaleDateString("es-ES", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long"
-                  });
-                  // Capitalizar primera letra
-                  dayHeaderText = dayHeaderText.charAt(0).toUpperCase() + dayHeaderText.slice(1);
-                }
+              if (showDayHeader) {
+                const d = new Date(r.datetime_utc);
+                dayHeaderText = d.toLocaleDateString("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long"
+                });
+                dayHeaderText = dayHeaderText.charAt(0).toUpperCase() + dayHeaderText.slice(1);
               }
 
               return (
