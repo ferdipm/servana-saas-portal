@@ -21,6 +21,7 @@ type InitialInfo = {
   country: string;
   timezone: string;
   logoUrl: string;
+  totalCapacity: number;
 };
 
 type NotificationSettings = {
@@ -200,6 +201,28 @@ export function SettingsContent({
                   defaultValue={initialInfo.address}
                   disabled={isReadOnly || isPending}
                 />
+              </div>
+
+              {/* Aforo total */}
+              <div className="md:col-span-1 max-w-[10rem]">
+                <div className="space-y-1">
+                  <label className="text-xs text-zinc-500 dark:text-zinc-400" htmlFor="totalCapacity">
+                    Aforo total (plazas)
+                  </label>
+                  <input
+                    id="totalCapacity"
+                    name="totalCapacity"
+                    type="number"
+                    min={1}
+                    max={999}
+                    defaultValue={initialInfo.totalCapacity}
+                    disabled={isReadOnly || isPending}
+                    className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-2 py-1.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    Capacidad máxima del restaurante
+                  </p>
+                </div>
               </div>
             </div>
 

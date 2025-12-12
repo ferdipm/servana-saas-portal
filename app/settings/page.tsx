@@ -56,7 +56,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       set_menus,
       wine_menu,
       logo_url,
-      notification_settings
+      notification_settings,
+      total_capacity
     `
     )
     .eq("id", currentRestaurantId)
@@ -76,6 +77,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     country: "",
     timezone: "Europe/Madrid", // o "Europe/Zurich", como prefieras por defecto
     logoUrl: infoRow?.logo_url ?? "",
+    totalCapacity: infoRow?.total_capacity ?? 50,
   };
 
   // En tu esquema real, los datos extendidos viven en restaurant_info

@@ -2035,6 +2035,7 @@ function NewReservationDrawer({
   // Buscar ocupación del turno cuando cambia fecha/hora (con debounce)
   // Usamos getTime() para comparar fechas por valor, no por referencia
   const dateTimestamp = date?.getTime();
+  const isFirstOccupancyLoad = useRef(true);
 
   useEffect(() => {
     if (!restaurantId || !date || !time) {
@@ -2043,17 +2044,18 @@ function NewReservationDrawer({
       return;
     }
 
-    // Mostrar loading mientras esperamos el debounce
-    setLoadingOccupancy(true);
-
-    const timer = setTimeout(async () => {
+    // Función para cargar la ocupación
+    const fetchOccupancy = async () => {
       try {
         // Construir datetime UTC
         const [hourStr, minuteStr] = time.split(":");
         const dt = new Date(date);
         dt.setHours(Number(hourStr), Number(minuteStr), 0, 0);
 
-        const res = await fetch(`/api/shift-occupancy?restaurantId=${restaurantId}&datetimeUtc=${dt.toISOString()}`);
+        // Send both UTC datetime and local time for correct shift matching
+        const localTime = time; // HH:mm in local timezone
+        const localDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        const res = await fetch(`/api/shift-occupancy?restaurantId=${restaurantId}&datetimeUtc=${dt.toISOString()}&localTime=${localTime}&localDate=${localDate}`);
         const data = await res.json();
 
         if (data.found && data.occupancy) {
@@ -2073,8 +2075,20 @@ function NewReservationDrawer({
       } finally {
         setLoadingOccupancy(false);
       }
-    }, 600);
+    };
 
+    // Mostrar loading
+    setLoadingOccupancy(true);
+
+    // Primera carga: ejecutar inmediatamente, sin debounce
+    if (isFirstOccupancyLoad.current) {
+      isFirstOccupancyLoad.current = false;
+      fetchOccupancy();
+      return;
+    }
+
+    // Cambios posteriores: usar debounce
+    const timer = setTimeout(fetchOccupancy, 600);
     return () => clearTimeout(timer);
   }, [dateTimestamp, time, restaurantId]); // Usar dateTimestamp en lugar de date
 

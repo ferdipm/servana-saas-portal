@@ -48,6 +48,7 @@ export async function updateGeneralSettings(formData: FormData) {
   const phone = formData.get("phone");
   const website = formData.get("website");
   const address = formData.get("address");
+  const totalCapacity = formData.get("totalCapacity");
 
   if (!restaurantId || typeof restaurantId !== "string") {
     throw new Error("Falta el identificador del restaurante.");
@@ -72,6 +73,15 @@ export async function updateGeneralSettings(formData: FormData) {
       ? address.trim()
       : null;
 
+  // Validar y parsear aforo total (mínimo 1, máximo 999, default 50)
+  let parsedCapacity = 50;
+  if (totalCapacity && typeof totalCapacity === "string") {
+    const num = parseInt(totalCapacity, 10);
+    if (!isNaN(num) && num >= 1 && num <= 999) {
+      parsedCapacity = num;
+    }
+  }
+
   const supabase = await supabaseServer();
 
   const { error } = await supabase
@@ -81,6 +91,7 @@ export async function updateGeneralSettings(formData: FormData) {
       phone: sanitizedPhone,
       website: sanitizedWebsite,
       address: sanitizedAddress,
+      total_capacity: parsedCapacity,
     })
     .eq("id", restaurantId);
 

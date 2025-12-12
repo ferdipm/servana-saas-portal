@@ -1291,6 +1291,8 @@ function NewReservationModal({
   }, [phone, restaurantId]);
 
   // Buscar ocupación del turno cuando cambia fecha/hora (con debounce)
+  const isFirstOccupancyLoad = useRef(true);
+
   useEffect(() => {
     if (!date || !time) {
       setShiftOccupancy(null);
@@ -1298,14 +1300,15 @@ function NewReservationModal({
       return;
     }
 
-    // Mostrar loading mientras esperamos el debounce
-    setLoadingOccupancy(true);
-
-    const timer = setTimeout(async () => {
+    // Función para cargar la ocupación
+    const fetchOccupancy = async () => {
       try {
         const dt = new Date(`${date}T${time}:00`);
+        // Send both UTC datetime and local time for correct shift matching
+        const localTime = time; // HH:mm in local timezone
+        const localDate = date; // YYYY-MM-DD format (already in local date)
 
-        const res = await fetch(`/api/shift-occupancy?restaurantId=${restaurantId}&datetimeUtc=${dt.toISOString()}`);
+        const res = await fetch(`/api/shift-occupancy?restaurantId=${restaurantId}&datetimeUtc=${dt.toISOString()}&localTime=${localTime}&localDate=${localDate}`);
         const data = await res.json();
 
         if (data.found && data.occupancy) {
@@ -1325,8 +1328,20 @@ function NewReservationModal({
       } finally {
         setLoadingOccupancy(false);
       }
-    }, 600);
+    };
 
+    // Mostrar loading
+    setLoadingOccupancy(true);
+
+    // Primera carga: ejecutar inmediatamente, sin debounce
+    if (isFirstOccupancyLoad.current) {
+      isFirstOccupancyLoad.current = false;
+      fetchOccupancy();
+      return;
+    }
+
+    // Cambios posteriores: usar debounce
+    const timer = setTimeout(fetchOccupancy, 600);
     return () => clearTimeout(timer);
   }, [date, time, restaurantId]);
 

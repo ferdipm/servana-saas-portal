@@ -1,6 +1,6 @@
 # Esquema de Base de Datos - Supabase
 
-> Documentación generada automáticamente el 11/12/2025, 18:16:00
+> Documentación generada automáticamente el 12/12/2025, 17:02:30
 
 ## Información General
 
@@ -20,7 +20,7 @@ Total de tablas: **11**
 - [`customers`](#tabla-customers) (14 columnas)
 - [`knowledge_usage`](#tabla-knowledge_usage) (8 columnas)
 - [`reservations`](#tabla-reservations) (21 columnas)
-- [`restaurant_info`](#tabla-restaurant_info) (23 columnas)
+- [`restaurant_info`](#tabla-restaurant_info) (24 columnas)
 - [`restaurant_knowledge_chunks`](#tabla-restaurant_knowledge_chunks) (12 columnas)
 - [`session_state`](#tabla-session_state) (10 columnas)
 - [`tenant_users`](#tabla-tenant_users) (10 columnas)
@@ -426,6 +426,7 @@ Total de tablas: **11**
 | `set_menus` | jsonb | YES | '[]'::jsonb |  | - |
 | `wine_menu` | jsonb | YES | '{"categories": []}'::jsonb |  | - |
 | `notification_settings` | jsonb | YES | '{"reminder_24h_enabled": true, "confirmation_required": true, "notify_on_cancellation": true, "notify_on_new_reservation": false}'::jsonb |  | - |
+| `total_capacity` | integer | YES | 50 |  | - |
 
 ### Relaciones (Foreign Keys)
 
