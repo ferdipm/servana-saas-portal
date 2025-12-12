@@ -1345,8 +1345,8 @@ function NewReservationModal({
     return () => clearTimeout(timer);
   }, [date, time, restaurantId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setError("");
 
     if (!name.trim()) {
@@ -1405,13 +1405,14 @@ function NewReservationModal({
       />
 
       {/* Modal desde abajo */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[90vh] overflow-auto safe-area-bottom animate-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[90vh] flex flex-col safe-area-bottom animate-slide-up">
         {/* Handle */}
-        <div className="sticky top-0 bg-white dark:bg-zinc-900 pt-3 pb-2">
+        <div className="pt-3 pb-2 flex-shrink-0">
           <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
         </div>
 
-        <form onSubmit={handleSubmit} className="px-5 pb-6">
+        {/* Contenido scrollable */}
+        <div className="flex-1 overflow-auto px-5">
           <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
             Nueva Reserva
           </h2>
@@ -1675,9 +1676,11 @@ function NewReservationModal({
               />
             </div>
           </div>
+        </div>
 
-          {/* Botones - en fila horizontal */}
-          <div className="mt-4 flex gap-3">
+        {/* Footer fijo con botones - fuera del área scrollable */}
+        <div className="flex-shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pb-safe">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -1686,8 +1689,9 @@ function NewReservationModal({
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
               disabled={saving}
+              onClick={handleSubmit}
               className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
             >
               {saving ? (
@@ -1700,7 +1704,7 @@ function NewReservationModal({
               )}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </>
   );
