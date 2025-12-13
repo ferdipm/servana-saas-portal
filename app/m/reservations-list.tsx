@@ -1552,67 +1552,74 @@ function NewReservationModal({
               </div>
             )}
 
-            {/* Fecha, Hora y Comensales en una fila con aire */}
-            <div className="flex items-end gap-4">
-              {/* Fecha - compacta */}
-              <div className="w-[7rem]">
+            {/* Fecha, Hora y Comensales - alineados con Teléfono y Nombre */}
+            <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2">
+              {/* Fecha - mismo ancho que Teléfono */}
+              <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
                 </label>
                 <input
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    // Cerrar el picker en móvil haciendo blur
+                    e.target.blur();
+                  }}
+                  className="w-full h-[38px] px-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* Hora - compacta */}
-              <div className="w-[4.5rem]">
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                  Hora
-                </label>
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  onBlur={(e) => setTime(e.target.value)}
-                  onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                  className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              {/* Comensales - altura uniforme */}
-              <div>
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                  Pax
-                </label>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setPartySize(Math.max(1, partySize - 1))}
-                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
-                  >
-                    -
-                  </button>
+              {/* Hora y Pax - mismo ancho que Nombre */}
+              <div className="flex items-end gap-3">
+                {/* Hora */}
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Hora
+                  </label>
                   <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={partySize}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (!isNaN(val) && val >= 1 && val <= 99) {
-                        setPartySize(val);
-                      }
-                    }}
-                    className="w-10 h-[38px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    onBlur={(e) => setTime(e.target.value)}
+                    onInput={(e) => setTime((e.target as HTMLInputElement).value)}
+                    className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setPartySize(Math.min(99, partySize + 1))}
-                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
-                  >
-                    +
-                  </button>
+                </div>
+                {/* Comensales */}
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Pax
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPartySize(Math.max(1, partySize - 1))}
+                      className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={partySize}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 99) {
+                          setPartySize(val);
+                        }
+                      }}
+                      className="w-9 h-[38px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPartySize(Math.min(99, partySize + 1))}
+                      className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
