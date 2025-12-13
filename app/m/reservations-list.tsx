@@ -1459,24 +1459,41 @@ function NewReservationModal({
               </div>
             </div>
 
-            {/* Teléfono - para buscar cliente */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Teléfono
-              </label>
-              <div className="relative">
+            {/* Teléfono y Nombre en la misma fila */}
+            <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2">
+              {/* Teléfono - para buscar cliente */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Teléfono
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-2 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="+34 600..."
+                  />
+                  {searchingCustomer && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Nombre *
+                </label>
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  placeholder="+34 600 000 000"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-2 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Nombre"
                 />
-                {searchingCustomer && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                  </div>
-                )}
               </div>
             </div>
 
@@ -1525,40 +1542,10 @@ function NewReservationModal({
               </div>
             )}
 
-            {/* Nombre */}
+            {/* Comensales */}
             <div>
               <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Nombre *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Nombre del cliente"
-              />
-            </div>
-
-            {/* Checkbox enviar WhatsApp */}
-            {phone.trim() && (
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
-                <input
-                  type="checkbox"
-                  id="sendWhatsAppMobile"
-                  checked={sendWhatsApp}
-                  onChange={(e) => setSendWhatsApp(e.target.checked)}
-                  className="h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <label htmlFor="sendWhatsAppMobile" className="flex-1 text-xs text-emerald-800 dark:text-emerald-200">
-                  Enviar confirmación por WhatsApp
-                </label>
-              </div>
-            )}
-
-            {/* Personas */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Personas
+                Comensales
               </label>
               <div className="flex items-center gap-2">
                 <button
@@ -1568,12 +1555,22 @@ function NewReservationModal({
                 >
                   -
                 </button>
-                <span className="text-base font-semibold text-zinc-900 dark:text-zinc-100 w-8 text-center">
-                  {partySize}
-                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={partySize}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1 && val <= 99) {
+                      setPartySize(val);
+                    }
+                  }}
+                  className="w-12 h-8 text-center text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <button
                   type="button"
-                  onClick={() => setPartySize(partySize + 1)}
+                  onClick={() => setPartySize(Math.min(99, partySize + 1))}
                   className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-base"
                 >
                   +
@@ -1582,7 +1579,7 @@ function NewReservationModal({
             </div>
 
             {/* Fecha y Hora */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-[1fr_auto] gap-2">
               <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
@@ -1594,7 +1591,7 @@ function NewReservationModal({
                   className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <div>
+              <div className="w-24">
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Hora
                 </label>
@@ -1604,7 +1601,7 @@ function NewReservationModal({
                   onChange={(e) => setTime(e.target.value)}
                   onBlur={(e) => setTime(e.target.value)}
                   onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-2 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -1674,16 +1671,32 @@ function NewReservationModal({
                 placeholder="Notas adicionales..."
               />
             </div>
+
+            {/* Checkbox enviar WhatsApp - al final, debajo de Notas */}
+            {phone.trim() && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
+                <input
+                  type="checkbox"
+                  id="sendWhatsAppMobile"
+                  checked={sendWhatsApp}
+                  onChange={(e) => setSendWhatsApp(e.target.checked)}
+                  className="h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <label htmlFor="sendWhatsAppMobile" className="flex-1 text-xs text-emerald-800 dark:text-emerald-200">
+                  Enviar confirmación por WhatsApp
+                </label>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer fijo con botones - fuera del área scrollable */}
-        <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pb-safe">
+        <div className="flex-shrink-0 px-4 pt-3 pb-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              className="flex-1 py-3 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
             >
               Cancelar
             </button>
@@ -1691,7 +1704,7 @@ function NewReservationModal({
               type="button"
               disabled={saving}
               onClick={handleSubmit}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
@@ -1699,7 +1712,7 @@ function NewReservationModal({
                   Guardando...
                 </>
               ) : (
-                "Crear Reserva"
+                "Guardar reserva"
               )}
             </button>
           </div>
