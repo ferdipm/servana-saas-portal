@@ -1578,7 +1578,7 @@ function NewReservationModal({
                 />
               </div>
               {/* Hora y Pax - alineados con Nombre */}
-              <div className="flex items-end gap-4 pl-2">
+              <div className="flex items-end gap-4 pl-4">
                 {/* Hora - tamaño reducido */}
                 <div className="w-[5rem] shrink-0">
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
