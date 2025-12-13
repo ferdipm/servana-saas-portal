@@ -1419,7 +1419,7 @@ function NewReservationModal({
       />
 
       {/* Modal desde abajo */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up overscroll-contain">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[92vh] flex flex-col animate-slide-up overscroll-contain">
         {/* Handle */}
         <div className="pt-2 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
@@ -1552,10 +1552,10 @@ function NewReservationModal({
               </div>
             )}
 
-            {/* Fecha, Hora y Comensales en una fila */}
-            <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
+            {/* Fecha, Hora y Comensales en una fila con aire */}
+            <div className="flex items-end gap-4">
               {/* Fecha - compacta */}
-              <div>
+              <div className="w-[7rem]">
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
                 </label>
@@ -1563,7 +1563,7 @@ function NewReservationModal({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-1.5 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Hora - compacta */}
@@ -1577,10 +1577,10 @@ function NewReservationModal({
                   onChange={(e) => setTime(e.target.value)}
                   onBlur={(e) => setTime(e.target.value)}
                   onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                  className="w-full px-1 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* Comensales - compacto */}
+              {/* Comensales - altura uniforme */}
               <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Pax
@@ -1589,7 +1589,7 @@ function NewReservationModal({
                   <button
                     type="button"
                     onClick={() => setPartySize(Math.max(1, partySize - 1))}
-                    className="w-7 h-9 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
                   >
                     -
                   </button>
@@ -1604,12 +1604,12 @@ function NewReservationModal({
                         setPartySize(val);
                       }
                     }}
-                    className="w-10 h-9 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-10 h-[38px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
                     type="button"
                     onClick={() => setPartySize(Math.min(99, partySize + 1))}
-                    className="w-7 h-9 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
                   >
                     +
                   </button>
@@ -1702,7 +1702,7 @@ function NewReservationModal({
         </div>
 
         {/* Footer fijo con botones - fuera del área scrollable */}
-        <div className="flex-shrink-0 px-4 pt-3 pb-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <div className="flex-shrink-0 px-4 pt-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }}>
           <div className="flex gap-3">
             <button
               type="button"
