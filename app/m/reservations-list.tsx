@@ -1577,8 +1577,8 @@ function NewReservationModal({
                   className="w-full h-[38px] px-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* Hora y Pax - alineados con Nombre */}
-              <div className="flex items-end gap-4 pl-4">
+              {/* Hora y Comensales - alineados con Nombre */}
+              <div className="flex items-end gap-3">
                 {/* Hora - tamaño reducido */}
                 <div className="w-[5rem] shrink-0">
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -1595,8 +1595,8 @@ function NewReservationModal({
                 </div>
                 {/* Comensales - alineado a la derecha */}
                 <div className="ml-auto">
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1 text-right">
-                    Pax
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                    Comensales
                   </label>
                   <div className="flex items-center gap-1">
                     <button
