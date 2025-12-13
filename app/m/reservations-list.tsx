@@ -615,15 +615,24 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
         </div>
       )}
 
-      {/* Encabezado de pendientes */}
-      {mode === "pending" && (
-        <div className="px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      {/* Encabezado de reservas */}
+      {mode === "pending" ? (
+        <div className="px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Reservas pendientes
           </h2>
-          <p className="text-sm text-zinc-500">
+          <p className="text-xs text-zinc-500">
             {rows.length} {rows.length === 1 ? "reserva requiere" : "reservas requieren"} confirmación
           </p>
+        </div>
+      ) : !isSearchMode && (
+        <div className="px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            Reservas
+          </h2>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
+            {displayRows.length} {displayRows.length === 1 ? "reserva" : "reservas"}
+          </span>
         </div>
       )}
 
@@ -729,29 +738,29 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                 <li key={r.id}>
                   {/* Header de turno (modo normal) */}
                   {showShiftHeader && currentShift && (
-                    <div className={`sticky top-0 z-10 px-4 py-2.5 border-b ${getShiftColors(currentShift.name)}`}>
+                    <div className={`sticky top-0 z-10 px-3 py-1.5 border-b ${getShiftColors(currentShift.name)}`}>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold flex items-center gap-2">
-                          <span className="text-base">{currentShift.emoji}</span>
+                        <span className="text-xs font-semibold flex items-center gap-1.5">
+                          <span className="text-sm">{currentShift.emoji}</span>
                           {currentShift.name}
-                          <span className="text-xs font-normal opacity-75">
-                            {currentShift.startTime} - {currentShift.endTime}
+                          <span className="text-[10px] font-normal opacity-75">
+                            {currentShift.startTime}-{currentShift.endTime}
                           </span>
                         </span>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 dark:bg-black/20">
-                          {getShiftReservationCount(currentShift.name)} reservas
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-white/50 dark:bg-black/20">
+                          {getShiftReservationCount(currentShift.name)}
                         </span>
                       </div>
                     </div>
                   )}
                   {/* Separador de día en búsqueda o vista multi-día */}
                   {showDayHeader && (
-                    <div className={`sticky top-0 z-10 px-4 py-2 border-b ${
+                    <div className={`sticky top-0 z-10 px-3 py-1.5 border-b ${
                       isSearchMode
                         ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/50"
                         : "bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700"
                     }`}>
-                      <span className={`text-sm font-semibold capitalize ${
+                      <span className={`text-xs font-semibold capitalize ${
                         isSearchMode
                           ? "text-indigo-700 dark:text-indigo-300"
                           : "text-zinc-700 dark:text-zinc-200"
@@ -762,35 +771,35 @@ export function MobileReservationsList({ tenantId, restaurantId, defaultTz, mode
                   )}
                   <button
                     onClick={() => setSelectedReservation(r)}
-                    className="w-full text-left px-4 py-4 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 active:bg-zinc-200 dark:active:bg-zinc-800 transition-colors"
+                    className="w-full text-left px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 active:bg-zinc-200 dark:active:bg-zinc-800 transition-colors"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Hora y fecha */}
-                      <div className="flex items-center gap-3">
-                        <div className="text-center min-w-[50px]">
-                          <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                            {formatTime(r.datetime_utc, r.tz || defaultTz)}
-                          </div>
-                          {!isSearchMode && (
-                            <div className="text-xs text-zinc-500">
-                              {formatDay(r.datetime_utc, r.tz || defaultTz)}
-                            </div>
-                          )}
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Hora y info */}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Hora */}
+                        <div className="text-base font-bold text-zinc-900 dark:text-zinc-100 tabular-nums shrink-0">
+                          {formatTime(r.datetime_utc, r.tz || defaultTz)}
                         </div>
 
                         {/* Nombre y comensales */}
-                        <div className="min-w-0">
-                          <div className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm text-zinc-900 dark:text-zinc-100 truncate">
                             {r.name}
                           </div>
-                          <div className="text-sm text-zinc-500">
-                            {r.party_size} {r.party_size === 1 ? "persona" : "personas"}
+                          <div className="text-xs text-zinc-500 flex items-center gap-1">
+                            <span>{r.party_size} pax</span>
+                            {!isSearchMode && (
+                              <>
+                                <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                                <span>{formatDay(r.datetime_utc, r.tz || defaultTz)}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
 
                       {/* Estado y badges */}
-                      <div className="flex flex-wrap gap-1.5 justify-end">
+                      <div className="flex items-center gap-1 shrink-0">
                         <StatusBadge status={r.status} />
                         <LateBadge datetimeUtc={r.datetime_utc} status={r.status} />
                       </div>
@@ -890,7 +899,7 @@ function StatusBadge({ status }: { status?: string }) {
   if (!c) return null;
 
   return (
-    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${c.bg} ${c.text}`}>
+    <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${c.bg} ${c.text}`}>
       {c.label}
     </span>
   );
@@ -939,9 +948,9 @@ function LateBadge({ datetimeUtc, status }: { datetimeUtc: string; status?: stri
   // Si la hora de reserva ya pasó hace más de 15 minutos
   if (reservationTime < fifteenMinutesAgo) {
     return (
-      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 flex items-center gap-1">
+      <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-        Retrasado
+        Tarde
       </span>
     );
   }
@@ -1552,10 +1561,10 @@ function NewReservationModal({
               </div>
             )}
 
-            {/* Fecha, Hora y Comensales - alineados con Teléfono y Nombre */}
-            <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2">
-              {/* Fecha - mismo ancho que Teléfono */}
-              <div>
+            {/* Fecha, Hora y Comensales - ocupando toda la fila con aire entre ellos */}
+            <div className="flex items-end gap-3">
+              {/* Fecha */}
+              <div className="flex-1">
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
                 </label>
@@ -1570,56 +1579,53 @@ function NewReservationModal({
                   className="w-full h-[38px] px-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              {/* Hora y Pax - mismo ancho que Nombre */}
-              <div className="flex items-end gap-3">
-                {/* Hora */}
-                <div className="flex-1">
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    Hora
-                  </label>
+              {/* Hora */}
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Hora
+                </label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                  onBlur={(e) => setTime(e.target.value)}
+                  onInput={(e) => setTime((e.target as HTMLInputElement).value)}
+                  className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              {/* Comensales */}
+              <div className="shrink-0">
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Pax
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPartySize(Math.max(1, partySize - 1))}
+                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                  >
+                    -
+                  </button>
                   <input
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    onBlur={(e) => setTime(e.target.value)}
-                    onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                    className="w-full h-[38px] px-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={partySize}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 1 && val <= 99) {
+                        setPartySize(val);
+                      }
+                    }}
+                    className="w-9 h-[38px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
-                </div>
-                {/* Comensales */}
-                <div>
-                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                    Pax
-                  </label>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setPartySize(Math.max(1, partySize - 1))}
-                      className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={partySize}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val >= 1 && val <= 99) {
-                          setPartySize(val);
-                        }
-                      }}
-                      className="w-9 h-[38px] text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setPartySize(Math.min(99, partySize + 1))}
-                      className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPartySize(Math.min(99, partySize + 1))}
+                    className="w-7 h-[38px] rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
             </div>
