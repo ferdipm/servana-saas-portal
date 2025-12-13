@@ -1218,6 +1218,15 @@ function NewReservationModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  // Bloquear scroll del body cuando el modal está abierto
+  useEffect(() => {
+    const originalStyle = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [partySize, setPartySize] = useState(2);
@@ -1402,21 +1411,22 @@ function NewReservationModal({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - bloquea scroll del fondo */}
       <div
-        className="fixed inset-0 bg-black/50 z-50"
+        className="fixed inset-0 bg-black/50 z-50 touch-none"
         onClick={onClose}
+        onTouchMove={(e) => e.preventDefault()}
       />
 
       {/* Modal desde abajo */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-zinc-900 rounded-t-2xl max-h-[85vh] flex flex-col animate-slide-up overscroll-contain">
         {/* Handle */}
         <div className="pt-2 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto" />
         </div>
 
         {/* Contenido scrollable */}
-        <div className="flex-1 min-h-0 overflow-auto px-4 pb-2">
+        <div className="flex-1 min-h-0 overflow-auto overscroll-contain px-4 pb-2">
           <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-3">
             Nueva Reserva
           </h2>
@@ -1542,44 +1552,9 @@ function NewReservationModal({
               </div>
             )}
 
-            {/* Comensales */}
-            <div>
-              <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Comensales
-              </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPartySize(Math.max(1, partySize - 1))}
-                  className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-base"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={99}
-                  value={partySize}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value, 10);
-                    if (!isNaN(val) && val >= 1 && val <= 99) {
-                      setPartySize(val);
-                    }
-                  }}
-                  className="w-12 h-8 text-center text-base font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => setPartySize(Math.min(99, partySize + 1))}
-                  className="w-8 h-8 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-base"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Fecha y Hora */}
-            <div className="grid grid-cols-[1fr_auto] gap-2">
+            {/* Fecha, Hora y Comensales en una fila */}
+            <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-end">
+              {/* Fecha - compacta */}
               <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
@@ -1588,10 +1563,11 @@ function NewReservationModal({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-1.5 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <div className="w-24">
+              {/* Hora - compacta */}
+              <div className="w-[4.5rem]">
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Hora
                 </label>
@@ -1601,8 +1577,43 @@ function NewReservationModal({
                   onChange={(e) => setTime(e.target.value)}
                   onBlur={(e) => setTime(e.target.value)}
                   onInput={(e) => setTime((e.target as HTMLInputElement).value)}
-                  className="w-full px-2 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-1 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+              </div>
+              {/* Comensales - compacto */}
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                  Pax
+                </label>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPartySize(Math.max(1, partySize - 1))}
+                    className="w-7 h-9 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={partySize}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 1 && val <= 99) {
+                        setPartySize(val);
+                      }
+                    }}
+                    className="w-10 h-9 text-center text-sm font-semibold text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPartySize(Math.min(99, partySize + 1))}
+                    className="w-7 h-9 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold text-sm"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
 
