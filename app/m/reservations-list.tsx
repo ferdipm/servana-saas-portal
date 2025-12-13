@@ -1560,7 +1560,7 @@ function NewReservationModal({
             )}
 
             {/* Fecha, Hora y Comensales - alineados con fila superior */}
-            <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4">
+            <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2">
               {/* Fecha - mismo ancho que Teléfono */}
               <div>
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
@@ -1578,7 +1578,7 @@ function NewReservationModal({
                 />
               </div>
               {/* Hora y Pax - alineados con Nombre */}
-              <div className="flex items-end gap-4">
+              <div className="flex items-end gap-4 pl-2">
                 {/* Hora - tamaño reducido */}
                 <div className="w-[5rem] shrink-0">
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
