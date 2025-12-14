@@ -1562,7 +1562,7 @@ function NewReservationModal({
             {/* Fecha, Hora y Comensales - alineados con fila superior */}
             <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-2">
               {/* Fecha - mismo ancho que Teléfono */}
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                   Fecha
                 </label>
@@ -1574,7 +1574,7 @@ function NewReservationModal({
                     // Cerrar el picker en móvil haciendo blur
                     e.target.blur();
                   }}
-                  className="w-full h-[38px] px-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full max-w-full h-[38px] px-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
               {/* Hora y Comensales - alineados con Nombre */}
