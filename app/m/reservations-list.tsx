@@ -1580,7 +1580,7 @@ function NewReservationModal({
               {/* Hora y Comensales - alineados con Nombre */}
               <div className="flex items-end gap-3">
                 {/* Hora - con margen izquierdo para no solapar con Fecha */}
-                <div className="w-[5rem] shrink-0 ml-2">
+                <div className="w-[5rem] shrink-0 ml-4">
                   <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     Hora
                   </label>
