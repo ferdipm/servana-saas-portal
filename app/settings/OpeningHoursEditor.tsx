@@ -100,7 +100,8 @@ type Shift = {
   endTime: string;
   color?: string; // Color personalizado (hex)
   isCustom?: boolean; // Si es un turno personalizado
-  maxCovers?: number; // Máx comensales que el bot puede reservar en este turno (default: 50)
+  maxCovers?: number; // Capacidad TOTAL del turno (todas las reservas)
+  maxOnlineCovers?: number; // Límite de comensales que la IA puede reservar (solo cuenta reservas de la IA)
   maxPartySize?: number; // Máx personas por reserva individual (default: 8)
   lastReservationMargin?: number; // Minutos antes del cierre para última reserva (default: 60)
 };
@@ -549,9 +550,15 @@ export function OpeningHoursEditor({
         if (shift.id !== shiftId) return shift;
 
         // Convertir a número para campos numéricos
-        let parsedValue: string | number = value;
-        if (field === 'maxCovers' || field === 'maxPartySize') {
-          parsedValue = parseInt(value) || (field === 'maxCovers' ? 50 : 8);
+        let parsedValue: string | number | undefined = value;
+        if (field === 'maxCovers' || field === 'maxPartySize' || field === 'maxOnlineCovers') {
+          const parsed = parseInt(value);
+          if (field === 'maxOnlineCovers') {
+            // maxOnlineCovers puede ser undefined (sin límite) o un número
+            parsedValue = isNaN(parsed) || value === '' ? undefined : parsed;
+          } else {
+            parsedValue = parsed || (field === 'maxCovers' ? 50 : 8);
+          }
         }
 
         return { ...shift, [field]: parsedValue };
@@ -1078,7 +1085,7 @@ export function OpeningHoursEditor({
                         />
                       </div>
 
-                      {/* Max covers por turno */}
+                      {/* Max covers por turno (capacidad total) */}
                       <div className="flex items-center gap-1">
                         <span className="text-zinc-400 dark:text-zinc-500 text-xs">🪑</span>
                         <input
@@ -1091,13 +1098,37 @@ export function OpeningHoursEditor({
                           className="w-14 text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50 text-center"
                         />
                         <InfoTooltip
-                          title="🪑 Máx. comensales por turno"
-                          description="Capacidad total que la IA de Servana puede reservar en este turno. El sistema cuenta en tiempo real TODAS las reservas registradas (online, telefónicas, walk-ins) y suma el número de personas. Cuando se alcanza este límite, la IA recomienda llamar al restaurante. Las cancelaciones liberan plazas automáticamente."
+                          title="🪑 Capacidad total del turno"
+                          description="Capacidad TOTAL del turno contando TODAS las reservas (IA + manuales + telefónicas). Cuando se alcanza este límite, el turno está lleno para todos."
                           examples={[
-                            "Si pones 50: la IA acepta reservas hasta llegar a 50 comensales totales",
-                            "Tienes 30 comensales (20 online + 10 telefónicas): quedan 20 plazas disponibles",
-                            "Cliente cancela reserva de 6: las plazas vuelven inmediatamente al pool",
-                            "Walk-ins sin registrar NO cuentan - solo reservas guardadas en el sistema"
+                            "Si pones 100: el turno puede tener máximo 100 comensales en total",
+                            "Incluye reservas de la IA, manuales, telefónicas y walk-ins registrados",
+                            "Cuando se llena, nadie puede reservar (ni la IA ni manualmente)"
+                          ]}
+                        />
+                      </div>
+
+                      {/* Límite IA de Servana (maxOnlineCovers) */}
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-400 dark:text-zinc-500 text-xs">🤖</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="500"
+                          placeholder="∞"
+                          value={shift.maxOnlineCovers ?? ''}
+                          onChange={(e) => updateShift(day, shift.id, "maxOnlineCovers", e.target.value)}
+                          disabled={isReadOnly || isPending}
+                          className="w-14 text-sm rounded bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-1.5 py-1 text-zinc-900 dark:text-zinc-200 disabled:opacity-50 text-center placeholder:text-zinc-400"
+                        />
+                        <InfoTooltip
+                          title="🤖 Límite de la IA de Servana"
+                          description="Máximo de comensales que la IA de Servana puede reservar en este turno. Las reservas manuales NO cuentan contra este límite. Déjalo vacío para sin límite (la IA puede reservar hasta la capacidad total)."
+                          examples={[
+                            "Capacidad 100, límite IA 30: la IA puede hacer hasta 30 comensales",
+                            "Si la IA ya tiene 25, puede hacer 5 más aunque el turno tenga 80 manuales",
+                            "Si el turno se llena (100 total), la IA ya no puede reservar aunque su límite no esté lleno",
+                            "Vacío = sin límite separado, la IA puede reservar hasta llenar el turno"
                           ]}
                         />
                       </div>

@@ -1,6 +1,6 @@
 # Esquema de Base de Datos - Supabase
 
-> Documentación generada automáticamente el 12/12/2025, 17:02:30
+> Documentación generada automáticamente el 14/12/2025, 3:28:38
 
 ## Información General
 

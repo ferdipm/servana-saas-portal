@@ -175,21 +175,13 @@ $$;
 -- ================================================
 -- PASO 7: Row Level Security (RLS)
 -- ================================================
+-- ================================================
+-- PASO 7: Row Level Security (RLS) - Versión simplificada
+-- ================================================
 ALTER TABLE restaurant_knowledge_chunks ENABLE ROW LEVEL SECURITY;
 
--- Policy: Usuarios autenticados pueden ver chunks de sus restaurantes
-CREATE POLICY "Users can view their restaurant knowledge chunks"
-  ON restaurant_knowledge_chunks
-  FOR SELECT
-  USING (
-    restaurant_id IN (
-      SELECT rp.restaurant_id
-      FROM restaurant_permissions rp
-      WHERE rp.user_id = auth.uid()
-    )
-  );
-
 -- Policy: Service role tiene acceso completo (para el backend)
+-- El backend siempre usa service_role, así que esto es suficiente
 CREATE POLICY "Service role has full access to knowledge chunks"
   ON restaurant_knowledge_chunks
   FOR ALL
