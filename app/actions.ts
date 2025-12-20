@@ -313,6 +313,22 @@ export async function updateReservationStatus(params: {
   const supabase = await supabaseServer();
   const { reservationId, status } = params;
 
+  // 1. Get current reservation to check if transitioning from pending to confirmed
+  const { data: currentReservation, error: fetchError } = await supabase
+    .from("reservations")
+    .select("status, phone, name, party_size, datetime_utc, tz, restaurant_id, checkin_token, locator")
+    .eq("id", reservationId)
+    .single();
+
+  if (fetchError) {
+    console.error("[updateReservationStatus] Error fetching reservation:", fetchError);
+    throw new Error(`Failed to fetch reservation: ${fetchError.message}`);
+  }
+
+  const wasConfirmingPending = currentReservation?.status === "pending" && status === "confirmed";
+  console.log("[updateReservationStatus] Was pending:", currentReservation?.status, "Confirming pending:", wasConfirmingPending);
+
+  // 2. Update the status
   console.log("[updateReservationStatus] Calling Supabase update...");
 
   const { error } = await supabase
@@ -325,6 +341,38 @@ export async function updateReservationStatus(params: {
   if (error) {
     console.error("[updateReservationStatus] Error:", error);
     throw new Error(`Failed to update reservation status: ${error.message}`);
+  }
+
+  // 3. If confirming a pending reservation, send WhatsApp with QR
+  if (wasConfirmingPending && currentReservation.phone) {
+    console.log("[updateReservationStatus] 📱 Sending WhatsApp confirmation for previously pending reservation...");
+
+    try {
+      // Get or create checkin token
+      let checkinToken = currentReservation.checkin_token;
+      if (!checkinToken) {
+        const { token } = await assignCheckinToken(reservationId);
+        checkinToken = token;
+      }
+
+      // Send confirmation with QR
+      await sendReservationConfirmationWithQR({
+        reservationId,
+        phone: currentReservation.phone,
+        name: currentReservation.name,
+        partySize: currentReservation.party_size,
+        datetimeUtc: currentReservation.datetime_utc,
+        tz: currentReservation.tz || "Europe/Madrid",
+        checkinToken,
+        restaurantId: currentReservation.restaurant_id,
+        locator: currentReservation.locator,
+      });
+
+      console.log("[updateReservationStatus] ✅ WhatsApp confirmation sent successfully");
+    } catch (whatsappError: any) {
+      // Don't fail the status update if WhatsApp fails
+      console.error("[updateReservationStatus] ⚠️ WhatsApp send failed:", whatsappError.message);
+    }
   }
 
   console.log("[updateReservationStatus] SUCCESS");
