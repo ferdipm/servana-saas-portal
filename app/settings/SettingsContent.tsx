@@ -11,6 +11,7 @@ import { WineEditor } from "./WineEditor";
 import { FAQEditor } from "./FAQEditor";
 import { NotificationsEditor } from "./NotificationsEditor";
 import { UsersEditor } from "./UsersEditor";
+import { BotSettingsEditor } from "./BotSettingsEditor";
 
 type InitialInfo = {
   name: string;
@@ -32,6 +33,11 @@ type NotificationSettings = {
   notify_on_new_reservation: boolean;
 };
 
+type BotSettings = {
+  reservation_mode: "auto_confirm" | "pending" | "disabled";
+  disabled_message?: string;
+};
+
 type SettingsContentProps = {
   tenantId: string;
   restaurantId: string;
@@ -44,9 +50,10 @@ type SettingsContentProps = {
   initialOpeningHours: any;
   initialSpecialDays?: any[];
   initialNotificationSettings?: NotificationSettings;
+  initialBotSettings?: BotSettings | null;
 };
 
-type TabKey = "general" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo" | "notifications" | "users";
+type TabKey = "general" | "bot" | "carta" | "vinos" | "menus" | "faqs" | "hours" | "logo" | "notifications" | "users";
 
 export function SettingsContent({
   tenantId,
@@ -60,6 +67,7 @@ export function SettingsContent({
   initialOpeningHours,
   initialSpecialDays = [],
   initialNotificationSettings,
+  initialBotSettings,
 }: SettingsContentProps) {
   const [tab, setTab] = useState<TabKey>("general");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -103,6 +111,7 @@ export function SettingsContent({
         <nav className="flex flex-wrap gap-1 p-1.5 bg-white dark:bg-zinc-900/60 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm dark:shadow-none">
           {[
             { key: "general", label: "General", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" },
+            { key: "bot", label: "Bot", icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
             { key: "hours", label: "Horarios", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
             { key: "carta", label: "Carta", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
             { key: "vinos", label: "Vinos", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
@@ -239,6 +248,17 @@ export function SettingsContent({
               </p>
             </div>
           </form>
+        </section>
+      )}
+
+      {tab === "bot" && (
+        <section className="bg-white dark:bg-[#111218] border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 md:p-5 space-y-3">
+          <BotSettingsEditor
+            restaurantId={restaurantId}
+            initialSettings={initialBotSettings ?? null}
+            isReadOnly={isReadOnly}
+            restaurantPhone={initialInfo.phone}
+          />
         </section>
       )}
 

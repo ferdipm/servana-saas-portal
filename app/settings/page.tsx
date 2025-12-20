@@ -57,7 +57,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       wine_menu,
       logo_url,
       notification_settings,
-      total_capacity
+      total_capacity,
+      bot_settings
     `
     )
     .eq("id", currentRestaurantId)
@@ -88,6 +89,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   const initialOpeningHours = infoRow?.opening_hours ?? {};
   const initialSpecialDays = infoRow?.special_days ?? [];
   const initialNotificationSettings = infoRow?.notification_settings ?? null;
+  const initialBotSettings = infoRow?.bot_settings ?? null;
 
   // Obtener conteo de pendientes para hoy
   const pendingCount = await getPendingTodayCount({
@@ -132,6 +134,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           initialOpeningHours={initialOpeningHours}
           initialSpecialDays={initialSpecialDays}
           initialNotificationSettings={initialNotificationSettings}
+          initialBotSettings={initialBotSettings}
         />
       </div>
     </DashboardShell>

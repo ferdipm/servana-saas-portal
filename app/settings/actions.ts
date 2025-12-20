@@ -426,3 +426,35 @@ export async function updateNotificationSettings(
   // Volvemos a validar la página de ajustes
   revalidatePath("/settings");
 }
+
+/**
+ * Actualiza la configuración del bot de un restaurante
+ */
+export async function updateBotSettings(
+  restaurantId: string,
+  settings: {
+    reservation_mode: "auto_confirm" | "pending" | "disabled";
+    disabled_message?: string;
+  }
+) {
+  if (!restaurantId) {
+    throw new Error("Falta el identificador del restaurante.");
+  }
+
+  const supabase = await supabaseServer();
+
+  const { error } = await supabase
+    .from("restaurant_info")
+    .update({
+      bot_settings: settings,
+    })
+    .eq("id", restaurantId);
+
+  if (error) {
+    console.error("Error en updateBotSettings:", error);
+    throw new Error("No se ha podido actualizar la configuración del bot.");
+  }
+
+  // Volvemos a validar la página de ajustes
+  revalidatePath("/settings");
+}
