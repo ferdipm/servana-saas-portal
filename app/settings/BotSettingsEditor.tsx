@@ -193,21 +193,23 @@ export function BotSettingsEditor({
 
         {/* Custom message for disabled mode */}
         {settings.reservation_mode === "disabled" && (
-          <div className="mt-4 space-y-2 pl-8">
-            <label className="text-xs text-zinc-500 dark:text-zinc-400">
-              Mensaje cuando el cliente intente reservar:
-            </label>
+          <div className="mt-4 p-4 rounded-xl border border-rose-200 dark:border-rose-500/40 bg-rose-50/50 dark:bg-rose-950/20 space-y-3">
+            <div>
+              <h4 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                Mensaje cuando el cliente intente reservar
+              </h4>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                Este mensaje se enviará automáticamente cuando alguien intente hacer una reserva.
+              </p>
+            </div>
             <textarea
               value={settings.disabled_message || ""}
               onChange={(e) => handleMessageChange(e.target.value)}
               disabled={isReadOnly}
               rows={3}
-              className="w-full max-w-lg rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed resize-none"
+              className="w-full rounded-lg bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-700 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 disabled:opacity-60 disabled:cursor-not-allowed resize-none"
               placeholder="En este momento no tomamos reservas online..."
             />
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
-              Este mensaje se enviará automáticamente cuando alguien intente hacer una reserva.
-            </p>
           </div>
         )}
       </div>
