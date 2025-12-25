@@ -636,6 +636,221 @@ export function ReservationsView({
         { value: "finished", label: "Finalizada" },
       ];
 
+  // Función para imprimir las reservas visibles
+  const printReservations = useCallback(() => {
+    const statusLabels: Record<string, string> = {
+      pending: "Pendiente",
+      confirmed: "Confirmada",
+      reconfirmed: "Reconfirmada",
+      seated: "Sentado",
+      cancelled: "Cancelada",
+      no_show: "No show",
+      finished: "Finalizada",
+    };
+
+    // Ordenar por fecha/hora
+    const sortedRows = [...visibleRows].sort((a, b) => {
+      return new Date(a.datetime_utc).getTime() - new Date(b.datetime_utc).getTime();
+    });
+
+    // Agrupar por día
+    const groupedByDay: Record<string, Reservation[]> = {};
+    for (const r of sortedRows) {
+      const dt = new Date(r.datetime_utc);
+      const dayKey = dt.toLocaleDateString("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: r.tz || defaultTz,
+      });
+      if (!groupedByDay[dayKey]) groupedByDay[dayKey] = [];
+      groupedByDay[dayKey].push(r);
+    }
+
+    // Generar filas HTML
+    let tableRows = "";
+    for (const [day, reservations] of Object.entries(groupedByDay)) {
+      // Header del día
+      tableRows += `
+        <tr class="day-header">
+          <td colspan="6" style="background: #f3f4f6; font-weight: 600; padding: 12px 8px; text-transform: capitalize; border-top: 2px solid #e5e7eb;">
+            ${day} (${reservations.length} reserva${reservations.length !== 1 ? "s" : ""})
+          </td>
+        </tr>
+      `;
+
+      // Filas de reservas
+      for (const r of reservations) {
+        const dt = new Date(r.datetime_utc);
+        const time = dt.toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: r.tz || defaultTz,
+        });
+        const statusLabel = statusLabels[r.status] || r.status;
+        const locator = r.locator || r.id.slice(0, 8).toUpperCase();
+
+        tableRows += `
+          <tr>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${time}</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500;">${r.name}</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${r.party_size}</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${r.phone || "—"}</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-family: monospace; font-size: 12px;">${locator}</td>
+            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${statusLabel}</td>
+          </tr>
+        `;
+
+        // Añadir notas si existen
+        if (r.notes) {
+          tableRows += `
+            <tr>
+              <td></td>
+              <td colspan="5" style="padding: 4px 8px 10px; font-size: 12px; color: #6b7280; font-style: italic;">
+                📝 ${r.notes}
+              </td>
+            </tr>
+          `;
+        }
+      }
+    }
+
+    const dateLabel = formatDateRangeLabel();
+    const totalGuests = visibleRows.reduce((sum, r) => sum + (r.party_size || 0), 0);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="utf-8">
+        <title>Reservas - ${dateLabel}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 30px;
+            color: #1f2937;
+            max-width: 900px;
+            margin: 0 auto;
+          }
+          h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #111827;
+          }
+          .subtitle {
+            color: #6b7280;
+            margin-bottom: 20px;
+            font-size: 14px;
+          }
+          .summary {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+          }
+          .summary-item {
+            text-align: center;
+          }
+          .summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #4f46e5;
+          }
+          .summary-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+          }
+          thead th {
+            text-align: left;
+            padding: 12px 8px;
+            background: #111827;
+            color: white;
+            font-weight: 600;
+          }
+          thead th:nth-child(3) {
+            text-align: center;
+          }
+          .footer {
+            margin-top: 30px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #9ca3af;
+            text-align: center;
+          }
+          @media print {
+            body { padding: 15px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Reservas</h1>
+        <p class="subtitle">${dateLabel}</p>
+
+        <div class="summary">
+          <div class="summary-item">
+            <div class="summary-value">${visibleRows.length}</div>
+            <div class="summary-label">Reservas</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${totalGuests}</div>
+            <div class="summary-label">Comensales</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px;">Hora</th>
+              <th>Nombre</th>
+              <th style="width: 80px;">Pax</th>
+              <th style="width: 130px;">Teléfono</th>
+              <th style="width: 100px;">Localizador</th>
+              <th style="width: 100px;">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Impreso el ${new Date().toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          })}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      // Esperar un momento para que se carguen los estilos
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  }, [visibleRows, defaultTz, formatDateRangeLabel]);
+
   return (
     <>
       <div className="rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 overflow-hidden">
@@ -852,6 +1067,29 @@ export function ReservationsView({
                   />
                 </PopoverContent>
               </Popover>
+
+              {/* Botón IMPRIMIR */}
+              {visibleRows.length > 0 && (
+                <button
+                  type="button"
+                  onClick={printReservations}
+                  className="
+                    h-9 px-3 rounded-xl text-sm font-medium
+                    border border-zinc-300/60 dark:border-zinc-600/60
+                    bg-white/80 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-700
+                    text-zinc-600 dark:text-zinc-300
+                    shadow-sm backdrop-blur-sm
+                    transition-colors
+                    inline-flex items-center gap-2
+                  "
+                  title="Imprimir reservas"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                  </svg>
+                  <span className="hidden md:inline">Imprimir</span>
+                </button>
+              )}
 
               {/* Botón NUEVA RESERVA MANUAL */}
               {!isPendingMode && (
