@@ -403,6 +403,12 @@ export async function updateNotificationSettings(
     confirmation_required: boolean;
     notify_on_cancellation: boolean;
     notify_on_new_reservation: boolean;
+    staff_members?: Array<{
+      phone: string;
+      name: string;
+      can_forward: boolean;
+      receives_notifications: boolean;
+    }>;
   }
 ) {
   if (!restaurantId) {

@@ -25,12 +25,20 @@ type InitialInfo = {
   totalCapacity: number;
 };
 
+type StaffMember = {
+  phone: string;
+  name: string;
+  can_forward: boolean;
+  receives_notifications: boolean;
+};
+
 type NotificationSettings = {
   reminder_24h_enabled: boolean;
   reminder_message_template?: string;
   confirmation_required: boolean;
   notify_on_cancellation: boolean;
   notify_on_new_reservation: boolean;
+  staff_members?: StaffMember[];
 };
 
 type BotSettings = {
