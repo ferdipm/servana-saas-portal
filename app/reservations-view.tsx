@@ -27,6 +27,7 @@ type Props = {
   defaultTz?: string;
   initialStatus?: string; // undefined en "/", "pending" en /pending
   onReservationChange?: () => void; // Callback para notificar cambios
+  restaurantName?: string; // Nombre del restaurante para impresión
 };
 
 // Helper para traducir el origen de la reserva al español
@@ -52,6 +53,7 @@ export function ReservationsView({
   defaultTz = "Europe/Zurich",
   initialStatus,
   onReservationChange,
+  restaurantName,
 }: Props) {
   const isPendingMode = initialStatus === "pending";
 
@@ -661,7 +663,6 @@ export function ReservationsView({
         weekday: "long",
         day: "numeric",
         month: "long",
-        year: "numeric",
         timeZone: r.tz || defaultTz,
       });
       if (!groupedByDay[dayKey]) groupedByDay[dayKey] = [];
@@ -674,8 +675,8 @@ export function ReservationsView({
       // Header del día
       tableRows += `
         <tr class="day-header">
-          <td colspan="6" style="background: #f3f4f6; font-weight: 600; padding: 12px 8px; text-transform: capitalize; border-top: 2px solid #e5e7eb;">
-            ${day} (${reservations.length} reserva${reservations.length !== 1 ? "s" : ""})
+          <td colspan="6" style="background: #f3f4f6; font-weight: 600; padding: 6px 6px; text-transform: capitalize; border-top: 1px solid #d1d5db;">
+            ${day} (${reservations.length})
           </td>
         </tr>
       `;
@@ -693,21 +694,21 @@ export function ReservationsView({
 
         tableRows += `
           <tr>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${time}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-weight: 500;">${r.name}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${r.party_size}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${r.phone || "—"}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; font-family: monospace; font-size: 12px;">${locator}</td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb;">${statusLabel}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb;">${time}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb; font-weight: 500;">${r.name}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb; text-align: center;">${r.party_size}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb;">${r.phone || "—"}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${locator}</td>
+            <td style="padding: 5px 6px; border-bottom: 1px solid #e5e7eb;">${statusLabel}</td>
           </tr>
         `;
 
-        // Añadir notas si existen
+        // Añadir notas si existen (más compacto)
         if (r.notes) {
           tableRows += `
             <tr>
               <td></td>
-              <td colspan="5" style="padding: 4px 8px 10px; font-size: 12px; color: #6b7280; font-style: italic;">
+              <td colspan="5" style="padding: 2px 6px 5px; font-size: 11px; color: #6b7280; font-style: italic;">
                 📝 ${r.notes}
               </td>
             </tr>
@@ -718,107 +719,117 @@ export function ReservationsView({
 
     const dateLabel = formatDateRangeLabel();
     const totalGuests = visibleRows.reduce((sum, r) => sum + (r.party_size || 0), 0);
+    const displayName = restaurantName || "Restaurante";
 
     const htmlContent = `
       <!DOCTYPE html>
       <html lang="es">
       <head>
         <meta charset="utf-8">
-        <title>Reservas - ${dateLabel}</title>
+        <title>Reservas - ${displayName}</title>
         <style>
-          * { box-sizing: border-box; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 30px;
+            padding: 20px 25px;
             color: #1f2937;
-            max-width: 900px;
-            margin: 0 auto;
+            font-size: 12px;
           }
-          h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #111827;
-          }
-          .subtitle {
-            color: #6b7280;
-            margin-bottom: 20px;
-            font-size: 14px;
-          }
-          .summary {
+          .header {
             display: flex;
-            gap: 24px;
-            margin-bottom: 24px;
-            padding: 16px;
-            background: #f9fafb;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
           }
-          .summary-item {
-            text-align: center;
+          .header-left h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 2px;
           }
-          .summary-value {
-            font-size: 28px;
+          .header-left .subtitle {
+            color: #6b7280;
+            font-size: 12px;
+          }
+          .header-right {
+            display: flex;
+            gap: 16px;
+            text-align: right;
+          }
+          .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+          }
+          .stat-value {
+            font-size: 20px;
             font-weight: 700;
             color: #4f46e5;
+            line-height: 1;
           }
-          .summary-label {
-            font-size: 12px;
+          .stat-label {
+            font-size: 10px;
             color: #6b7280;
             text-transform: uppercase;
           }
           table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 12px;
           }
           thead th {
             text-align: left;
-            padding: 12px 8px;
-            background: #111827;
-            color: white;
+            padding: 8px 6px;
+            background: #f3f4f6;
+            color: #374151;
             font-weight: 600;
+            border-bottom: 2px solid #d1d5db;
           }
           thead th:nth-child(3) {
             text-align: center;
           }
           .footer {
-            margin-top: 30px;
-            padding-top: 16px;
+            margin-top: 15px;
+            padding-top: 8px;
             border-top: 1px solid #e5e7eb;
-            font-size: 12px;
+            font-size: 10px;
             color: #9ca3af;
             text-align: center;
           }
           @media print {
-            body { padding: 15px; }
-            .no-print { display: none; }
+            body { padding: 10px 15px; }
           }
         </style>
       </head>
       <body>
-        <h1>Reservas</h1>
-        <p class="subtitle">${dateLabel}</p>
-
-        <div class="summary">
-          <div class="summary-item">
-            <div class="summary-value">${visibleRows.length}</div>
-            <div class="summary-label">Reservas</div>
+        <div class="header">
+          <div class="header-left">
+            <h1>Reservas — ${displayName}</h1>
+            <div class="subtitle">${dateLabel}</div>
           </div>
-          <div class="summary-item">
-            <div class="summary-value">${totalGuests}</div>
-            <div class="summary-label">Comensales</div>
+          <div class="header-right">
+            <div class="stat">
+              <span class="stat-value">${visibleRows.length}</span>
+              <span class="stat-label">Reservas</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">${totalGuests}</span>
+              <span class="stat-label">Comensales</span>
+            </div>
           </div>
         </div>
 
         <table>
           <thead>
             <tr>
-              <th style="width: 70px;">Hora</th>
+              <th style="width: 50px;">Hora</th>
               <th>Nombre</th>
-              <th style="width: 80px;">Pax</th>
-              <th style="width: 130px;">Teléfono</th>
-              <th style="width: 100px;">Localizador</th>
-              <th style="width: 100px;">Estado</th>
+              <th style="width: 45px;">Pax</th>
+              <th style="width: 100px;">Teléfono</th>
+              <th style="width: 80px;">Localizador</th>
+              <th style="width: 75px;">Estado</th>
             </tr>
           </thead>
           <tbody>
@@ -827,10 +838,9 @@ export function ReservationsView({
         </table>
 
         <div class="footer">
-          Impreso el ${new Date().toLocaleDateString("es-ES", {
-            weekday: "long",
+          Impreso: ${new Date().toLocaleDateString("es-ES", {
             day: "numeric",
-            month: "long",
+            month: "short",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit"
@@ -844,12 +854,11 @@ export function ReservationsView({
     if (printWindow) {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
-      // Esperar un momento para que se carguen los estilos
       setTimeout(() => {
         printWindow.print();
       }, 250);
     }
-  }, [visibleRows, defaultTz, formatDateRangeLabel]);
+  }, [visibleRows, defaultTz, formatDateRangeLabel, restaurantName]);
 
   return (
     <>

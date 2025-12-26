@@ -9,9 +9,10 @@ type Props = {
   tenantId: string;
   restaurantId: string;
   defaultTz: string;
+  restaurantName?: string;
 };
 
-export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: Props) {
+export function ReservationsPageContent({ tenantId, restaurantId, defaultTz, restaurantName }: Props) {
   const router = useRouter();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -49,6 +50,7 @@ export function ReservationsPageContent({ tenantId, restaurantId, defaultTz }: P
         tenantId={tenantId}
         restaurantId={restaurantId}
         defaultTz={defaultTz}
+        restaurantName={restaurantName}
         onReservationChange={handleReservationChange}
       />
     </div>

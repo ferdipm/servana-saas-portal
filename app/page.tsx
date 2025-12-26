@@ -65,6 +65,7 @@ export default async function Page({ searchParams }: PageProps) {
         tenantId={tenantId}
         restaurantId={currentRestaurantId}
         defaultTz={defaultTz}
+        restaurantName={restaurantInfo?.name}
       />
     </DashboardShell>
   );
